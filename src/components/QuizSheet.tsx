@@ -1,20 +1,31 @@
-import { useState } from "react";
-import { ExternalLink, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Check, ExternalLink, RotateCcw, X } from "lucide-react";
 import { useGame } from "@/game/useGame";
-import { LESSON_CONTENT } from "@/game/content";
-import { RewardChip } from "./GameBits";
-import { VineLoader } from "./VineLoader";
+import { LESSON_CONTENT, type LessonContent } from "@/game/content";
+import { RewardChip, ItemIcon } from "./GameBits";
+import { LabLoader } from "./LabLoader";
+import { Press, labEase } from "./lab/motion";
 import { cn } from "@/lib/utils";
 
-const CONFETTI = Array.from({ length: 18 }, (_, i) => i);
-const CONFETTI_COLORS = ["bg-sun", "bg-leaf", "bg-sage", "bg-terracotta"];
+type Flight = { id: string; from: DOMRect; to: DOMRect };
 
-export function QuizSheet({ lessonId, onClose }: { lessonId: string; onClose: () => void }) {
+/**
+ * Quiz bottom sheet. On success the reward chips fly to the inventory bar,
+ * then `onLanded` lets the map release the held numbers; `saved` arrives last.
+ */
+export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: string; onClose: () => void; onLanded: () => void; saved: boolean }) {
   const game = useGame();
-  const lesson = LESSON_CONTENT.find((l) => l.lesson_id === lessonId)!;
+  const reduce = useReducedMotion();
+  const index = LESSON_CONTENT.findIndex((l) => l.lesson_id === lessonId);
+  const lesson = LESSON_CONTENT[index] as LessonContent & { explanation?: string };
   const [picked, setPicked] = useState<string | null>(null);
   const [wrong, setWrong] = useState<string[]>([]);
+  const [shake, setShake] = useState(0);
   const [done, setDone] = useState(false);
+  const [flights, setFlights] = useState<Flight[]>([]);
+  const firstOption = useRef<HTMLButtonElement>(null);
 
   const choose = async (opt: string) => {
     if (game.busy) return;
@@ -23,76 +34,152 @@ export function QuizSheet({ lessonId, onClose }: { lessonId: string; onClose: ()
       await game.completeLesson(lesson.lesson_id, opt);
       setDone(true);
     } catch {
-      setWrong((w) => [...w, opt]);
+      setWrong((w) => (w.includes(opt) ? w : [...w, opt]));
+      setShake((s) => s + 1);
     } finally {
       setPicked(null);
     }
   };
 
+  // Rewards land: chips fly to the inventory bar, then hand over to the map.
+  useEffect(() => {
+    if (!done) return;
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+    const ids = ["gold", lesson.reward_item];
+    const t1 = setTimeout(() => {
+      const fl = ids
+        .map((id) => {
+          const from = document.querySelector(`[data-chip="${id}"]`)?.getBoundingClientRect();
+          const to = document.querySelector(`[data-inv="${id}"]`)?.getBoundingClientRect();
+          return from && to ? { id, from, to } : null;
+        })
+        .filter((f): f is Flight => !!f);
+      if (!reduce) setFlights(fl);
+    }, reduce ? 0 : 600);
+    const t2 = setTimeout(() => { setFlights([]); onLanded(); }, reduce ? 50 : 1400);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [done]);
+
+  const lastWrong = wrong.length > 0 && !done;
+
   return (
-    <div className="fixed inset-0 z-[45] flex items-end justify-center bg-foreground/30 backdrop-blur-sm animate-in fade-in" role="dialog" aria-modal="true" aria-label={lesson.title}>
-      <div className="relative max-h-[92vh] w-full max-w-[480px] overflow-y-auto rounded-t-[2rem] bg-background px-5 pb-8 pt-4 shadow-lift animate-in slide-in-from-bottom-8">
-        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" />
-        <button onClick={onClose} aria-label="Close" className="tap absolute right-3 top-3 flex items-center justify-center rounded-full text-muted-foreground">
+    <motion.div className="fixed inset-0 z-[45] flex items-end justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-modal="true" aria-label={lesson.title}>
+      <button aria-label="Close" onClick={onClose} className="absolute inset-0 bg-navy/50" />
+      <motion.div
+        initial={reduce ? false : { y: 80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={reduce ? undefined : { y: 80, opacity: 0 }}
+        transition={{ duration: 0.5, ease: labEase }}
+        className="relative max-h-[80vh] w-full max-w-[480px] overflow-y-auto rounded-t-[2rem] bg-ivory px-6 pb-8 pt-4 text-navy shadow-lift"
+      >
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-navy/15" />
+        <Press onClick={onClose} aria-label="Close" className="absolute right-3 top-3 flex items-center justify-center rounded-full text-navy/60">
           <X className="h-5 w-5" />
-        </button>
+        </Press>
+
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-lavender-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]">{lesson.topic}</span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Chapter {index + 1}</span>
+        </div>
 
         {!done ? (
           <>
-            <span className="inline-block rounded-full bg-secondary px-3 py-1 text-xs font-bold uppercase tracking-wider text-moss">{lesson.topic}</span>
-            <h2 className="mt-3 text-2xl font-bold text-moss">{lesson.title}</h2>
-            <p className="mt-3 rounded-2xl bg-sun-soft/60 p-4 leading-relaxed">{lesson.concept}</p>
-            <p className="mt-5 font-display text-lg font-semibold">{lesson.question}</p>
-            <div className="mt-4 flex flex-col gap-3">
-              {lesson.options.map((opt) => (
-                <button
+            <h2 className="mt-4 font-display text-3xl font-medium uppercase leading-none tracking-[-0.04em]">{lesson.title}</h2>
+            <p className="mt-4 text-[15px] leading-relaxed text-navy/80">{lesson.concept}</p>
+            <p className="mt-6 font-display text-xl font-medium leading-snug">{lesson.question}</p>
+            <motion.div
+              key={shake}
+              animate={shake && !reduce ? { x: [0, -10, 9, -6, 4, 0] } : { x: 0 }}
+              transition={{ duration: 0.45, ease: "easeOut" }}
+              className="mt-4 flex flex-col gap-2.5"
+            >
+              {lesson.options.map((opt, i) => (
+                <Press
                   key={opt}
+                  ref={i === 0 ? firstOption : undefined}
                   disabled={game.busy}
                   onClick={() => choose(opt)}
                   className={cn(
-                    "tap rounded-2xl border-2 px-5 py-3 text-left font-semibold transition-colors",
-                    wrong.includes(opt) ? "border-terracotta/60 bg-terracotta/10 text-terracotta" : "border-border bg-card hover:border-leaf",
-                    picked === opt && "border-leaf bg-secondary",
+                    "flex min-h-[56px] items-center justify-between rounded-2xl border-2 px-5 py-3 text-left font-semibold transition-colors disabled:opacity-60",
+                    wrong.includes(opt) ? "border-coral bg-coral/20 text-navy/70 line-through decoration-coral decoration-2" : "border-navy/10 bg-card hover:border-navy",
+                    picked === opt && "border-navy bg-lavender-soft",
                   )}
                 >
                   {opt}
-                </button>
+                  <span className="ml-3 font-display text-xs text-muted-foreground">{String.fromCharCode(65 + i)}</span>
+                </Press>
               ))}
-            </div>
-            {game.busy && picked && <div className="mt-4"><VineLoader label="Checking your answer…" /></div>}
+            </motion.div>
+            {game.busy && picked && <div className="mt-4"><LabLoader tone="navy" label="Checking your answer…" /></div>}
+            <AnimatePresence>
+              {lastWrong && lesson.explanation && !game.busy && (
+                <motion.div
+                  key={`exp-${shake}`}
+                  initial={reduce ? false : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.4, ease: labEase }}
+                  className="mt-5 rounded-2xl border-l-4 border-coral bg-coral/15 p-4"
+                >
+                  <p className="text-[15px] leading-relaxed">{lesson.explanation}</p>
+                  <Press onClick={() => firstOption.current?.focus()} className="mt-2 inline-flex items-center gap-1.5 rounded-full px-1 text-sm font-semibold underline-offset-4 hover:underline">
+                    <RotateCcw className="h-4 w-4" /> Try again
+                  </Press>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </>
         ) : (
-          <div className="relative text-center">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-0 overflow-visible" aria-hidden="true">
-              {CONFETTI.map((i) => (
-                <span
-                  key={i}
-                  className={cn("absolute top-0 h-3 w-2 rounded-full animate-confetti", CONFETTI_COLORS[i % 4])}
-                  style={{ left: `${(i * 37) % 100}%`, animationDelay: `${(i % 6) * 0.08}s` }}
-                />
-              ))}
+          <motion.div initial={reduce ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: labEase }}>
+            <h2 className="mt-4 font-display text-3xl font-medium uppercase leading-none tracking-[-0.04em]">Quest complete</h2>
+            <p className="mt-3 text-[15px] leading-relaxed text-navy/80">{lesson.success}</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <RewardChip id="gold" amount={lesson.reward_gold} className={cn(flights.length && "opacity-30")} />
+              <RewardChip id={lesson.reward_item} amount={lesson.reward_item_amount} className={cn(flights.length && "opacity-30")} />
             </div>
-            <h2 className="mt-6 text-3xl font-extrabold text-moss">Quest complete!</h2>
-            <p className="mt-3 text-lg">{lesson.success}</p>
-            <div className="mt-5 flex flex-wrap justify-center gap-2">
-              <RewardChip id="gold" amount={lesson.reward_gold} />
-              <RewardChip id={lesson.reward_item} amount={lesson.reward_item_amount} />
+            <div className="mt-3 h-6">
+              <AnimatePresence>
+                {saved && (
+                  <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} className="inline-flex items-center gap-1.5 text-sm font-semibold">
+                    <Check className="h-4 w-4" /> Saved on NEAR ✓
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </div>
-            <div className="card-organic mt-6 p-5 text-left">
-              <h3 className="font-bold text-moss">What just happened on NEAR</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{lesson.near_reveal}</p>
+            <div className="mt-4 rounded-3xl bg-navy p-5 text-ivory">
+              <h3 className="font-display text-lg font-medium text-lime">What just happened on NEAR</h3>
+              <p className="mt-2 text-sm leading-relaxed text-ivory/80">{lesson.near_reveal}</p>
               {game.lastTx && (
-                <a href={game.lastTx.url} target="_blank" rel="noreferrer" className="tap mt-2 inline-flex items-center gap-1.5 font-semibold text-moss underline-offset-4 hover:underline">
+                <a href={game.lastTx.url} target="_blank" rel="noreferrer" className="tap mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-lime underline-offset-4 hover:underline">
                   See it on the explorer <ExternalLink className="h-4 w-4" />
                 </a>
               )}
             </div>
-            <button onClick={onClose} className="tap mt-6 w-full rounded-full bg-moss py-3 text-lg font-semibold text-primary-foreground shadow-soft">
+            <Press onClick={onClose} className="mt-6 w-full rounded-full bg-navy py-3.5 text-base font-semibold text-ivory">
               Back to the map
-            </button>
-          </div>
+            </Press>
+          </motion.div>
         )}
-      </div>
-    </div>
+      </motion.div>
+
+      {typeof document !== "undefined" &&
+        createPortal(
+          <div className="pointer-events-none fixed inset-0 z-[60]" aria-hidden="true">
+            {flights.map((f, i) => (
+              <motion.span
+                key={f.id}
+                className={cn("fixed left-0 top-0 flex h-9 w-9 items-center justify-center rounded-full shadow-lift", f.id === "gold" ? "bg-lime text-navy" : "bg-lavender-soft text-navy")}
+                initial={{ x: f.from.left + 8, y: f.from.top, scale: 1, opacity: 1 }}
+                animate={{ x: f.to.left + f.to.width / 2 - 18, y: f.to.top + f.to.height / 2 - 18, scale: 0.7, opacity: [1, 1, 0.9] }}
+                transition={{ duration: 0.7, delay: i * 0.08, ease: labEase }}
+              >
+                <ItemIcon id={f.id} />
+              </motion.span>
+            ))}
+          </div>,
+          document.body,
+        )}
+    </motion.div>
   );
 }
