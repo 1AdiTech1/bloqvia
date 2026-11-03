@@ -30,7 +30,7 @@ export function QuizSheet({ lessonId, onClose }: { lessonId: string; onClose: ()
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-foreground/30 backdrop-blur-sm animate-in fade-in" role="dialog" aria-modal="true" aria-label={lesson.title}>
+    <div className="fixed inset-0 z-[45] flex items-end justify-center bg-foreground/30 backdrop-blur-sm animate-in fade-in" role="dialog" aria-modal="true" aria-label={lesson.title}>
       <div className="relative max-h-[92vh] w-full max-w-[480px] overflow-y-auto rounded-t-[2rem] bg-background px-5 pb-8 pt-4 shadow-lift animate-in slide-in-from-bottom-8">
         <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" />
         <button onClick={onClose} aria-label="Close" className="tap absolute right-3 top-3 flex items-center justify-center rounded-full text-muted-foreground">
