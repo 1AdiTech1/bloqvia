@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
-import { Check, Leaf, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Check, X } from "lucide-react";
 import { useGame } from "@/game/useGame";
+import { BloqMark } from "@/components/Logo";
 
 /** Global busy indicator, error toast and the short "Saved" confirmation. */
 export function AppChrome() {
@@ -32,30 +34,31 @@ export function AppChrome() {
   }, [game.lastTx]);
 
   const onLanding = path === "/";
+  const pill = "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-lift";
+  const anim = { initial: { opacity: 0, y: -12 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -12 }, transition: { duration: 0.35 } };
 
   return (
     <div className="pointer-events-none fixed inset-x-0 top-3 z-50 flex flex-col items-center gap-2 px-4">
-      {game.busy && !onLanding && (
-        <div className="flex items-center gap-2 rounded-full bg-card px-4 py-2 text-sm font-medium text-moss shadow-soft">
-          <Leaf className="h-4 w-4 animate-spin [animation-duration:2.5s]" /> Working on it…
-        </div>
-      )}
-      {saved && !game.busy && (
-        <div className="flex items-center gap-2 rounded-full bg-moss px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lift animate-in fade-in slide-in-from-top-2">
-          <Check className="h-4 w-4" /> Saved on NEAR ✓
-        </div>
-      )}
-      {err && (
-        <div
-          role="alert"
-          className="pointer-events-auto flex max-w-[440px] items-center gap-3 rounded-2xl bg-terracotta px-4 py-3 text-sm font-medium text-destructive-foreground shadow-lift animate-in fade-in slide-in-from-top-2"
-        >
-          <span className="flex-1">{err}</span>
-          <button aria-label="Dismiss" className="tap -my-2 -mr-2 flex items-center justify-center" onClick={() => setErr(null)}>
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )}
+      <AnimatePresence>
+        {game.busy && !onLanding && (
+          <motion.div key="busy" {...anim} className={`${pill} bg-navy text-ivory`}>
+            <span className="animate-pulse"><BloqMark size={24} tone="lime" /></span> Working on it…
+          </motion.div>
+        )}
+        {saved && !game.busy && (
+          <motion.div key="saved" {...anim} className={`${pill} bg-lime font-semibold text-navy`}>
+            <Check className="h-4 w-4" /> Saved on NEAR ✓
+          </motion.div>
+        )}
+        {err && (
+          <motion.div key="err" {...anim} role="alert" className="pointer-events-auto flex max-w-[440px] items-center gap-3 rounded-2xl bg-coral px-4 py-3 text-sm font-medium text-navy shadow-lift">
+            <span className="flex-1">{err}</span>
+            <button aria-label="Dismiss" className="tap -my-2 -mr-2 flex items-center justify-center" onClick={() => setErr(null)}>
+              <X className="h-4 w-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
