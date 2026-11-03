@@ -5,14 +5,24 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Type scale (fluid) */
+  --text-display-xl: clamp(2.75rem, 9vw, 7.5rem);
+  --text-display-xl--line-height: 0.92;
+  --text-display-lg: clamp(2.25rem, 6.5vw, 5.25rem);
+  --text-display-lg--line-height: 0.95;
+  --text-display-md: clamp(1.75rem, 4vw, 3rem);
+  --text-display-md--line-height: 1;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -32,6 +42,17 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* Brand palette */
+  --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
+  --color-ivory: var(--ivory);
+  --color-lime: var(--lime);
+  --color-coral: var(--coral);
+  --color-lavender: var(--lavender);
+  --color-lavender-soft: var(--lavender-soft);
+
+  /* Legacy aliases used by game screens until they are restyled */
   --color-moss: var(--moss);
   --color-sage: var(--sage);
   --color-leaf: var(--leaf);
@@ -40,80 +61,92 @@
   --color-terracotta: var(--terracotta);
   --color-cream: var(--cream);
   --color-bark: var(--bark);
+
   --shadow-soft: var(--shadow-soft);
   --shadow-lift: var(--shadow-lift);
+  --ease-calm: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :root {
   --radius: 1rem;
-  --cream: oklch(0.97 0.025 95);
-  --moss: oklch(0.45 0.09 140);
-  --sage: oklch(0.82 0.06 135);
-  --leaf: oklch(0.66 0.15 138);
-  --sun: oklch(0.82 0.15 82);
-  --sun-soft: oklch(0.93 0.08 90);
-  --terracotta: oklch(0.62 0.14 40);
-  --bark: oklch(0.32 0.05 80);
 
-  --background: var(--cream);
-  --foreground: oklch(0.27 0.05 145);
-  --card: oklch(0.99 0.012 95);
-  --card-foreground: oklch(0.27 0.05 145);
-  --popover: oklch(0.99 0.012 95);
-  --popover-foreground: oklch(0.27 0.05 145);
-  --primary: var(--moss);
-  --primary-foreground: oklch(0.98 0.02 95);
-  --secondary: oklch(0.92 0.04 130);
-  --secondary-foreground: oklch(0.3 0.06 145);
-  --muted: oklch(0.93 0.025 110);
-  --muted-foreground: oklch(0.48 0.04 140);
-  --accent: var(--sun);
-  --accent-foreground: oklch(0.3 0.06 70);
-  --destructive: var(--terracotta);
-  --destructive-foreground: oklch(0.98 0.02 95);
-  --border: oklch(0.88 0.04 120);
-  --input: oklch(0.88 0.04 120);
-  --ring: var(--leaf);
+  --navy: #16243a;
+  --navy-soft: #23344f;
+  --ivory: #f7f4eb;
+  --lime: #c7f36b;
+  --coral: #f5a58b;
+  --lavender: #b9b2ef;
+  --lavender-soft: #e6e3fa;
 
-  --shadow-soft: 0 6px 20px -8px oklch(0.45 0.09 140 / 0.25);
-  --shadow-lift: 0 14px 34px -12px oklch(0.45 0.09 140 / 0.35);
-  --gradient-sky: radial-gradient(circle at 85% -10%, oklch(0.93 0.1 90 / 0.9), transparent 45%),
-    radial-gradient(circle at -10% 110%, oklch(0.85 0.08 135 / 0.7), transparent 50%),
-    linear-gradient(180deg, oklch(0.97 0.03 95), oklch(0.95 0.04 115));
-  --gradient-sun: linear-gradient(135deg, var(--sun), oklch(0.75 0.15 65));
-  --gradient-leaf: linear-gradient(135deg, var(--leaf), var(--moss));
+  --moss: var(--navy);
+  --sage: var(--lavender);
+  --leaf: var(--lime);
+  --sun: var(--lime);
+  --sun-soft: var(--lavender-soft);
+  --terracotta: var(--coral);
+  --cream: var(--ivory);
+  --bark: var(--navy);
+
+  --background: var(--ivory);
+  --foreground: var(--navy);
+  --card: #fffdf7;
+  --card-foreground: var(--navy);
+  --popover: #fffdf7;
+  --popover-foreground: var(--navy);
+  --primary: var(--navy);
+  --primary-foreground: var(--ivory);
+  --secondary: var(--lavender-soft);
+  --secondary-foreground: var(--navy);
+  --muted: #ece8dc;
+  --muted-foreground: #4f5b6e;
+  --accent: var(--lime);
+  --accent-foreground: var(--navy);
+  --destructive: var(--coral);
+  --destructive-foreground: var(--navy);
+  --border: #ddd8c9;
+  --input: #ddd8c9;
+  --ring: var(--navy);
+
+  --shadow-soft: 0 8px 24px -12px rgb(22 36 58 / 0.25);
+  --shadow-lift: 0 20px 44px -18px rgb(22 36 58 / 0.4);
+  --gradient-sun: linear-gradient(135deg, var(--lime), #e4f9b5);
+  --gradient-leaf: linear-gradient(135deg, var(--navy-soft), var(--navy));
+  --gradient-night: radial-gradient(circle at 80% 10%, rgb(185 178 239 / 0.25), transparent 50%),
+    radial-gradient(circle at 10% 90%, rgb(199 243 107 / 0.12), transparent 45%), var(--navy);
 }
 
 @layer base {
   * {
     border-color: var(--color-border);
   }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
-    background: var(--gradient-sky);
-    background-attachment: fixed;
+    background: var(--background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.03em;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   }
 }
 
-@utility bg-sky {
-  background: var(--gradient-sky);
-}
-@utility bg-sun-gradient {
-  background: var(--gradient-sun);
-}
-@utility bg-leaf-gradient {
-  background: var(--gradient-leaf);
-}
+@utility bg-night { background: var(--gradient-night); }
+@utility bg-sky { background: var(--background); }
+@utility bg-sun-gradient { background: var(--gradient-sun); }
+@utility bg-leaf-gradient { background: var(--gradient-leaf); }
 @utility card-organic {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 1.75rem 1.25rem 1.75rem 1.25rem;
+  border-radius: 1.5rem;
   box-shadow: var(--shadow-soft);
 }
 @utility tap {
@@ -121,43 +154,14 @@
   min-width: 44px;
 }
 
-@keyframes vine-grow {
-  from { stroke-dashoffset: 300; }
-  to { stroke-dashoffset: 0; }
-}
-@keyframes leaf-pop {
-  0%, 40% { transform: scale(0); }
-  70% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-@keyframes confetti-fall {
-  0% { transform: translateY(-20px) rotate(0); opacity: 1; }
-  100% { transform: translateY(260px) rotate(540deg); opacity: 0; }
-}
-@keyframes float-soft {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-@keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 oklch(0.82 0.15 82 / 0.6); }
-  100% { box-shadow: 0 0 0 14px oklch(0.82 0.15 82 / 0); }
-}
+@keyframes vine-grow { from { stroke-dashoffset: 300; } to { stroke-dashoffset: 0; } }
+@keyframes leaf-pop { 0%, 40% { transform: scale(0); } 70% { transform: scale(1.1); } 100% { transform: scale(1); } }
+@keyframes confetti-fall { 0% { transform: translateY(-20px) rotate(0); opacity: 1; } 100% { transform: translateY(260px) rotate(540deg); opacity: 0; } }
+@keyframes float-soft { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgb(199 243 107 / 0.6); } 100% { box-shadow: 0 0 0 14px rgb(199 243 107 / 0); } }
 
-@utility animate-vine {
-  stroke-dasharray: 300;
-  animation: vine-grow 2.2s ease-in-out infinite alternate;
-}
-@utility animate-leaf {
-  animation: leaf-pop 2.2s ease-out infinite alternate;
-  transform-origin: center;
-  transform-box: fill-box;
-}
-@utility animate-confetti {
-  animation: confetti-fall 1.8s ease-in forwards;
-}
-@utility animate-float {
-  animation: float-soft 4s ease-in-out infinite;
-}
-@utility animate-pulse-ring {
-  animation: pulse-ring 1.6s ease-out infinite;
-}
+@utility animate-vine { stroke-dasharray: 300; animation: vine-grow 2.2s ease-in-out infinite alternate; }
+@utility animate-leaf { animation: leaf-pop 2.2s ease-out infinite alternate; transform-origin: center; transform-box: fill-box; }
+@utility animate-confetti { animation: confetti-fall 1.8s ease-in forwards; }
+@utility animate-float { animation: float-soft 6s ease-in-out infinite; }
+@utility animate-pulse-ring { animation: pulse-ring 1.6s ease-out infinite; }
