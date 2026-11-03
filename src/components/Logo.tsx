@@ -1,26 +1,54 @@
-export function LogoBadge({ size = 40 }: { size?: number }) {
+type Tone = "lime" | "navy";
+const fill = (t: Tone) => (t === "lime" ? "fill-lime" : "fill-navy");
+
+/** Primary mark: three offset rounded blocks stacked into a "B". */
+export function BloqMark({ size = 40, tone = "navy" }: { size?: 24 | 40 | number; tone?: Tone }) {
+  const f = fill(tone);
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true">
-      <path
-        d="M24 3C36 3 45 12 45 24C45 36 36 45 24 45C12 45 3 36 3 24C3 14 9 5 24 3Z"
-        className="fill-moss"
-      />
-      <path
-        d="M17 13h9.5c4.2 0 7 2.4 7 5.8 0 2.3-1.3 4-3.3 4.8 2.6.7 4.3 2.7 4.3 5.4 0 3.9-3 6-7.6 6H17V13Z"
-        className="fill-cream"
-      />
-      <path d="M21.5 17.5h4.3c1.8 0 2.9.9 2.9 2.4s-1.1 2.4-2.9 2.4h-4.3Z" className="fill-moss" />
-      <path d="M21.5 26.2h5c2 0 3.2 1 3.2 2.6s-1.2 2.6-3.2 2.6h-5Z" className="fill-moss" />
-      <path d="M33 6c4 1 7 4 8 8-4 0-7-3-8-8Z" className="fill-sun" />
+    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
+      <rect x="6" y="3" width="22" height="10" rx="4" className={f} />
+      <rect x="6" y="15" width="26" height="10" rx="4" className={f} opacity="0.85" />
+      <rect x="6" y="27" width="28" height="10" rx="4" className={f} />
     </svg>
   );
 }
 
-export function Wordmark() {
+/** Alternate A: spine + two offset blocks. */
+export function BloqMarkAltA({ size = 40, tone = "navy" }: { size?: number; tone?: Tone }) {
+  const f = fill(tone);
   return (
-    <span className="flex items-center gap-2">
-      <LogoBadge />
-      <span className="font-display text-xl font-bold tracking-tight text-moss">Bloqvia</span>
+    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
+      <rect x="5" y="3" width="9" height="34" rx="4" className={f} />
+      <rect x="16" y="3" width="15" height="15" rx="5" className={f} />
+      <rect x="16" y="21" width="19" height="16" rx="5" className={f} />
+    </svg>
+  );
+}
+
+/** Alternate B: isometric-leaning blocks with a lifted middle. */
+export function BloqMarkAltB({ size = 40, tone = "navy" }: { size?: number; tone?: Tone }) {
+  const f = fill(tone);
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
+      <rect x="4" y="4" width="22" height="10" rx="5" className={f} />
+      <rect x="10" y="15" width="22" height="10" rx="5" className={f} opacity="0.7" />
+      <rect x="4" y="26" width="30" height="10" rx="5" className={f} />
+    </svg>
+  );
+}
+
+export function Wordmark({ tone = "navy", size = 24 }: { tone?: Tone; size?: 24 | 40 }) {
+  return (
+    <span className="flex items-center gap-2.5">
+      <BloqMark size={size} tone={tone} />
+      <span
+        className={`font-display font-medium tracking-[-0.04em] ${size === 40 ? "text-3xl" : "text-lg"} ${tone === "lime" ? "text-ivory" : "text-navy"}`}
+      >
+        BLOQVIA
+      </span>
     </span>
   );
 }
+
+/** Back-compat for existing imports. */
+export const LogoBadge = ({ size = 40 }: { size?: number }) => <BloqMark size={size} />;

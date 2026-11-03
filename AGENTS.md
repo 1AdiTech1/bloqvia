@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Rules
+- Brand primitives (Section, Eyebrow, Display, Illustration, CTA, Reveal) live in src/components/brand/ and colours come from tokens in src/styles.css; legacy token names (moss, sun, etc.) alias the new palette so un-restyled screens keep working.
