@@ -55,8 +55,8 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
         })
         .filter((f): f is Flight => !!f);
       if (!reduce) setFlights(fl);
-    }, reduce ? 0 : 600);
-    const t2 = setTimeout(() => { setFlights([]); onLanded(); }, reduce ? 50 : 1400);
+    }, reduce ? 0 : 350);
+    const t2 = setTimeout(() => { setFlights([]); onLanded(); }, reduce ? 50 : 1100);
     return () => { clearTimeout(t1); clearTimeout(t2); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done]);
