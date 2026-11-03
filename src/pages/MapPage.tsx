@@ -83,7 +83,7 @@ function MapInner() {
         <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-lime">Three quests. One merchant. A Passport that's yours.</p>
       )}
 
-      <div className="relative mt-6 h-[640px]">
+      <div className="relative mt-6 h-[700px]">
         <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 640" preserveAspectRatio="none" aria-hidden="true">
           <path d={PATH} fill="none" vectorEffect="non-scaling-stroke" strokeLinecap="round" className="stroke-lavender/30" style={{ strokeWidth: 10 }} />
           <path d={PATH} fill="none" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeDasharray="2 10" className="stroke-lavender/60" style={{ strokeWidth: 3 }} />
