@@ -1,0 +1,23 @@
+[
+  { "lesson_id": "the-vault", "title": "The Vault", "topic": "Cryptographic keys",
+    "concept": "Your public key is like your home mailbox: anyone can see it and drop a letter inside. Your private key is like your actual mailbox key: only you hold it, and if you lose it, you can never unlock your mail again.",
+    "question": "If someone wants to safely send you digital gold, which one do you share with them?",
+    "options": ["Your private key", "Your public key", "Your seed phrase"], "answer": "Your public key",
+    "reward_gold": "100", "reward_item": "key-fragment", "reward_item_amount": "3",
+    "success": "You unlocked the vault. +100 gold and 3 Key Fragments minted to your account.",
+    "near_reveal": "The account that just received them is yours on NEAR. You never typed a seed phrase: the app created the account and holds a key that can only play this game." },
+  { "lesson_id": "the-fuel-system", "title": "The Fuel System", "topic": "Network gas",
+    "concept": "Every action on a decentralized network needs computer power. Gas is the small fee paid to the computers that keep the system running. No fuel, no movement: a transaction without gas stalls.",
+    "question": "True or false: when a network is busy, gas fees generally go down.",
+    "options": ["True", "False"], "answer": "False",
+    "reward_gold": "100", "reward_item": "fuel-cell", "reward_item_amount": "3",
+    "success": "You fueled the engine. +100 gold and 3 Fuel Cells minted to your account.",
+    "near_reveal": "Look at the transaction link: the gas for it was paid by Bloqvia's relayer, not by you. That is a NEAR meta-transaction: you signed, we paid." },
+  { "lesson_id": "smart-agreements", "title": "Smart Agreements", "topic": "Smart contracts",
+    "concept": "A smart contract is a vending machine made of code. Put in exactly what it asks for and it hands out the product by itself. No shopkeeper, no one to argue with, and the rules are printed on the machine for everyone to read.",
+    "question": "You sell an item to Bloq the merchant. What decides the price and moves the gold?",
+    "options": ["A Bloqvia employee", "A smart contract", "Bloq's mood"], "answer": "A smart contract",
+    "reward_gold": "100", "reward_item": "contract-seal", "reward_item_amount": "3",
+    "success": "Pipeline cleared. +100 gold and 3 Contract Seals. Bloq's shop is open to you.",
+    "near_reveal": "Bloq's prices come from one rule in the contract. Nobody at Bloqvia can change a price by hand; only what players sell and buy moves it." }
+]
