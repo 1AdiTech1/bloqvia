@@ -4,7 +4,7 @@ import { GoldDisc, ItemIcon, itemLabel } from "@/components/GameBits";
 import { AnimatedNumber } from "./motion";
 
 /** BloqGold + the three items. Values can be held back while rewards are in flight. */
-export function InventoryBar({ gold, items }: { gold?: number; items?: [string, string][] }) {
+export function InventoryBar({ gold, items }: { gold?: number | undefined; items?: [string, string][] | undefined }) {
   const { learner } = useGame();
   if (!learner) return null;
   const g = gold ?? Number(learner.gold);

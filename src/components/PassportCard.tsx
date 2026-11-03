@@ -4,7 +4,7 @@ import { useGame } from "@/game/useGame";
 import { GoldSeal, LevelRing } from "./GameBits";
 
 /** Compact passport header. `level` can be held back by the map while rewards land. */
-export function PassportCard({ level: override }: { level?: number }) {
+export function PassportCard({ level: override }: { level?: number | undefined }) {
   const { passport } = useGame();
   if (!passport) return null;
   const level = override ?? passport.level;

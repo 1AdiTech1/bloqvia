@@ -69,7 +69,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
       <motion.div
         initial={reduce ? false : { y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={reduce ? undefined : { y: 80, opacity: 0 }}
+        exit={reduce ? { opacity: 0 } : { y: 80, opacity: 0 }}
         transition={{ duration: 0.5, ease: labEase }}
         className="relative max-h-[80vh] w-full max-w-[480px] overflow-y-auto rounded-t-[2rem] bg-ivory px-6 pb-8 pt-4 text-navy shadow-lift"
       >

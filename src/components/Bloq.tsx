@@ -3,8 +3,8 @@ import { motion, useReducedMotion } from "framer-motion";
 /** Bloq the merchant: three stacked rounded blocks — navy body, lavender band, lime head with ivory eyes. */
 export function BloqCharacter({ size = 112, pose = 0 }: { size?: number; pose?: number }) {
   const reduce = useReducedMotion();
-  const tilt = [0, -4, 3, -2][pose % 4];
-  const lift = [0, -4, -2, -5][pose % 4];
+  const tilt = [0, -4, 3, -2][pose % 4] ?? 0;
+  const lift = [0, -4, -2, -5][pose % 4] ?? 0;
   return (
     <motion.svg
       width={size}

@@ -145,7 +145,7 @@ function MapInner() {
         >
           <motion.span
             className="block h-4 w-6 rounded-md bg-lime shadow-lift"
-            animate={reduce ? undefined : { y: [0, -3, 0] }}
+            animate={reduce ? { y: 0 } : { y: [0, -3, 0] }}
             transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
           />
         </motion.div>

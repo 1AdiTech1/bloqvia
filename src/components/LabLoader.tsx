@@ -23,7 +23,7 @@ export function LabLoader({ label, tone = "lime" }: { label?: string; tone?: "li
             className={fill}
             initial={false}
             animate={reduce ? { x: 0, opacity: 1 } : { x: [b.from, 0, 0, b.from], opacity: [0, 1, 1, 0] }}
-            transition={reduce ? undefined : { duration: 2, times: [0, 0.3, 0.75, 1], repeat: Infinity, delay: i * 0.15, ease: [0.22, 1, 0.36, 1] }}
+            transition={reduce ? {} : { duration: 2, times: [0, 0.3, 0.75, 1], repeat: Infinity, delay: i * 0.15, ease: [0.22, 1, 0.36, 1] }}
           />
         ))}
       </svg>

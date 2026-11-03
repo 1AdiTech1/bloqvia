@@ -14,7 +14,7 @@ export function buzz() {
 /** Button with a press-down scale of 0.98 (static when reduced motion is on). */
 export const Press = forwardRef<HTMLButtonElement, HTMLMotionProps<"button">>(({ className, ...rest }, ref) => {
   const reduce = useReducedMotion();
-  return <motion.button ref={ref} whileTap={reduce ? undefined : { scale: 0.98 }} className={cn("tap", className)} {...rest} />;
+  return <motion.button ref={ref} whileTap={reduce ? {} : { scale: 0.98 }} className={cn("tap", className)} {...rest} />;
 });
 Press.displayName = "Press";
 

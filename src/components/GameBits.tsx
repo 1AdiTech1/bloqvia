@@ -15,7 +15,7 @@ export function itemLabel(id: string) {
 }
 
 /** Coin-like lime disc for BloqGold. */
-export function GoldDisc({ className }: { className?: string }) {
+export function GoldDisc({ className }: { className?: string | undefined }) {
   return (
     <span className={cn("relative inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-lime ring-2 ring-lime/40", className)} aria-hidden="true">
       <span className="h-1/2 w-1/2 rounded-full border border-navy/50" />
@@ -23,13 +23,13 @@ export function GoldDisc({ className }: { className?: string }) {
   );
 }
 
-export function ItemIcon({ id, className }: { id: string; className?: string }) {
+export function ItemIcon({ id, className }: { id: string; className?: string | undefined }) {
   if (id === "gold") return <GoldDisc className={className} />;
   const Icon = ITEM_ICONS[id as keyof typeof ITEM_ICONS] ?? Stamp;
   return <Icon className={cn("h-4 w-4", className)} />;
 }
 
-export const RewardChip = forwardRef<HTMLSpanElement, { id: string; amount: string | number; className?: string }>(
+export const RewardChip = forwardRef<HTMLSpanElement, { id: string; amount: string | number; className?: string | undefined }>(
   ({ id, amount, className }, ref) => (
     <span
       ref={ref}
