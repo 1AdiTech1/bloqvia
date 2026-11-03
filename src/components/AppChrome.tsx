@@ -14,13 +14,14 @@ export function AppChrome() {
   const lastHash = useRef<string | null>(null);
 
   useEffect(() => {
-    if (game.error) {
-      setErr(game.error);
-      const t = setTimeout(() => setErr(null), 3500);
-      return () => clearTimeout(t);
-    }
-    return undefined;
+    if (game.error) setErr(game.error);
   }, [game.error]);
+
+  useEffect(() => {
+    if (!err) return undefined;
+    const t = setTimeout(() => setErr(null), 3500);
+    return () => clearTimeout(t);
+  }, [err]);
 
   useEffect(() => {
     const h = game.lastTx?.txHash ?? null;
