@@ -100,7 +100,7 @@ function MapInner() {
         </svg>
 
         {LESSON_CONTENT.map((l, i) => {
-          const done = completed.includes(l.lesson_id) && i < level;
+          const done = completed.includes(l.lesson_id);
           const available = !completed.includes(l.lesson_id) && i === completed.length;
           const pos = STOPS[i];
           return (
