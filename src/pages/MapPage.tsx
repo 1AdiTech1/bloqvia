@@ -14,7 +14,7 @@ import { Press, buzz, labEase } from "@/components/lab/motion";
 import { cn } from "@/lib/utils";
 
 // Positions along the winding path (percent of width, px from top). Index 3 = shop door.
-const STOPS = [
+const STOPS: { x: number; y: number }[] = [
   { x: 28, y: 70 },
   { x: 72, y: 230 },
   { x: 30, y: 390 },
@@ -69,7 +69,8 @@ function MapInner() {
   };
 
   const shopOpen = learner.level === 3 && heldLevel === null;
-  const marker = STOPS[Math.min(level, 3)];
+  const marker = STOPS[Math.min(level, 3)] ?? { x: 50, y: 0 };
+  const door = STOPS[3] ?? { x: 50, y: 560 };
 
   return (
     <>
@@ -102,7 +103,7 @@ function MapInner() {
         {LESSON_CONTENT.map((l, i) => {
           const done = completed.includes(l.lesson_id);
           const available = !completed.includes(l.lesson_id) && i === completed.length;
-          const pos = STOPS[i];
+          const pos = STOPS[i] ?? { x: 50, y: 0 };
           return (
             <div key={l.lesson_id} className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2" style={{ left: `${pos.x}%`, top: pos.y }}>
               <Press
@@ -151,7 +152,7 @@ function MapInner() {
         </motion.div>
 
         {/* Bloq's shop door */}
-        <div className="absolute flex w-56 -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 text-center" style={{ left: `${STOPS[3].x}%`, top: STOPS[3].y + 20 }}>
+        <div className="absolute flex w-56 -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 text-center" style={{ left: `${door.x}%`, top: door.y + 20 }}>
           <ShopDoor open={shopOpen} />
           {shopOpen ? (
             <Link to="/shop" className="tap inline-flex items-center rounded-full bg-lime px-6 font-semibold text-navy shadow-lift active:scale-[0.98]">
