@@ -1,41 +1,33 @@
-export function VineLoader({ label }: { label: string }) {
+import { motion, useReducedMotion } from "framer-motion";
+
+/** Three blocks assembling into the Bloqvia mark, looped. */
+export function LabLoader({ label, tone = "lime" }: { label?: string; tone?: "lime" | "navy" }) {
+  const reduce = useReducedMotion();
+  const fill = tone === "lime" ? "fill-lime" : "fill-navy";
+  const blocks = [
+    { y: 3, w: 22, from: -18 },
+    { y: 15, w: 26, from: 18 },
+    { y: 27, w: 28, from: -18 },
+  ];
   return (
     <div className="flex flex-col items-center gap-3 py-2" role="status" aria-live="polite">
-      <svg width="160" height="48" viewBox="0 0 160 48" aria-hidden="true">
-        <path
-          d="M4 36 C 30 6, 50 46, 80 24 S 130 4, 156 22"
-          fill="none"
-          strokeWidth="3"
-          strokeLinecap="round"
-          className="animate-vine stroke-leaf"
-        />
-        {[30, 70, 110, 145].map((x, i) => (
-          <ellipse
-            key={x}
-            cx={x}
-            cy={i % 2 ? 14 : 30}
-            rx="6"
-            ry="3.5"
-            className="animate-leaf fill-sage"
-            style={{ animationDelay: `${i * 0.25}s` }}
+      <svg width="48" height="48" viewBox="0 0 40 40" aria-hidden="true">
+        {blocks.map((b, i) => (
+          <motion.rect
+            key={i}
+            x={6}
+            y={b.y}
+            width={b.w}
+            height={10}
+            rx={4}
+            className={fill}
+            initial={false}
+            animate={reduce ? { x: 0, opacity: 1 } : { x: [b.from, 0, 0, b.from], opacity: [0, 1, 1, 0] }}
+            transition={reduce ? undefined : { duration: 2, times: [0, 0.3, 0.75, 1], repeat: Infinity, delay: i * 0.15, ease: [0.22, 1, 0.36, 1] }}
           />
         ))}
       </svg>
-      <p className="font-medium text-moss">{label}</p>
-    </div>
-  );
-}
-
-export function LeafDivider() {
-  return (
-    <div className="flex items-center gap-3 text-sage" aria-hidden="true">
-      <span className="h-px flex-1 bg-border" />
-      <svg width="40" height="16" viewBox="0 0 40 16">
-        <path d="M2 8h36" className="stroke-sage" strokeWidth="1.5" />
-        <path d="M20 8c-4-6-10-6-12-4 2 4 8 5 12 4Z" className="fill-sage" />
-        <path d="M20 8c4 6 10 6 12 4-2-4-8-5-12-4Z" className="fill-leaf" />
-      </svg>
-      <span className="h-px flex-1 bg-border" />
+      {label && <p className={tone === "lime" ? "text-sm font-medium text-ivory" : "text-sm font-medium text-navy"}>{label}</p>}
     </div>
   );
 }

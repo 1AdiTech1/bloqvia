@@ -1,4 +1,6 @@
-import { Coins, Flame, KeyRound, Stamp } from "lucide-react";
+import { forwardRef } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { Flame, KeyRound, Stamp } from "lucide-react";
 import { ITEM_NAMES } from "@/game/content";
 import { cn } from "@/lib/utils";
 
@@ -6,74 +8,94 @@ export const ITEM_ICONS = {
   "key-fragment": KeyRound,
   "fuel-cell": Flame,
   "contract-seal": Stamp,
-  gold: Coins,
 } as const;
 
-export function ItemIcon({ id, className }: { id: string; className?: string }) {
-  const Icon = ITEM_ICONS[id as keyof typeof ITEM_ICONS] ?? Coins;
-  return <Icon className={cn("h-4 w-4", className)} />;
+export function itemLabel(id: string) {
+  return id === "gold" ? "BloqGold" : ITEM_NAMES[id] ?? id;
 }
 
-export function RewardChip({ id, amount }: { id: string; amount: string | number }) {
-  const gold = id === "gold";
+/** Coin-like lime disc for BloqGold. */
+export function GoldDisc({ className }: { className?: string }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold",
-        gold ? "bg-sun-soft text-accent-foreground" : "bg-secondary text-secondary-foreground",
-      )}
-    >
-      <ItemIcon id={id} /> +{amount} {ITEM_NAMES[id]}
+    <span className={cn("relative inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-lime ring-2 ring-lime/40", className)} aria-hidden="true">
+      <span className="h-1/2 w-1/2 rounded-full border border-navy/50" />
     </span>
   );
 }
 
-export function LevelRing({ level, graduated, size = 72 }: { level: number; graduated: boolean; size?: number }) {
+export function ItemIcon({ id, className }: { id: string; className?: string }) {
+  if (id === "gold") return <GoldDisc className={className} />;
+  const Icon = ITEM_ICONS[id as keyof typeof ITEM_ICONS] ?? Stamp;
+  return <Icon className={cn("h-4 w-4", className)} />;
+}
+
+export const RewardChip = forwardRef<HTMLSpanElement, { id: string; amount: string | number; className?: string }>(
+  ({ id, amount, className }, ref) => (
+    <span
+      ref={ref}
+      data-chip={id}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold",
+        id === "gold" ? "bg-navy text-lime" : "bg-lavender-soft text-navy",
+        className,
+      )}
+    >
+      <ItemIcon id={id} /> +{amount} {itemLabel(id)}
+    </span>
+  ),
+);
+RewardChip.displayName = "RewardChip";
+
+/** Passport progress ring, 0–3. `tone` is the surface it sits on. */
+export function LevelRing({ level, graduated, size = 72, tone = "ivory" }: { level: number; graduated: boolean; size?: number; tone?: "ivory" | "navy" }) {
+  const reduce = useReducedMotion();
   const r = (size - 10) / 2;
   const c = 2 * Math.PI * r;
   const pct = Math.min(level, 3) / 3;
+  const onNavy = tone === "navy";
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth="8" className="stroke-muted" />
-        <circle
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={size > 100 ? 10 : 7} className={onNavy ? "stroke-navy-soft" : "stroke-lavender-soft"} />
+        {[0, 1, 2].map((i) => (
+          <circle key={i} cx={size / 2 + r * Math.cos((i * 2 * Math.PI) / 3)} cy={size / 2 + r * Math.sin((i * 2 * Math.PI) / 3)} r={1.6} className={onNavy ? "fill-lavender" : "fill-navy/40"} />
+        ))}
+        <motion.circle
           cx={size / 2}
           cy={size / 2}
           r={r}
           fill="none"
-          strokeWidth="8"
+          strokeWidth={size > 100 ? 10 : 7}
           strokeLinecap="round"
           strokeDasharray={c}
-          strokeDashoffset={c * (1 - pct)}
-          className={cn("transition-all duration-700", graduated ? "stroke-sun" : "stroke-leaf")}
+          initial={false}
+          animate={{ strokeDashoffset: c * (1 - pct) }}
+          transition={reduce ? { duration: 0 } : { duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          className={onNavy || graduated ? "stroke-lime" : "stroke-navy"}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-display text-xl font-bold leading-none text-moss" style={{ fontSize: size / 3.4 }}>
+        <span className={cn("font-display font-bold leading-none", onNavy ? "text-ivory" : "text-navy")} style={{ fontSize: size / 3.2 }}>
           {Math.min(level, 3)}
         </span>
-        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">of 3</span>
+        <span className={cn("text-[10px] font-medium uppercase tracking-[0.14em]", onNavy ? "text-lavender" : "text-muted-foreground")}>of 3</span>
       </div>
     </div>
   );
 }
 
+/** The Graduate seal: a scalloped lime disc with the three-block mark. */
 export function GoldSeal({ size = 56 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-label="Graduate seal">
-      {Array.from({ length: 12 }).map((_, i) => (
-        <ellipse
-          key={i}
-          cx="32"
-          cy="9"
-          rx="5"
-          ry="9"
-          className="fill-sun"
-          transform={`rotate(${i * 30} 32 32)`}
-        />
+    <svg width={size} height={size} viewBox="0 0 64 64" role="img" aria-label="Graduate seal">
+      {Array.from({ length: 16 }).map((_, i) => (
+        <circle key={i} cx="32" cy="5" r="5" className="fill-lime" transform={`rotate(${i * 22.5} 32 32)`} />
       ))}
-      <circle cx="32" cy="32" r="18" className="fill-sun-soft stroke-sun" strokeWidth="3" />
-      <path d="M24 32l6 6 11-12" fill="none" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="stroke-moss" />
+      <circle cx="32" cy="32" r="25" className="fill-lime" />
+      <circle cx="32" cy="32" r="19" fill="none" className="stroke-navy" strokeWidth="1.5" strokeDasharray="2 3" />
+      <rect x="22" y="21" width="15" height="6" rx="2.5" className="fill-navy" />
+      <rect x="22" y="29" width="18" height="6" rx="2.5" className="fill-navy" opacity="0.85" />
+      <rect x="22" y="37" width="20" height="6" rx="2.5" className="fill-navy" />
     </svg>
   );
 }
