@@ -5,6 +5,6 @@ import type { SignedDelegate } from "near-api-js";
 export function encodeSignedDelegateBase64(signedDelegate: SignedDelegate): string {
   const bytes = encodeSignedDelegate(signedDelegate);
   let binary = "";
-  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]);
+  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]!);
   return btoa(binary);
 }

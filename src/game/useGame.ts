@@ -1,7 +1,12 @@
 import type { Game } from "./types";
 import { useMockGame } from "./mockGame";
+import { useBloqvia } from "../near";
 
-/** The single source of truth for game state. Swap the mock for the chain layer here. */
-export function useGame(): Game {
-  return useMockGame();
-}
+/**
+ * VITE_GAME_MODE=near plays on NEAR testnet through src/near (needs the
+ * relayer at VITE_RELAYER_URL). Anything else, including this preview, keeps
+ * the in-memory mock. Decided once per build, so no conditional hooks.
+ */
+const useNear = import.meta.env.VITE_GAME_MODE === "near";
+
+export const useGame: () => Game = useNear ? useBloqvia : useMockGame;
