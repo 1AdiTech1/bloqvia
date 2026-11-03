@@ -7,8 +7,14 @@
  *   b.completeLesson(id, answer)    // -> { txHash }
  *   b.sellToBloq(item, 1) / b.buyFromBloq(item, 1) / b.graduate()
  *   b.learner, b.bloq, b.lessons, b.passport, b.lastTx, b.busy, b.error
+ *
+ * It is ONE store shared by every component (useSyncExternalStore), the same
+ * shape as src/game/mockGame.ts, so RequireAccount, the map, the quiz sheet
+ * and the chrome all see the same state. It is also SSR-safe: the server
+ * snapshot has no account and `busy: true` ("restoring session"); the first
+ * client effect reads the session from localStorage and flips busy off.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { game, views } from "./contracts";
 import { explorer } from "./explorer";
 import { createSigner, type LearnerSigner } from "./signer";
@@ -34,88 +40,133 @@ export interface Bloqvia extends BloqviaState {
   graduate: () => Promise<RelayResult>;
   signOut: () => void;
   exportSecretKey: () => string | null;
+  clearError: () => void;
   explorer: typeof explorer;
 }
 
-export function useBloqvia(signerKind: LearnerSigner["kind"] = "local-key"): Bloqvia {
-  const signerRef = useRef<LearnerSigner | null>(null);
-  if (!signerRef.current) signerRef.current = createSigner(signerKind);
-  const signer = signerRef.current;
+// ---------------------------------------------------------------------------
+// Store
+// ---------------------------------------------------------------------------
 
-  const [state, setState] = useState<BloqviaState>({
-    accountId: signer.accountId(),
-    learner: null,
-    passport: null,
-    bloq: null,
-    lessons: [],
-    lastTx: null,
-    busy: false,
-    error: null,
-  });
+const SIGNER_KIND = (import.meta.env.VITE_SIGNER_KIND ?? "local-key") as LearnerSigner["kind"];
 
-  const refresh = useCallback(async () => {
-    const accountId = signer.accountId();
+const INITIAL: BloqviaState = {
+  accountId: null,
+  learner: null,
+  passport: null,
+  bloq: null,
+  lessons: [],
+  lastTx: null,
+  busy: true, // until the session is restored on the client
+  error: null,
+};
+
+let state: BloqviaState = INITIAL;
+let signer: LearnerSigner | null = null;
+let initialised = false;
+const listeners = new Set<() => void>();
+
+function set(patch: Partial<BloqviaState>): void {
+  state = { ...state, ...patch };
+  snapshot = build();
+  listeners.forEach((l) => l());
+}
+
+function getSigner(): LearnerSigner {
+  if (!signer) signer = createSigner(SIGNER_KIND);
+  return signer;
+}
+
+async function refresh(): Promise<void> {
+  const accountId = signer?.accountId() ?? null;
+  try {
     const [lessons, bloq, learner, passport] = await Promise.all([
       views.lessons(),
       views.bloq(),
       accountId ? views.learner(accountId) : Promise.resolve(null),
       accountId ? views.passport(accountId) : Promise.resolve(null),
     ]);
-    setState((s) => ({ ...s, accountId, lessons, bloq, learner, passport }));
-  }, [signer]);
+    set({ accountId, lessons, bloq, learner, passport });
+  } catch (e) {
+    set({ accountId, error: (e as Error).message });
+  }
+}
 
-  useEffect(() => {
-    void refresh().catch((e: Error) => setState((s) => ({ ...s, error: e.message })));
-  }, [refresh]);
+/** Client only, once: restore the session synchronously, then load views. */
+function init(): void {
+  if (initialised) return;
+  initialised = true;
+  const s = getSigner();
+  set({ accountId: s.accountId(), busy: false });
+  void refresh();
+}
 
-  const run = useCallback(
-    async (fn: () => Promise<RelayResult>): Promise<RelayResult> => {
-      setState((s) => ({ ...s, busy: true, error: null }));
-      try {
-        const result = await fn();
-        setState((s) => ({ ...s, lastTx: { ...result, url: explorer.tx(result.txHash) } }));
-        await refresh();
-        return result;
-      } catch (e) {
-        setState((s) => ({ ...s, error: (e as Error).message }));
-        throw e;
-      } finally {
-        setState((s) => ({ ...s, busy: false }));
-      }
-    },
-    [refresh],
-  );
+async function run(fn: (s: LearnerSigner) => Promise<RelayResult>): Promise<RelayResult> {
+  set({ busy: true, error: null });
+  try {
+    const result = await fn(getSigner());
+    set({ lastTx: { ...result, url: explorer.tx(result.txHash) } });
+    await refresh();
+    return result;
+  } catch (e) {
+    set({ error: (e as Error).message });
+    throw e;
+  } finally {
+    set({ busy: false });
+  }
+}
 
-  const start = useCallback(async () => {
-    setState((s) => ({ ...s, busy: true, error: null }));
+const actions = {
+  start: async (): Promise<string> => {
+    set({ busy: true, error: null });
     try {
-      const accountId = await signer.ensureAccount();
+      const accountId = await getSigner().ensureAccount();
+      set({ accountId });
       await refresh();
       return accountId;
     } catch (e) {
-      setState((s) => ({ ...s, error: (e as Error).message }));
+      set({ error: (e as Error).message });
       throw e;
     } finally {
-      setState((s) => ({ ...s, busy: false }));
+      set({ busy: false });
     }
-  }, [signer, refresh]);
+  },
+  refresh,
+  completeLesson: (lessonId: string, answer: string) => run((s) => game.completeLesson(s, lessonId, answer)),
+  sellToBloq: (tokenId: string, amount = 1) => run((s) => game.sellToBloq(s, tokenId, amount)),
+  buyFromBloq: (tokenId: string, amount = 1) => run((s) => game.buyFromBloq(s, tokenId, amount)),
+  graduate: () => run((s) => game.graduate(s)),
+  signOut: (): void => {
+    signer?.signOut();
+    set({ accountId: null, learner: null, passport: null, lastTx: null, error: null });
+  },
+  exportSecretKey: (): string | null => signer?.exportSecretKey() ?? null,
+  clearError: (): void => set({ error: null }),
+  explorer,
+};
 
-  return useMemo<Bloqvia>(
-    () => ({
-      ...state,
-      start,
-      refresh,
-      completeLesson: (lessonId, answer) => run(() => game.completeLesson(signer, lessonId, answer)),
-      sellToBloq: (tokenId, amount = 1) => run(() => game.sellToBloq(signer, tokenId, amount)),
-      buyFromBloq: (tokenId, amount = 1) => run(() => game.buyFromBloq(signer, tokenId, amount)),
-      graduate: () => run(() => game.graduate(signer)),
-      signOut: () => {
-        signer.signOut();
-        setState((s) => ({ ...s, accountId: null, learner: null, passport: null, lastTx: null }));
-      },
-      exportSecretKey: () => signer.exportSecretKey(),
-      explorer,
-    }),
-    [state, start, refresh, run, signer],
-  );
+function build(): Bloqvia {
+  return { ...state, ...actions };
+}
+
+let snapshot: Bloqvia = build();
+const SERVER_SNAPSHOT: Bloqvia = snapshot;
+
+const subscribe = (l: () => void) => {
+  listeners.add(l);
+  return () => {
+    listeners.delete(l);
+  };
+};
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+
+export function useBloqvia(): Bloqvia {
+  const value = useSyncExternalStore(subscribe, () => snapshot, () => SERVER_SNAPSHOT);
+  useEffect(() => {
+    init();
+  }, []);
+  return value;
 }
