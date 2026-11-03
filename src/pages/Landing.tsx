@@ -129,8 +129,8 @@ function IntroWeb3() {
 
 /** Diagram morphs from one-way broadcast → central hub → owned accounts → open network. */
 function Web3Diagram({ step }: { step: number }) {
-  const nodes = [[80, 80], [320, 80], [60, 220], [340, 220], [200, 40], [200, 260]];
-  const hub = [200, 150];
+  const nodes: [number, number][] = [[80, 80], [320, 80], [60, 220], [340, 220], [200, 40], [200, 260]];
+  const hub: [number, number] = [200, 150];
   const t = { duration: 0.9, ease };
   return (
     <div className="relative aspect-square w-full overflow-hidden rounded-[2rem] bg-night">
