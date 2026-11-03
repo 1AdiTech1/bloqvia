@@ -53,7 +53,7 @@ function MapInner() {
         {LESSON_CONTENT.map((l, i) => {
           const done = completed.includes(l.lesson_id);
           const available = !done && i === completed.length;
-          const pos = NODES[i];
+          const pos = NODES[i] ?? { x: 50, y: 50 };
           return (
             <div
               key={l.lesson_id}

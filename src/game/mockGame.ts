@@ -200,7 +200,7 @@ const actions = {
       const items = { ...raw.learnerItems };
       const stock = { ...raw.bloqStock };
       ITEM_IDS.forEach((id) => {
-        items[id] -= 1;
+        items[id] = (items[id] ?? 0) - 1;
         stock[id] = (stock[id] ?? 0) + 1;
       });
       set({

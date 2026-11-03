@@ -17,6 +17,7 @@ export function AppChrome() {
       const t = setTimeout(() => setErr(null), 3500);
       return () => clearTimeout(t);
     }
+    return undefined;
   }, [game.error]);
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export function AppChrome() {
       const t = setTimeout(() => setSaved(false), 2200);
       return () => clearTimeout(t);
     }
+    return undefined;
   }, [game.lastTx]);
 
   const onLanding = path === "/";

@@ -40,7 +40,7 @@ export function LandingPage() {
               aria-label="Your profile"
               className="tap flex h-11 w-11 items-center justify-center rounded-full bg-leaf-gradient font-display text-lg font-bold text-primary-foreground shadow-soft"
             >
-              {game.accountId[0].toUpperCase()}
+              {game.accountId.charAt(0).toUpperCase()}
             </Link>
           ) : (
             <button
