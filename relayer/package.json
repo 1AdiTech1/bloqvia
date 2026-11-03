@@ -5,8 +5,8 @@
   "type": "module",
   "description": "Gas-sponsoring relayer for Bloqvia (NEP-366 meta-transactions). Creates learner accounts and relays allow-listed calls to bloqvia-core.",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "start": "tsx src/index.ts",
+    "dev": "tsx watch --env-file=.env src/index.ts",
+    "start": "tsx --env-file=.env src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts"
   },

@@ -57,8 +57,8 @@ If any of these fail on a clean clone, stop and report the full output; do not
 | --- | --- | --- |
 | Contract tests | `cargo test` in each crate | 19 / 6 passed |
 | Build wasm | `cargo near build non-reproducible-wasm` in each crate | `target/near/*.wasm` |
-| Deploy + seed (Adi's go-ahead) | `export OWNER_PRIVATE_KEY=…; ./contracts/deploy/deploy-testnet.sh` | `get_bloq`, `get_lessons` print |
-| Relayer | `cd relayer && npm run dev` | `GET /health` → `{ok:true}` |
+| Deploy + seed (Adi's go-ahead) | `./contracts/deploy/deploy-testnet.sh` (reads `relayer/.env`) | `get_bloq`, `get_lessons` print |
+| Relayer | `cd relayer && npm run dev` (loads `.env` via `--env-file`) | `GET /health` → `{ok:true}` |
 | Lessons changed | `cd scripts && npm run hash-lessons` then `npm run seed-lessons` | public JSON rewritten; new lessons added |
 | Tune economy | `cd scripts && npm run simulate:offline` | `docs/simulation-latest.md` |
 | Live proof | `cd scripts && npm run simulate -- --players 4 --rounds 3` | prices move in `get_bloq` |

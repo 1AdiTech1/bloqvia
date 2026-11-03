@@ -3,14 +3,22 @@
 # Prereqs: near-cli-rs >= 0.30 (`near`), cargo-near >= 0.22, rustup target wasm32-unknown-unknown.
 # One-time: create the parent account with the faucet, then run this script.
 #
-#   near account create-account sponsor-by-faucet-service bloqvia.testnet autogenerate-new-keypair save-to-keychain network-config testnet create
+#   near account create-account sponsor-by-faucet-service bloqvia.testnet autogenerate-new-keypair save-to-legacy-keychain network-config testnet create
+#   (put that key into relayer/.env as RELAYER_PRIVATE_KEY)
 #   ./contracts/deploy/deploy-testnet.sh
+#
+# Keys: on a headless Linux (WSL) near-cli-rs has no system keychain and falls
+# back to the legacy keychain, i.e. plain files under ~/.near-credentials/testnet/.
 #
 # Idempotent where it can be: re-running redeploys code but skips account creation if the account exists.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
-PARENT="${PARENT:-bloqvia.testnet}"          # relayer + owner
+# The one place secrets live: relayer/.env (git-ignored). It provides
+# RELAYER_ACCOUNT_ID (= the parent/owner) and RELAYER_PRIVATE_KEY.
+if [ -f relayer/.env ]; then set -a; . ./relayer/.env; set +a; fi
+
+PARENT="${PARENT:-${RELAYER_ACCOUNT_ID:-bloqvia.testnet}}"   # relayer + owner
 CORE="${CORE:-core.$PARENT}"
 PASSPORT="${PASSPORT:-passport.$PARENT}"
 BLOQ="${BLOQ:-bloq.$PARENT}"
@@ -44,7 +52,8 @@ CORE_ARGS=$(node -e "const a=require('./$ARGS').core; a.owner_id='$PARENT'; a.pa
 near contract deploy "$CORE" use-file "$CORE_WASM" with-init-call new json-args "$CORE_ARGS" prepaid-gas '100 Tgas' attached-deposit '0 NEAR' network-config testnet sign-with-keychain send
 
 echo "== seed lessons"
-(cd scripts && OWNER_ACCOUNT_ID="$PARENT" CORE_CONTRACT_ID="$CORE" OWNER_PRIVATE_KEY="${OWNER_PRIVATE_KEY:?export OWNER_PRIVATE_KEY=ed25519:... (parent full-access key)}" npm run seed-lessons --silent)
+OWNER_PRIVATE_KEY="${OWNER_PRIVATE_KEY:-${RELAYER_PRIVATE_KEY:?set RELAYER_PRIVATE_KEY in relayer/.env (parent full-access key)}}"
+(cd scripts && OWNER_ACCOUNT_ID="$PARENT" CORE_CONTRACT_ID="$CORE" OWNER_PRIVATE_KEY="$OWNER_PRIVATE_KEY" npm run seed-lessons --silent)
 
 echo "== verify"
 near contract call-function as-read-only "$CORE" get_bloq empty-args network-config testnet now

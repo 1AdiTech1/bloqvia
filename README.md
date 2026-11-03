@@ -47,7 +47,7 @@ Prereqs: Node 22+, Rust 1.95+ with `wasm32-unknown-unknown`, `cargo-near` 0.22+,
 3. Offline economy fast-forward: `cd scripts && npm i && npm run simulate:offline`
    **See:** a table of 12 rounds with 100 scripted players (no LLM). Bloq's buy price for Key Fragments falls from 88 to ~17 as sellers dump them; 100/100 graduate; the treasury stays above the floor. Output also lands in `docs/simulation-latest.md`.
 4. Relayer: `cd relayer && npm i && npm test` **See:** 3 tests pass (byte-exact NEP-366 payload round trip; allow-list rejects a foreign receiver, a foreign method and an unregistered sender).
-5. Deploy your own copy (optional, ~5 min): create `yourname.testnet` with the faucet, `export OWNER_PRIVATE_KEY=…`, `PARENT=yourname.testnet ./contracts/deploy/deploy-testnet.sh`. **See:** `get_bloq` returns the seeded merchant and `get_lessons` the three lessons.
+5. Deploy your own copy (optional, ~5 min): create `yourname.testnet` with the faucet, put its id and key in `relayer/.env` (copy `relayer/.env.example`), run `./contracts/deploy/deploy-testnet.sh`. **See:** `get_bloq` returns the seeded merchant and `get_lessons` the three lessons.
 6. Run the relayer against it: `cp relayer/.env.example relayer/.env`, fill it, `npm --prefix relayer run dev`. **See:** `GET http://localhost:8787/health` → `{ ok: true, core: …, passport: … }`.
 7. Live simulation through the relayer: `cd scripts && npm run simulate -- --players 8 --rounds 4`. **See:** real accounts created, real transactions relayed, prices moving in `get_bloq` between rounds.
 8. Web app: `npm i && npm run dev`, open http://localhost:5173 and follow A.

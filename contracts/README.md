@@ -16,7 +16,8 @@ cd contracts/bloqvia-passport && cargo test
 cargo near build non-reproducible-wasm
 
 # deploy everything to testnet (creates sub-accounts, deploys, seeds lessons)
-export OWNER_PRIVATE_KEY=ed25519:...   # bloqvia.testnet full-access key
+# the parent account id and its full-access key are read from relayer/.env
+# (RELAYER_ACCOUNT_ID / RELAYER_PRIVATE_KEY); PARENT=... overrides the id
 ./contracts/deploy/deploy-testnet.sh
 ```
 
