@@ -48,8 +48,8 @@ export function LandingPage() {
 
 function Header({ onStart }: { onStart: () => void }) {
   return (
-    <header className="fixed inset-x-0 top-0 z-30">
-      <div className="mx-auto mt-3 flex max-w-7xl items-center justify-between rounded-full bg-navy/85 px-4 py-2 backdrop-blur-md mx-3 md:mx-auto md:px-6">
+    <header className="fixed inset-x-0 top-0 z-30 px-3 md:px-6">
+      <div className="mx-auto mt-3 flex max-w-7xl items-center justify-between rounded-full bg-navy/85 px-4 py-2 backdrop-blur-md md:px-6">
         <Link to="/" aria-label="Bloqvia home" className="tap flex items-center"><Wordmark tone="lime" /></Link>
         <button onClick={onStart} className="tap rounded-full bg-lime px-5 font-display text-xs font-medium uppercase tracking-[0.14em] text-navy transition-transform hover:-translate-y-0.5">
           Start

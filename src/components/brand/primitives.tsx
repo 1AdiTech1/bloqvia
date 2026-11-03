@@ -69,8 +69,7 @@ export function Display({
           <motion.span
             className={cn("block", accent === i && "text-[color:var(--display-accent,var(--lavender))]")}
             initial={reduce ? false : { y: "105%" }}
-            whileInView={{ y: 0 }}
-            viewport={{ once: true }}
+            {...(Tag === "h1" ? { animate: { y: 0 } } : { whileInView: { y: 0 }, viewport: { once: true } })}
             transition={{ duration: 1, ease, delay: 0.1 + i * 0.12 }}
           >
             {l}

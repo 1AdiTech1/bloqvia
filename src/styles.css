@@ -9,7 +9,7 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
   /* Type scale (fluid) */
-  --text-display-xl: clamp(2.75rem, 9vw, 7.5rem);
+  --text-display-xl: clamp(2.75rem, 7vw, 6.25rem);
   --text-display-xl--line-height: 0.92;
   --text-display-lg: clamp(2.25rem, 6.5vw, 5.25rem);
   --text-display-lg--line-height: 0.95;
