@@ -97,7 +97,7 @@ interface LivePlayer { id: string; strategy: Strategy; joinsAt: number; account:
 
 async function relayCall(p: LivePlayer, method: string, args: Record<string, unknown>): Promise<string> {
   if (!p.account) throw new Error("not registered");
-  const acts: Action[] = [actions.functionCall(method, args, teraToGas("20"), 0n)];
+  const acts: Action[] = [actions.functionCall(method, args, teraToGas("40"), 0n)];
   const { signedDelegate } = await p.account.createSignedMetaTransaction({ receiverId: coreId, actions: acts, blockHeightTtl: 100 });
   const payload = Buffer.from(encodeSignedDelegate(signedDelegate)).toString("base64");
   const r = await post<{ txHash: string }>("/relay", { payload });

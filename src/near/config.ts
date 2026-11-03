@@ -17,7 +17,7 @@ export const GOLD = "gold";
 export const ITEMS = ["key-fragment", "fuel-cell", "contract-seal"] as const;
 export type ItemId = (typeof ITEMS)[number];
 
-/** Gas attached to every learner call. The relayer caps at 30 TGas. */
-export const CALL_GAS_TGAS = "20";
+/** Gas attached to every learner call (graduate needs ~25; the relayer caps at 50). */
+export const CALL_GAS_TGAS = "40";
 /** Blocks a signed delegate stays valid (~1 block/second). */
 export const DELEGATE_TTL_BLOCKS = 100;

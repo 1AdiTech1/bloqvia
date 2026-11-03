@@ -11,8 +11,8 @@ export const ALLOWED_METHODS = ["complete_lesson", "sell_to_bloq", "buy_from_blo
 /** The same list, used when the relayer adds the learner's function-call key. */
 export const LEARNER_KEY_METHODS: string[] = [...ALLOWED_METHODS];
 
-/** Hard cap per relayed call. 30 TGas is plenty for any method above. */
-export const MAX_GAS_PER_ACTION = 30_000_000_000_000n;
+/** Hard cap per relayed call. graduate needs ~25 TGas (own work + 15 TGas of Passport calls). */
+export const MAX_GAS_PER_ACTION = 50_000_000_000_000n;
 
 /** Learners never attach NEAR. A non-zero deposit is a bug or an attack. */
 export const MAX_DEPOSIT = 0n;

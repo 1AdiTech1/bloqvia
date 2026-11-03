@@ -51,19 +51,22 @@ export async function handle(ctx: NearContext, req: IncomingMessage, res: Server
 
     if (req.method === "POST" && url.pathname === "/register") {
       const body = await readJson(req);
-      if (typeof body.publicKey === "string") {
-        return send(res, 200, await registerLearner(ctx, body.publicKey), origin, allowed);
-      }
-      if (typeof body.accountId === "string") {
-        return send(res, 200, await registerExistingAccount(ctx, body.accountId), origin, allowed);
-      }
-      throw new PolicyError("Send { publicKey } or { accountId }");
+      const started = Date.now();
+      let result;
+      if (typeof body.publicKey === "string") result = await registerLearner(ctx, body.publicKey);
+      else if (typeof body.accountId === "string") result = await registerExistingAccount(ctx, body.accountId);
+      else throw new PolicyError("Send { publicKey } or { accountId }");
+      console.log(`[relayer] register ${result.accountId} created=${result.created} registered=${result.registered} ${Date.now() - started}ms`);
+      return send(res, 200, result, origin, allowed);
     }
 
     if (req.method === "POST" && url.pathname === "/relay") {
       const body = await readJson(req);
       if (typeof body.payload !== "string") throw new PolicyError("Send { payload: <base64> }");
-      return send(res, 200, await relay(ctx, body.payload), origin, allowed);
+      const started = Date.now();
+      const result = await relay(ctx, body.payload);
+      console.log(`[relayer] relay ${result.senderId} ${result.methods.join(",")} tx=${result.txHash} ${Date.now() - started}ms`);
+      return send(res, 200, result, origin, allowed);
     }
 
     return send(res, 404, { error: "Not found" }, origin, allowed);
@@ -71,6 +74,7 @@ export async function handle(ctx: NearContext, req: IncomingMessage, res: Server
     const status = e instanceof PolicyError ? e.status : 500;
     const message = (e as Error).message ?? String(e);
     if (status === 500) console.error(`[relayer] ${req.method} ${req.url} failed:`, e);
+    else console.log(`[relayer] ${req.method} ${req.url} rejected ${status}: ${message}`);
     return send(res, status, { error: message }, origin, allowed);
   }
 }

@@ -1,5 +1,6 @@
 /** Relays one allow-listed signed delegate; the relayer pays the gas. */
 import { decodeSignedDelegateBase64 } from "./codec.js";
+import { receiptFailure } from "./outcome.js";
 import { PolicyError, RateLimiter, assertAllowed } from "./policy.js";
 import { type NearContext, view } from "./near.js";
 
@@ -37,5 +38,14 @@ export async function relay(ctx: NearContext, payloadBase64: string): Promise<Re
   const outcome = await ctx.relayer.relayMetaTransaction(signedDelegate);
   const methods = signedDelegate.delegateAction.actions
     .map((a) => (a as { functionCall?: { methodName: string } }).functionCall?.methodName ?? "?");
-  return { txHash: outcome.transaction.hash, senderId, methods };
+  const txHash: string = outcome.transaction.hash;
+
+  // The relayer's own transaction succeeded; the delegated call may still have
+  // panicked inside the contract. Surface that as the player's error.
+  const failure = receiptFailure(outcome);
+  if (failure) {
+    console.log(`[relayer] relay ${senderId} ${methods.join(",")} tx=${txHash} FAILED in ${failure.executor}: ${failure.message}`);
+    throw new PolicyError(failure.message, 422);
+  }
+  return { txHash, senderId, methods };
 }

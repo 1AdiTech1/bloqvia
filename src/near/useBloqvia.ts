@@ -77,18 +77,45 @@ function getSigner(): LearnerSigner {
   return signer;
 }
 
+async function load(accountId: string | null) {
+  const [lessons, bloq, learner, passport] = await Promise.all([
+    views.lessons(),
+    views.bloq(),
+    accountId ? views.learner(accountId) : Promise.resolve(null),
+    accountId ? views.passport(accountId) : Promise.resolve(null),
+  ]);
+  return { accountId, lessons, bloq, learner, passport };
+}
+
 async function refresh(): Promise<void> {
   const accountId = signer?.accountId() ?? null;
   try {
-    const [lessons, bloq, learner, passport] = await Promise.all([
-      views.lessons(),
-      views.bloq(),
-      accountId ? views.learner(accountId) : Promise.resolve(null),
-      accountId ? views.passport(accountId) : Promise.resolve(null),
-    ]);
-    set({ accountId, lessons, bloq, learner, passport });
+    set(await load(accountId));
   } catch (e) {
     set({ accountId, error: (e as Error).message });
+  }
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Read-your-writes. The relayer answers once the transaction has executed
+ * optimistically; an RPC node one block behind can still serve the old state.
+ * Re-read until `expect` is true (max ~4 s), then keep whatever we got.
+ */
+async function refreshUntil(expect: (l: LearnerView | null) => boolean): Promise<void> {
+  const accountId = signer?.accountId() ?? null;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      const next = await load(accountId);
+      if (expect(next.learner) || attempt === 7) {
+        set(next);
+        return;
+      }
+    } catch (e) {
+      if (attempt === 7) set({ accountId, error: (e as Error).message });
+    }
+    await sleep(500);
   }
 }
 
@@ -101,12 +128,15 @@ function init(): void {
   void refresh();
 }
 
-async function run(fn: (s: LearnerSigner) => Promise<RelayResult>): Promise<RelayResult> {
+async function run(
+  fn: (s: LearnerSigner) => Promise<RelayResult>,
+  expect: (l: LearnerView | null) => boolean,
+): Promise<RelayResult> {
   set({ busy: true, error: null });
   try {
     const result = await fn(getSigner());
     set({ lastTx: { ...result, url: explorer.tx(result.txHash) } });
-    await refresh();
+    await refreshUntil(expect);
     return result;
   } catch (e) {
     set({ error: (e as Error).message });
@@ -132,10 +162,30 @@ const actions = {
     }
   },
   refresh,
-  completeLesson: (lessonId: string, answer: string) => run((s) => game.completeLesson(s, lessonId, answer)),
-  sellToBloq: (tokenId: string, amount = 1) => run((s) => game.sellToBloq(s, tokenId, amount)),
-  buyFromBloq: (tokenId: string, amount = 1) => run((s) => game.buyFromBloq(s, tokenId, amount)),
-  graduate: () => run((s) => game.graduate(s)),
+  completeLesson: (lessonId: string, answer: string) =>
+    run(
+      (s) => game.completeLesson(s, lessonId, answer),
+      (l) => !!l && l.completed.includes(lessonId),
+    ),
+  sellToBloq: (tokenId: string, amount = 1) => {
+    const before = state.learner?.gold;
+    return run(
+      (s) => game.sellToBloq(s, tokenId, amount),
+      (l) => !!l && l.gold !== before,
+    );
+  },
+  buyFromBloq: (tokenId: string, amount = 1) => {
+    const before = state.learner?.gold;
+    return run(
+      (s) => game.buyFromBloq(s, tokenId, amount),
+      (l) => !!l && l.gold !== before,
+    );
+  },
+  graduate: () =>
+    run(
+      (s) => game.graduate(s),
+      (l) => !!l && l.graduated,
+    ),
   signOut: (): void => {
     signer?.signOut();
     set({ accountId: null, learner: null, passport: null, lastTx: null, error: null });
