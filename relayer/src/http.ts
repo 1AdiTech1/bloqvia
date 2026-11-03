@@ -1,0 +1,85 @@
+/**
+ * Minimal HTTP surface on node:http (no framework, nothing to configure).
+ *
+ *   GET  /health             -> { ok, relayer, core, passport, network }
+ *   POST /register           -> { publicKey } | { accountId }   -> RegisterResult
+ *   POST /relay              -> { payload: <base64 SignedDelegate> } -> RelayResult
+ *
+ * Wrap `handle()` in a Vercel/Netlify function if you host it serverless.
+ */
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { registerExistingAccount, registerLearner } from "./accounts.js";
+import { PolicyError } from "./policy.js";
+import { relay } from "./relay.js";
+import type { NearContext } from "./near.js";
+
+async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) chunks.push(chunk as Buffer);
+  const text = Buffer.concat(chunks).toString("utf8");
+  if (text.length > 64 * 1024) throw new PolicyError("Body too large", 413);
+  return text ? (JSON.parse(text) as Record<string, unknown>) : {};
+}
+
+function send(res: ServerResponse, status: number, body: unknown, origin: string | undefined, allowed: string[]): void {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (origin && (allowed.includes("*") || allowed.includes(origin))) {
+    headers["Access-Control-Allow-Origin"] = origin;
+    headers["Access-Control-Allow-Headers"] = "Content-Type";
+    headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS";
+  }
+  res.writeHead(status, headers);
+  res.end(JSON.stringify(body));
+}
+
+export async function handle(ctx: NearContext, req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const origin = req.headers.origin;
+  const allowed = ctx.config.corsOrigins;
+  try {
+    if (req.method === "OPTIONS") return send(res, 204, {}, origin, allowed);
+    const url = new URL(req.url ?? "/", "http://localhost");
+
+    if (req.method === "GET" && url.pathname === "/health") {
+      return send(res, 200, {
+        ok: true,
+        network: ctx.config.network,
+        relayer: ctx.config.relayerAccountId,
+        core: ctx.config.coreContractId,
+        passport: ctx.config.passportContractId,
+      }, origin, allowed);
+    }
+
+    if (req.method === "POST" && url.pathname === "/register") {
+      const body = await readJson(req);
+      if (typeof body.publicKey === "string") {
+        return send(res, 200, await registerLearner(ctx, body.publicKey), origin, allowed);
+      }
+      if (typeof body.accountId === "string") {
+        return send(res, 200, await registerExistingAccount(ctx, body.accountId), origin, allowed);
+      }
+      throw new PolicyError("Send { publicKey } or { accountId }");
+    }
+
+    if (req.method === "POST" && url.pathname === "/relay") {
+      const body = await readJson(req);
+      if (typeof body.payload !== "string") throw new PolicyError("Send { payload: <base64> }");
+      return send(res, 200, await relay(ctx, body.payload), origin, allowed);
+    }
+
+    return send(res, 404, { error: "Not found" }, origin, allowed);
+  } catch (e) {
+    const status = e instanceof PolicyError ? e.status : 500;
+    const message = (e as Error).message ?? String(e);
+    if (status === 500) console.error(`[relayer] ${req.method} ${req.url} failed:`, e);
+    return send(res, status, { error: message }, origin, allowed);
+  }
+}
+
+export function startServer(ctx: NearContext): ReturnType<typeof createServer> {
+  const server = createServer((req, res) => void handle(ctx, req, res));
+  server.listen(ctx.config.port, () => {
+    console.log(`[relayer] ${ctx.config.relayerAccountId} on ${ctx.config.network} listening on :${ctx.config.port}`);
+    console.log(`[relayer] core=${ctx.config.coreContractId} passport=${ctx.config.passportContractId}`);
+  });
+  return server;
+}

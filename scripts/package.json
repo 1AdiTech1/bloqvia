@@ -1,0 +1,23 @@
+{
+  "name": "bloqvia-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Operator scripts: hash lesson answers, seed lessons on-chain, simulate the economy.",
+  "scripts": {
+    "hash-lessons": "tsx hash-lessons.ts",
+    "seed-lessons": "tsx seed-lessons.ts",
+    "simulate": "tsx simulate.ts",
+    "simulate:offline": "tsx simulate.ts --offline",
+    "test": "tsx --test *.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "near-api-js": "^7.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

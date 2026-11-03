@@ -1,0 +1,21 @@
+{
+  "name": "bloqvia-relayer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Gas-sponsoring relayer for Bloqvia (NEP-366 meta-transactions). Creates learner accounts and relays allow-listed calls to bloqvia-core.",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "near-api-js": "^7.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

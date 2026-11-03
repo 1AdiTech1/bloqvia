@@ -1,0 +1,41 @@
+/** Relays one allow-listed signed delegate; the relayer pays the gas. */
+import { decodeSignedDelegateBase64 } from "./codec.js";
+import { PolicyError, RateLimiter, assertAllowed } from "./policy.js";
+import { type NearContext, view } from "./near.js";
+
+const limiter = new RateLimiter(30, 60_000); // 30 calls per minute per sender
+const registeredCache = new Map<string, number>();
+
+async function isRegisteredCached(ctx: NearContext, accountId: string): Promise<boolean> {
+  const until = registeredCache.get(accountId);
+  if (until && until > Date.now()) return true;
+  const learner = await view<{ registered: boolean }>(ctx, ctx.config.coreContractId, "get_learner", { account_id: accountId });
+  if (learner.registered) registeredCache.set(accountId, Date.now() + 10 * 60_000);
+  return learner.registered === true;
+}
+
+export interface RelayResult {
+  txHash: string;
+  senderId: string;
+  methods: string[];
+}
+
+export async function relay(ctx: NearContext, payloadBase64: string): Promise<RelayResult> {
+  let signedDelegate;
+  try {
+    signedDelegate = decodeSignedDelegateBase64(payloadBase64);
+  } catch (e) {
+    throw new PolicyError(`Cannot decode payload: ${(e as Error).message}`);
+  }
+  const senderId = signedDelegate.delegateAction.senderId;
+  limiter.check(senderId);
+  await assertAllowed(signedDelegate, {
+    coreContractId: ctx.config.coreContractId,
+    isRegistered: (id) => isRegisteredCached(ctx, id),
+  });
+
+  const outcome = await ctx.relayer.relayMetaTransaction(signedDelegate);
+  const methods = signedDelegate.delegateAction.actions
+    .map((a) => (a as { functionCall?: { methodName: string } }).functionCall?.methodName ?? "?");
+  return { txHash: outcome.transaction.hash, senderId, methods };
+}

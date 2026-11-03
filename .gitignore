@@ -15,11 +15,9 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
-
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -30,3 +28,25 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+**/neardev/
+.near-credentials/
+# build
+node_modules/
+dist/
+target/
+**/target/
+*.wasm
+!docs/**/*.wasm
+# tooling
+.vscode/
+.idea/
+
+# NEAR agent skills, installed locally with: npx skills add near/agent-skills
+.agents/
+.claude/skills/
+skills-lock.json

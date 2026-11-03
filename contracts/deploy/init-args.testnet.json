@@ -1,0 +1,20 @@
+{
+  "$comment": "Init arguments for the testnet deployment. The pricing block is FIXED at init and can never be changed; tune it with `npm run simulate:offline` (scripts/) before deploying. Rewards per lesson live in src/content/lessons.json.",
+  "core": {
+    "owner_id": "bloqvia.testnet",
+    "passport_id": "passport.bloqvia.testnet",
+    "bloq_id": "bloq.bloqvia.testnet",
+    "pricing": {
+      "base_price": "100",
+      "stock_halving": "40",
+      "spread_bps": 250,
+      "treasury_floor": "500"
+    },
+    "bloq_gold_seed": "10000",
+    "bloq_item_seed": "5"
+  },
+  "passport": {
+    "owner_id": "bloqvia.testnet",
+    "core_id": "core.bloqvia.testnet"
+  }
+}

@@ -1,130 +1,83 @@
-# bloqvia
+# Bloqvia
 
-Build **Bloqvia**, a mobile-first web app that teaches Web3 by playing it. A newcomer signs in with just an email, plays three short quests, trades with a merchant whose prices move with what players do, and graduates — and only at the end learns that everything was a real transaction on the NEAR blockchain in an account that is theirs. The blockchain must be invisible until the final "reveal" screen: **no wallet-connect button, no seed phrase, no "gas", no "transaction pending" wording anywhere before the reveal.**
+Learn Web3 by playing it. A newcomer signs in with an email, plays three short quests, trades with a merchant whose prices move with what players do, and graduates — and only then learns that every step was a real transaction on NEAR, in an account that is theirs.
 
-Stack: Vite + React + TypeScript + Tailwind (your defaults). One web app that works on phones and laptops: the **Landing page is fully responsive** and uses the full width on desktop (grid layout, generous spacing); **every other screen** (map, quiz, shop, passport, reveal) is designed at 390px phone width and rendered as a centered column, max 480px, with the Solarpunk background filling the rest of a wide screen. Touch targets at least 44px. All text in English.
+Built at **NEAR HACKATHON** (Nov 1–14, 2026). Tracks: `games` (primary), `nfts`, `open`.
 
-## Visual direction: Solarpunk
+## The problem
 
-Optimistic, sunlit, organic. Warm greens (moss, sage, leaf), sunlight gold as the accent, cream backgrounds, terracotta for warnings; rounded organic shapes, soft shadows, subtle leaf/vine motifs in dividers and empty states. Friendly geometric display font for headings (e.g. Outfit or Sora from Google Fonts) and a highly readable body font (e.g. Inter). **Not** the usual crypto look: no dark mode by default, no neon, no gradients-on-black, no hexagons.
+Onboarding to Web3 starts with a seed phrase, a wallet popup and a gas error. Most people stop there. Bloqvia removes all three from the first session: the chain is invisible until the player has already used it.
 
-## Architecture rule (important)
+## What it is
 
-All screens read and write game state through ONE hook: `useGame()` in `src/game/useGame.ts`, which returns the `Game` interface below. For now `useGame()` wraps a **mock** in `src/game/mockGame.ts` that holds state in React and simulates the whole loop, including the merchant's prices with the exact formula given below. Later we will replace the mock with the real chain layer that lives in `src/near/` (do not create that folder); the screens must not need any change for that swap. Put the types in `src/game/types.ts` exactly as given. Do not add any other data layer, context or store; the hook is the only source of truth. Keep all your work inside `src/components/`, `src/pages/`, `src/styles/`, `src/game/`.
+- **A game loop with a real economy.** Quests mint items (NEP-245 multi-tokens) and gold. Bloq the merchant has a wallet, an inventory and one readable price rule: the more of an item he holds, the less he pays for it. Players selling an item lower its price for everyone. Graduation costs the three items plus Bloq's *current* price, so the cost of finishing follows the market.
+- **A credential that does something.** Every learner gets a Passport (NEP-171) at sign-in. Its level is updated on-chain per quest and it is non-transferable: a transfer hook panics, so it cannot be bought.
+- **Zero plumbing for the player.** Sign-in creates a NEAR account with a function-call key scoped to one contract; a relayer pays every fee (NEP-366 meta-transactions). The player never sees a seed phrase, a popup or a gas prompt.
 
-```ts
-// src/game/types.ts — copy exactly
-export interface LessonPublic {
-  lesson_id: string; title: string; answer_hash: string;
-  reward_gold: string; reward_item: string; reward_item_amount: string;
-}
-export interface ItemPrice { token_id: string; bloq_stock: string; buy_price: string; sell_price: string; }
-export interface BloqView {
-  account_id: string; gold: string; shop_open: boolean; treasury_floor: string;
-  prices: ItemPrice[]; graduation_fee: string;
-}
-export interface LearnerView {
-  account_id: string; registered: boolean; completed: string[]; level: number;
-  graduated: boolean; gold: string; items: [string, string][];
-}
-export interface PassportView { token_id: string; owner_id: string; level: number; graduated: boolean; }
-export interface RelayResult { txHash: string; senderId: string; methods: string[]; }
+## How NEAR fits in
 
-export interface Game {
-  accountId: string | null;
-  learner: LearnerView | null;
-  passport: PassportView | null;
-  bloq: BloqView | null;
-  lessons: LessonPublic[];
-  lastTx: (RelayResult & { url: string }) | null;
-  busy: boolean;
-  error: string | null;
-  start: () => Promise<string>;                                   // sign-in; returns accountId
-  refresh: () => Promise<void>;
-  completeLesson: (lessonId: string, answer: string) => Promise<RelayResult>;
-  sellToBloq: (tokenId: string, amount?: number) => Promise<RelayResult>;
-  buyFromBloq: (tokenId: string, amount?: number) => Promise<RelayResult>;
-  graduate: () => Promise<RelayResult>;
-  signOut: () => void;
-  exportSecretKey: () => string | null;
-  explorer: { tx: (hash: string) => string; account: (id: string) => string; passport: (id: string) => string; };
-}
+| What the player feels | What NEAR does |
+|---|---|
+| "Start Learning" works with just an email | Sub-account `learner-xxxx.bloqvia.testnet` created by the relayer; the browser's key is added as a function-call key limited to `core.bloqvia.testnet` and four methods |
+| Nothing ever asks for gas | The learner signs a NEP-366 `DelegateAction`; the relayer wraps and pays |
+| Items, gold, prices | One NEP-245 contract (`bloqvia-core`); prices from `contracts/bloqvia-core/src/pricing.rs` |
+| "Your Passport levelled up" | `bloqvia-core` calls `bloqvia-passport.set_level` cross-contract; metadata is updated on-chain |
+| The reveal | Explorer links to the account, the transactions and the Passport; the key is handed over |
+
+## Try it — "do X, see Y"
+
+Testnet. No funds needed. Each step says what you should see.
+
+### A. The hosted demo (fastest)
+
+1. Open https://bloqvia.com on a phone or a narrow browser window.
+2. Tap **Start Learning**, enter an email. **See:** the map with three quests; no wallet UI at any point.
+3. Open **The Vault**, answer *Your public key*, tap **Claim**. **See:** "+100 gold, 3 Key Fragments", an Explorer link. Open it: a `complete_lesson` call on `core.bloqvia.testnet`, signed by your `learner-….bloqvia.testnet`, gas paid by `bloqvia.testnet`.
+4. Finish the other two quests. **See:** the Passport card reads Level 3; Bloq's shop unlocks.
+5. In the shop, sell two Key Fragments. **See:** Bloq's buy price for Key Fragments drops after the sale (the rule is in the tooltip).
+6. Tap **Graduate**. **See:** the Passport reads Graduate; the reveal screen lists every transaction and shows your key.
+
+### B. From a clean clone (what the AI judges run)
+
+Prereqs: Node 22+, Rust 1.95+ with `wasm32-unknown-unknown`, `cargo-near` 0.22+, `near-cli-rs` 0.30+.
+
+1. `git clone <this repo> && cd bloqvia`
+2. Contracts: `cd contracts/bloqvia-core && cargo test && cd ../bloqvia-passport && cargo test`
+   **See:** 19 and 6 tests pass. Read `src/pricing.rs` (the price rule) and the test names in `src/lib.rs` (once-per-account, wrong answer, shop closes below the floor, Passport non-transferable).
+3. Offline economy fast-forward: `cd scripts && npm i && npm run simulate:offline`
+   **See:** a table of 12 rounds with 100 scripted players (no LLM). Bloq's buy price for Key Fragments falls from 88 to ~17 as sellers dump them; 100/100 graduate; the treasury stays above the floor. Output also lands in `docs/simulation-latest.md`.
+4. Relayer: `cd relayer && npm i && npm test` **See:** 3 tests pass (byte-exact NEP-366 payload round trip; allow-list rejects a foreign receiver, a foreign method and an unregistered sender).
+5. Deploy your own copy (optional, ~5 min): create `yourname.testnet` with the faucet, `export OWNER_PRIVATE_KEY=…`, `PARENT=yourname.testnet ./contracts/deploy/deploy-testnet.sh`. **See:** `get_bloq` returns the seeded merchant and `get_lessons` the three lessons.
+6. Run the relayer against it: `cp relayer/.env.example relayer/.env`, fill it, `npm --prefix relayer run dev`. **See:** `GET http://localhost:8787/health` → `{ ok: true, core: …, passport: … }`.
+7. Live simulation through the relayer: `cd scripts && npm run simulate -- --players 8 --rounds 4`. **See:** real accounts created, real transactions relayed, prices moving in `get_bloq` between rounds.
+8. Web app: `npm i && npm run dev`, open http://localhost:5173 and follow A.
+
+## Repository layout
+
+```
+contracts/bloqvia-core/      NEP-245 economy: gold, items, lessons, Bloq's shop, graduation   (Rust, cargo-near)
+contracts/bloqvia-passport/  NEP-171 non-transferable credential with on-chain level           (Rust, cargo-near)
+contracts/deploy/            init-args.testnet.json, deploy-testnet.sh
+relayer/                     node:http relayer: /register, /relay, allow-list, NEP-366            (TypeScript)
+src/near/                    the client chain layer and the single React hook `useBloqvia`      (TypeScript)
+src/content/lessons.json     the three lessons; answers hashed into the contract
+scripts/                     hash-lessons, seed-lessons, simulate (offline replica + live)
+docs/                        FLOWS.md (Mermaid), SPIKE-AUTH.md, INTEGRATION.md, simulation-latest.md
 ```
 
-Amounts are decimal strings with 0 decimals (`"100"` = 100 gold); `Number(x)` is fine for display. Item ids are exactly `key-fragment`, `fuel-cell`, `contract-seal`; the currency is `gold`. Display names: Key Fragment, Fuel Cell, Contract Seal, Gold.
+## What is baseline and what was built in the window
 
-### Mock behaviour (so the whole loop is playable before the chain is connected)
+- Baseline (not judged): the Vite + React + Tailwind scaffold generated by Lovable for the screens; `cargo near new` templates; the libraries listed below.
+- Built Oct 19 – Nov 14, 2026: everything in `contracts/`, `relayer/`, `src/near/`, `scripts/`, `docs/`, the lesson content, and the screens' wiring.
+- Libraries: near-sdk 5.30, near-sdk-contract-tools 4.0 (NEP-245 / NEP-171 derives), near-api-js 7.4, React 18, Vite. No AI-generated code is hidden: this README, the contracts and the scripts were written with Claude Code as a pair, as the hackathon encourages.
 
-- `start()` waits 1.2 s, sets `accountId` to `learner-7f3a9c2b1d4e.bloqvia.testnet`, `passport` level 0, `learner` with 0 gold and no items, `bloq` with 10,000 gold and stock 5 of each item.
-- `completeLesson(id, answer)`: if `answer` (trimmed, lower-cased) equals the lesson's correct answer, waits 1.5 s, adds the lesson's rewards (100 gold + 3 of its item), increments `passport.level` and `learner.level`, appends the id to `learner.completed`, sets `lastTx` to a fake hash with url `https://testnet.nearblocks.io/txns/<hash>`. Otherwise reject with the Error message exactly `"Wrong answer"`.
-- Merchant prices, computed from Bloq's stock `s` of that item with `base = 100`, `halving = 40`, `spread = 250` bps:
-  `buy_price = floor(base * halving / (halving + s))` (what Bloq pays you per unit) and `sell_price = floor(buy_price * (10000 + spread) / 10000)` (what Bloq charges you). Multi-unit trades are priced one unit at a time as the stock changes. `sellToBloq` moves items to Bloq and gold to the learner; `buyFromBloq` the reverse; reject with `"Not enough gold"` / `"Bloq does not have enough stock"` when appropriate. `shop_open` is `bloq.gold >= treasury_floor` (500). `graduation_fee` = sum of the three current `sell_price`s.
-- `graduate()`: requires `level === 3`, at least one of each item and `gold >= graduation_fee`; otherwise reject with `"Finish all three quests first"` / `"You need one of each item to graduate"` / `"Not enough gold for the fee"`. On success moves one of each item and the fee to Bloq and sets `graduated = true` on learner and passport.
-- Every change sets `busy` true while "waiting" and false after; errors set `error` to the message verbatim.
-- `exportSecretKey()` returns a fake `ed25519:5K…` string. `explorer.*` return nearblocks testnet URLs.
+## Known limits (stated plainly)
 
-### Lesson content (ship as `src/game/lessons.json` and use it in the mock; the real build reads the same shape from the chain)
+- Testnet only. Mainnet needs NEAR Auth approved credentials and a funded relayer; both are post-hackathon.
+- Quiz answers are public (they are three-option quizzes) and travel in transaction arguments. The on-chain record is the completion, not the secret. Once-per-account is enforced by the contract.
+- Sybil: one email = one account = one set of rewards. The relayer rate-limits per sender; it does not stop someone creating many emails. The streak token (if present under `contracts/bloqvia-streak/`) states its own limits.
+- The simulation's "players" are scripted strategies, not LLM agents, so the economy's behaviour is reproducible.
 
-```json
-[
-  { "lesson_id": "the-vault", "title": "The Vault", "topic": "Cryptographic keys",
-    "concept": "Your public key is like your home mailbox: anyone can see it and drop a letter inside. Your private key is like your actual mailbox key: only you hold it, and if you lose it, you can never unlock your mail again.",
-    "question": "If someone wants to safely send you digital gold, which one do you share with them?",
-    "options": ["Your private key", "Your public key", "Your seed phrase"], "answer": "Your public key",
-    "reward_gold": "100", "reward_item": "key-fragment", "reward_item_amount": "3",
-    "success": "You unlocked the vault. +100 gold and 3 Key Fragments minted to your account.",
-    "near_reveal": "The account that just received them is yours on NEAR. You never typed a seed phrase: the app created the account and holds a key that can only play this game." },
-  { "lesson_id": "the-fuel-system", "title": "The Fuel System", "topic": "Network gas",
-    "concept": "Every action on a decentralized network needs computer power. Gas is the small fee paid to the computers that keep the system running. No fuel, no movement: a transaction without gas stalls.",
-    "question": "True or false: when a network is busy, gas fees generally go down.",
-    "options": ["True", "False"], "answer": "False",
-    "reward_gold": "100", "reward_item": "fuel-cell", "reward_item_amount": "3",
-    "success": "You fueled the engine. +100 gold and 3 Fuel Cells minted to your account.",
-    "near_reveal": "Look at the transaction link: the gas for it was paid by Bloqvia's relayer, not by you. That is a NEAR meta-transaction: you signed, we paid." },
-  { "lesson_id": "smart-agreements", "title": "Smart Agreements", "topic": "Smart contracts",
-    "concept": "A smart contract is a vending machine made of code. Put in exactly what it asks for and it hands out the product by itself. No shopkeeper, no one to argue with, and the rules are printed on the machine for everyone to read.",
-    "question": "You sell an item to Bloq the merchant. What decides the price and moves the gold?",
-    "options": ["A Bloqvia employee", "A smart contract", "Bloq's mood"], "answer": "A smart contract",
-    "reward_gold": "100", "reward_item": "contract-seal", "reward_item_amount": "3",
-    "success": "Pipeline cleared. +100 gold and 3 Contract Seals. Bloq's shop is open to you.",
-    "near_reveal": "Bloq's prices come from one rule in the contract. Nobody at Bloqvia can change a price by hand; only what players sell and buy moves it." }
-]
-```
+## Licence
 
-## Screens (React Router, one route each)
-
-1. **Landing `/`** — a real website front door, responsive:
-   - Sticky top bar: a custom "B" logo badge in the Solarpunk palette (a leaf-shaped B), the name Bloqvia, and a prominent **Start Learning** button; after sign-in the bar shows a small profile marker with the account's first letter instead.
-   - Large centered hero: headline "Learn Web3 by playing it." and sub-line "No wallet, no jargon, real rewards. Three short quests, one merchant, a Passport that's yours." An email field and the **Start Learning** button that calls `start()`; while busy show "Setting up your account…" with a gentle growing-vine animation. On success go to `/map`.
-   - A 3-column feature section (stacked on phones) with simple vector icons (lucide-react): **Start with just an email** — "No seed phrase, no app to install." / **Play three quests, earn real items** — "Every reward is really yours, not points in a database." / **Graduate with a Passport nobody can buy** — "Your progress becomes a credential that can't be sold or faked."
-   - Footer: "Built on NEAR · NEAR Hackathon 2026" with a link to the public repository (placeholder href). This footer line is the only place before the reveal where the blockchain is named.
-2. **Map `/map`** — a winding path with three quest nodes (The Vault, The Fuel System, Smart Agreements): done / available / locked states, in order. A compact Passport card at the top (ring with level 0–3, "Graduate" state) and a gold + items counter. At the bottom, **Bloq's shop** card: locked until level 3 ("Finish the three quests to meet Bloq"), then a button to `/shop`. Tapping an available node opens the Quiz.
-3. **Quiz (modal/sheet over the map)** — topic chip, `concept` text, `question`, option buttons; tapping an option calls `completeLesson(lesson_id, optionText)`. On error show `error` verbatim in a terracotta toast and let them try again. On success: confetti-light celebration, `success` text, the reward chips, a small card titled "What just happened on NEAR" with `near_reveal` and an external link "See it on the explorer" → `lastTx.url`. Button "Back to the map".
-4. **Shop `/shop`** — Bloq, a friendly merchant character (illustrated with simple shapes, Solarpunk palette), a speech bubble with his current mood line based on stock. Three item rows: name, your amount, Bloq's stock, **he pays** `buy_price`, **he charges** `sell_price`, with a Sell and a Buy button and a quantity stepper. An info icon on the price opens a tooltip: "Bloq pays less for what he already has a lot of: price = 100 × 40 ÷ (40 + his stock). Nobody can change this rule by hand." A banner when `!shop_open`: "Bloq's treasury is below 500 gold — shop closed until it refills." A **Graduate** card at the bottom: checklist (3 quests, one of each item, fee of `graduation_fee` gold) with ticks, and a button that calls `graduate()`; on success go to `/reveal`.
-5. **Passport `/passport`** — the credential full-screen: level ring, three quest stamps, "Non-transferable" badge, Graduate state with a gold seal; link "View on the explorer" → `explorer.passport(accountId)`.
-6. **Reveal `/reveal`** — the aha moment. Headline: "It was on NEAR the whole time." Three cards: *Your account* (`accountId`, link `explorer.account`), *Your Passport* (link), *Your key* (masked, Copy button, warning that whoever holds it controls the account, "Import it into any NEAR wallet"). Below, a timeline of what happened (sign-in, three quests, trades, graduation) each with "View transaction". A final line: "Thanks for playing. Everything you earned is yours."
-
-Persistent bottom nav (Map, Shop, Passport) on `/map`, `/shop`, `/passport`. A small `busy` indicator and a toast for `error`. Use `lastTx` to show a short "Saved on NEAR ✓" confirmation after each successful action — but on screens before the reveal, keep that wording and nothing more technical.
-
-Start with the Landing and Map screens, then the Quiz, then the Shop, Passport and Reveal. Ask me before adding anything outside the list.
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/1ace3ff8-eade-482b-9466-adce66b51217).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+MIT — see `LICENSE`.
