@@ -62,7 +62,7 @@ If any of these fail on a clean clone, stop and report the full output; do not
 | Lessons changed | `cd scripts && npm run hash-lessons` then `npm run seed-lessons` | public JSON rewritten; new lessons added |
 | Tune economy | `cd scripts && npm run simulate:offline` | `docs/simulation-latest.md` |
 | Live proof | `cd scripts && npm run simulate -- --players 4 --rounds 3` | prices move in `get_bloq` |
-| View on chain | `near contract call-function as-read-only core.bloqvia.testnet get_bloq empty-args network-config testnet now` | JSON |
+| View on chain | `near contract call-function as-read-only core.bloqvia.testnet get_bloq json-args '{}' network-config testnet now` | JSON |
 
 ## How to report
 

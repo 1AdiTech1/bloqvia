@@ -25,10 +25,25 @@ BLOQ="${BLOQ:-bloq.$PARENT}"
 ARGS=contracts/deploy/init-args.testnet.json
 
 exists() { near account view-account-summary "$1" network-config testnet now >/dev/null 2>&1; }
+# true when the account already holds contract code (then redeploy without init)
+has_code() {
+  local out
+  out=$(near account view-account-summary "$1" network-config testnet now 2>/dev/null) || return 1
+  ! grep -q "No contract code" <<<"$out"
+}
 
 create_sub() { # name, balance
   if exists "$1"; then echo "exists  $1"; else
-    near account create-account fund-myself "$1" "$2" autogenerate-new-keypair save-to-keychain sign-as "$PARENT" network-config testnet sign-with-keychain send
+    near account create-account fund-myself "$1" "$2" autogenerate-new-keypair --signature-scheme ed25519 save-to-keychain sign-as "$PARENT" network-config testnet sign-with-keychain send
+  fi
+}
+
+deploy() { # account, wasm, init-args-json
+  if has_code "$1"; then
+    echo "redeploy $1 (already initialised, keeping state)"
+    near contract deploy "$1" use-file "$2" without-init-call network-config testnet sign-with-keychain send
+  else
+    near contract deploy "$1" use-file "$2" with-init-call new json-args "$3" prepaid-gas '100 Tgas' attached-deposit '0 NEAR' network-config testnet sign-with-keychain send
   fi
 }
 
@@ -45,17 +60,18 @@ PASS_WASM=$(ls contracts/bloqvia-passport/target/near/*.wasm | head -1)
 
 echo "== deploy passport"
 PASS_ARGS=$(node -e "const a=require('./$ARGS').passport; a.owner_id='$PARENT'; a.core_id='$CORE'; console.log(JSON.stringify(a))")
-near contract deploy "$PASSPORT" use-file "$PASS_WASM" with-init-call new json-args "$PASS_ARGS" prepaid-gas '100 Tgas' attached-deposit '0 NEAR' network-config testnet sign-with-keychain send
+deploy "$PASSPORT" "$PASS_WASM" "$PASS_ARGS"
 
 echo "== deploy core"
 CORE_ARGS=$(node -e "const a=require('./$ARGS').core; a.owner_id='$PARENT'; a.passport_id='$PASSPORT'; a.bloq_id='$BLOQ'; console.log(JSON.stringify(a))")
-near contract deploy "$CORE" use-file "$CORE_WASM" with-init-call new json-args "$CORE_ARGS" prepaid-gas '100 Tgas' attached-deposit '0 NEAR' network-config testnet sign-with-keychain send
+deploy "$CORE" "$CORE_WASM" "$CORE_ARGS"
 
 echo "== seed lessons"
+[ -d scripts/node_modules ] || (cd scripts && npm i --silent)
 OWNER_PRIVATE_KEY="${OWNER_PRIVATE_KEY:-${RELAYER_PRIVATE_KEY:?set RELAYER_PRIVATE_KEY in relayer/.env (parent full-access key)}}"
 (cd scripts && OWNER_ACCOUNT_ID="$PARENT" CORE_CONTRACT_ID="$CORE" OWNER_PRIVATE_KEY="$OWNER_PRIVATE_KEY" npm run seed-lessons --silent)
 
 echo "== verify"
-near contract call-function as-read-only "$CORE" get_bloq empty-args network-config testnet now
-near contract call-function as-read-only "$CORE" get_lessons empty-args network-config testnet now
+near contract call-function as-read-only "$CORE" get_bloq json-args '{}' network-config testnet now
+near contract call-function as-read-only "$CORE" get_lessons json-args '{}' network-config testnet now
 echo "done: core=$CORE passport=$PASSPORT bloq=$BLOQ"
