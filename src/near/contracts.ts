@@ -6,7 +6,7 @@ import { JsonRpcProvider, actions, teraToGas } from "near-api-js";
 import { CALL_GAS_TGAS, NEAR_CONFIG } from "./config";
 import { relayerApi } from "./relayer";
 import type { LearnerSigner } from "./signer";
-import type { BloqView, ItemPrice, LearnerView, LessonPublic, PassportView, PricingParams, RelayResult } from "./types";
+import type { BloqView, ItemPrice, LearnerView, LessonPublic, MemberView, PassportView, PricingParams, RelayResult, StreakView } from "./types";
 
 const provider = new JsonRpcProvider({ url: NEAR_CONFIG.rpcUrl });
 
@@ -22,6 +22,11 @@ export const views = {
   learner: (accountId: string) => view<LearnerView>(NEAR_CONFIG.coreContractId, "get_learner", { account_id: accountId }),
   passport: (accountId: string) =>
     view<PassportView | null>(NEAR_CONFIG.passportContractId, "get_passport", { account_id: accountId }),
+  /** Module A: null when core has no streak contract set (module not deployed). */
+  streakContract: () => view<string | null>(NEAR_CONFIG.coreContractId, "get_streak_contract"),
+  streak: (streakId: string = NEAR_CONFIG.streakContractId) => view<StreakView>(streakId, "get_streak"),
+  member: (accountId: string, streakId: string = NEAR_CONFIG.streakContractId) =>
+    view<MemberView>(streakId, "get_member", { account_id: accountId }),
 };
 
 function call(method: string, args: Record<string, unknown>) {
@@ -42,4 +47,6 @@ export const game = {
   buyFromBloq: (signer: LearnerSigner, tokenId: string, amount: number) =>
     send(signer, "buy_from_bloq", { token_id: tokenId, amount: String(amount) }),
   graduate: (signer: LearnerSigner) => send(signer, "graduate", {}),
+  /** Module A: one check-in per streak day, forwarded by core to the streak contract. */
+  checkIn: (signer: LearnerSigner) => send(signer, "check_in", {}),
 };

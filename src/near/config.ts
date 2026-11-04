@@ -8,6 +8,8 @@ export const NEAR_CONFIG = {
   rpcUrl: import.meta.env.VITE_NEAR_RPC_URL ?? "https://test.rpc.fastnear.com",
   coreContractId: import.meta.env.VITE_CORE_CONTRACT_ID ?? "core.bloqvia.testnet",
   passportContractId: import.meta.env.VITE_PASSPORT_CONTRACT_ID ?? "passport.bloqvia.testnet",
+  /** Module A. The card hides itself when core reports no streak contract. */
+  streakContractId: import.meta.env.VITE_STREAK_CONTRACT_ID ?? "streak.bloqvia.testnet",
   relayerUrl: (import.meta.env.VITE_RELAYER_URL ?? "https://relay.bloqvia.app").replace(/\/$/, ""),
   explorerBase: import.meta.env.VITE_EXPLORER_BASE ?? "https://testnet.nearblocks.io",
 } as const;

@@ -63,3 +63,13 @@ export interface RelayResult {
   senderId: string;
   methods: string[];
 }
+
+// ---- Module A: streak token ----
+export interface StreakParams { daily_target: number; reward_per_checkin: string; burn_per_miss: string; day_length_seconds: number; }
+export interface DayResult { day: number; checkins: number; target: number; met: boolean; minted: string; burned: string; streak_after: number; }
+export interface StreakView {
+  day: number; seconds_left_in_day: number; today_count: number; today_target: number;
+  streak: number; best_streak: number; treasury: string; total_supply: string;
+  params: StreakParams; last: DayResult | null; history: DayResult[];
+}
+export interface MemberView { account_id: string; checked_in_today: boolean; last_checkin_day: number | null; total_checkins: number; balance: string; }

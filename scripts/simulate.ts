@@ -5,6 +5,8 @@
  *   npm run simulate -- --players 20    # LIVE on testnet through the relayer: real accounts, real txs
  *
  * Options: --players N  --rounds N  --relayer URL  --offline  --out docs/simulation-latest.md
+ *          --check-in   (live only) every active player also calls check_in once per round
+ *                       (Module A; a second call in the same streak day is refused by the contract)
  *
  * Live mode exercises exactly the path a human takes: /register, then signed
  * delegates for complete_lesson / sell_to_bloq / buy_from_bloq / graduate.
@@ -26,6 +28,8 @@ const offline = argv.includes("--offline");
 const players = Number(flag("players", offline ? "100" : "12"));
 const rounds = Number(flag("rounds", offline ? "12" : "5"));
 const relayerUrl = flag("relayer", process.env.RELAYER_URL ?? "http://localhost:8787").replace(/\/$/, "");
+const checkIn = process.argv.includes("--check-in");
+const streakId = process.env.STREAK_CONTRACT_ID ?? "streak.bloqvia.testnet";
 const out = resolve(ROOT, flag("out", "docs/simulation-latest.md"));
 
 const init = JSON.parse(readFileSync(resolve(ROOT, "contracts/deploy/init-args.testnet.json"), "utf8")) as {
@@ -119,6 +123,9 @@ async function learnerItems(accountId: string): Promise<Record<Item, bigint>> {
 const live: LivePlayer[] = [...Array(players)].map((_, i) => ({ id: `p${i}`, strategy: strategyFor(i), joinsAt: joinsAt(i, players), account: null, accountId: null, key: KeyPair.fromRandom("ed25519"), completed: 0, graduated: false }));
 const snaps: Snapshot[] = [];
 let graduates = 0;
+let checkIns = 0;
+let checkInRefusals = 0;
+let lastCheckInError = "";
 
 async function liveSnapshot(round: number): Promise<Snapshot> {
   const lp = await livePrices();
@@ -136,6 +143,9 @@ for (let r = 1; r <= rounds; r += 1) {
           const reg = await post<{ accountId: string }>("/register", { publicKey: p.key.getPublicKey().toString() });
           p.accountId = reg.accountId;
           p.account = new Account(reg.accountId, provider, p.key.toString());
+        }
+        if (checkIn) {
+          try { await relayCall(p, "check_in", {}); checkIns += 1; } catch (e) { checkInRefusals += 1; lastCheckInError = (e as Error).message; }
         }
         const lesson = lessons[p.completed];
         if (lesson) {
@@ -161,7 +171,19 @@ for (let r = 1; r <= rounds; r += 1) {
   snaps.push(await liveSnapshot(r));
   console.log(`round ${r}: ` + ITEMS.map((i) => `${i}=${snaps.at(-1)!.prices[i]}`).join(" "));
 }
-const md = report(`live testnet via ${relayerUrl}`, snaps);
+let md = report(`live testnet via ${relayerUrl}`, snaps);
+if (checkIn) {
+  const streak = (await provider.callFunction({ contractId: streakId, method: "get_streak", args: {} })) as {
+    day: number; today_count: number; today_target: number; streak: number; treasury: string; total_supply: string;
+    last: { day: number; checkins: number; met: boolean; minted: string; burned: string } | null;
+  };
+  md += `\n## Streak (Module A, ${streakId})\n\n` +
+    `check_in calls accepted: ${checkIns}; refused: ${checkInRefusals}` +
+    (lastCheckInError ? ` (last refusal: ${lastCheckInError})` : "") + `\n\n` +
+    `| day | today | target | community streak | treasury | total supply | last settled day |\n|---|---|---|---|---|---|---|\n` +
+    `| ${streak.day} | ${streak.today_count} | ${streak.today_target} | ${streak.streak} | ${streak.treasury} | ${streak.total_supply} | ` +
+    (streak.last ? `day ${streak.last.day}: ${streak.last.checkins} check-ins, ${streak.last.met ? "met, minted " + streak.last.minted : "missed, burned " + streak.last.burned}` : "none yet") + ` |\n`;
+}
 writeFileSync(out, md);
 console.log(md);
 console.log(`wrote ${out}`);

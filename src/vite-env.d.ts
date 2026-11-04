@@ -11,6 +11,7 @@ interface ImportMetaEnv {
   readonly VITE_NEAR_RPC_URL?: string;
   readonly VITE_CORE_CONTRACT_ID?: string;
   readonly VITE_PASSPORT_CONTRACT_ID?: string;
+  readonly VITE_STREAK_CONTRACT_ID?: string;
   readonly VITE_RELAYER_URL?: string;
   readonly VITE_EXPLORER_BASE?: string;
 }
