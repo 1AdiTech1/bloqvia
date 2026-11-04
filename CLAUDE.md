@@ -60,7 +60,7 @@ If any of these fail on a clean clone, stop and report the full output; do not
 | Deploy + seed (Adi's go-ahead) | `./contracts/deploy/deploy-testnet.sh` (reads `relayer/.env`) | `get_bloq`, `get_lessons` print |
 | Relayer | `cd relayer && npm run dev` (loads `.env` via `--env-file`) | `GET /health` → `{ok:true}` |
 | Lessons changed | `cd scripts && npm run hash-lessons` then `npm run seed-lessons` | public JSON rewritten; new lessons added |
-| Tune economy | `cd scripts && npm run simulate:offline` | `docs/simulation-latest.md` |
+| Tune economy | `cd scripts && npm run simulate:offline` | `docs/simulation-offline.md` |
 | Live proof | `cd scripts && npm run simulate -- --players 4 --rounds 3` | prices move in `get_bloq` |
 | View on chain | `near contract call-function as-read-only core.bloqvia.testnet get_bloq json-args '{}' network-config testnet now` | JSON |
 

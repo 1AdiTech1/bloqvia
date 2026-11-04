@@ -42,17 +42,17 @@ Testnet. No funds needed. Each step says what you should see.
 
 ### B. From a clean clone (what the AI judges run)
 
-Prereqs: Node 22+, Rust via `rustup` (the repo pins 1.96 and the wasm target in `rust-toolchain.toml`), `cargo-near` 0.22+, `near-cli-rs` 0.30+, `bun` for the web app.
+Prereqs: Node 22+, Rust via `rustup` (each crate's `rust-toolchain.toml` pins 1.96 and the wasm target, so rustup installs them on first build), `cargo-near` 0.22+, `near-cli-rs` 0.30+, `bun` for the web app. Every command below runs from the repository root.
 
 1. `git clone <this repo> && cd bloqvia`
-2. Contracts: `cd contracts/bloqvia-core && cargo test && cd ../bloqvia-passport && cargo test`
-   **See:** 19 and 6 tests pass. Read `src/pricing.rs` (the price rule) and the test names in `src/lib.rs` (once-per-account, wrong answer, shop closes below the floor, Passport non-transferable).
-3. Offline economy fast-forward: `cd scripts && npm i && npm run simulate:offline`
-   **See:** a table of 12 rounds with 100 scripted players (no LLM). Bloq's buy price for Key Fragments falls from 88 to ~17 as sellers dump them; 100/100 graduate; the treasury stays above the floor. Output also lands in `docs/simulation-latest.md`.
-4. Relayer: `cd relayer && npm i && npm test` **See:** 8 tests pass (byte-exact NEP-366 payload round trip; a contract panic inside a delegated receipt is surfaced as the error; CORS wildcard rules).
+2. Contracts: `(cd contracts/bloqvia-core && cargo test) && (cd contracts/bloqvia-passport && cargo test)`
+   **See:** `19 passed` then `6 passed`. Read `contracts/bloqvia-core/src/pricing.rs` (the price rule) and the test names in `contracts/bloqvia-core/src/lib.rs` (`complete_lesson_twice_fails`, `wrong_answer_fails`, `shop_closes_below_treasury_floor`) and `contracts/bloqvia-passport/src/lib.rs` (`passport_cannot_be_transferred`).
+3. Offline economy fast-forward: `(cd scripts && npm i && npm run simulate:offline)`
+   **See:** a table of 12 rounds with 100 scripted players (no LLM). Bloq's buy price for Key Fragments falls from 88 to 17 as sellers dump them; 100/100 graduate; the treasury never goes near the floor of 500. The same table is committed as `docs/simulation-offline.md`; the live 8-player run through the hosted relayer is `docs/simulation-latest.md`.
+4. Relayer: `(cd relayer && npm i && npm test)` **See:** 8 tests pass (byte-exact NEP-366 payload round trip; a contract panic inside a delegated receipt is surfaced as the error; CORS wildcard rules).
 5. Deploy your own copy (optional, ~5 min): create `yourname.testnet` with the faucet, put its id and key in `relayer/.env` (copy `relayer/.env.example`), run `./contracts/deploy/deploy-testnet.sh`. **See:** `get_bloq` returns the seeded merchant and `get_lessons` the three lessons.
-6. Run the relayer against it: `cp relayer/.env.example relayer/.env`, fill it, `npm --prefix relayer run dev`. **See:** `GET http://localhost:8787/health` → `{ ok: true, core: …, passport: … }`.
-7. Live simulation through the relayer: `cd scripts && npm run simulate -- --players 8 --rounds 4`. **See:** real accounts created, real transactions relayed, prices moving in `get_bloq` between rounds.
+6. Run the relayer against it: `npm --prefix relayer run dev` (reads `relayer/.env`). **See:** `GET http://localhost:8787/health` → `{ ok: true, core: …, passport: … }`.
+7. Live simulation through a relayer: `(cd scripts && npm run simulate -- --players 8 --rounds 5 --relayer https://relay.bloqvia.app)` — ours, or `--relayer http://localhost:8787` for yours. **See:** real accounts created, real transactions relayed, prices moving in `get_bloq` between rounds; the table is written to `docs/simulation-latest.md`.
 8. Web app: `bun install && bun run dev`, open http://localhost:8080 and follow A. It plays on testnet through the hosted relayer by default; `VITE_RELAYER_URL=http://localhost:8787` in `.env.local` points it at your own, `VITE_GAME_MODE=mock` runs the in-memory mock.
 
 ## Repository layout

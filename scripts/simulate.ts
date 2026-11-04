@@ -1,7 +1,7 @@
 /**
  * Fast-forward the economy and write a judge-readable report.
  *
- *   npm run simulate:offline            # pure replica, instant, for tuning (default 100 players, 12 rounds)
+ *   npm run simulate:offline            # pure replica, instant, for tuning (100 players, 12 rounds) -> docs/simulation-offline.md
  *   npm run simulate -- --players 20    # LIVE on testnet through the relayer: real accounts, real txs
  *
  * Options: --players N  --rounds N  --relayer URL  --offline  --out docs/simulation-latest.md

@@ -8,7 +8,7 @@
     "hash-lessons": "tsx hash-lessons.ts",
     "seed-lessons": "tsx seed-lessons.ts",
     "simulate": "tsx simulate.ts",
-    "simulate:offline": "tsx simulate.ts --offline",
+    "simulate:offline": "tsx simulate.ts --offline --out docs/simulation-offline.md",
     "test": "tsx --test *.test.ts",
     "typecheck": "tsc --noEmit"
   },
