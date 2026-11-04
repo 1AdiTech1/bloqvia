@@ -21,9 +21,21 @@ async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> 
   return text ? (JSON.parse(text) as Record<string, unknown>) : {};
 }
 
+/** Exact origins, "*", or wildcard subdomains written as https://*.lovable.app */
+export function originAllowed(origin: string, allowed: string[]): boolean {
+  return allowed.some((a) => {
+    if (a === "*" || a === origin) return true;
+    if (a.includes("://*.")) {
+      const [scheme, host] = a.split("://*.");
+      return origin.startsWith(`${scheme}://`) && origin.endsWith(`.${host}`);
+    }
+    return false;
+  });
+}
+
 function send(res: ServerResponse, status: number, body: unknown, origin: string | undefined, allowed: string[]): void {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (origin && (allowed.includes("*") || allowed.includes(origin))) {
+  if (origin && originAllowed(origin, allowed)) {
     headers["Access-Control-Allow-Origin"] = origin;
     headers["Access-Control-Allow-Headers"] = "Content-Type";
     headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS";

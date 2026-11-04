@@ -1,5 +1,11 @@
 # Auth spike — Nov 4, time-boxed to one day
 
+> **Verdict (Nov 4, 18:50): path B ships.** The spike was not run inside its
+> time box; by the rule below that settles it. Path B is live end to end
+> (`learner-….bloqvia.testnet`, key in the browser, export on the reveal page).
+> NEAR Auth stays a stretch item for Nov 10–11 if the day is quiet; it would
+> replace only `LocalKeySigner` behind the `LearnerSigner` interface.
+
 Decides sign-in path A (NEAR Auth) or path B (app-held key). Path B is already
 implemented (`src/near/signer.ts` → `LocalKeySigner`) and is the default. The
 spike only decides whether A replaces it. Any blocker below = B, no debate.

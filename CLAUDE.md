@@ -17,7 +17,7 @@ Tracks: games (primary), nfts, open. Read `README.md` first, then
    `near-smart-contracts`, `near-api-js`, `near-cli-rs` before touching those areas.
 2. `cd contracts/bloqvia-core && cargo test` → expect 19 passed.
    `cd ../bloqvia-passport && cargo test` → expect 6 passed.
-3. `cd relayer && npm i && npm test` → expect 6 passed.
+3. `cd relayer && npm i && npm test` → expect 8 passed.
    `cd ../scripts && npm i && npm test` → expect 2 passed.
 If any of these fail on a clean clone, stop and report the full output; do not
 "fix" by changing tests.
