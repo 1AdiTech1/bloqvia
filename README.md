@@ -34,7 +34,7 @@ Testnet. No funds needed. Each step says what you should see.
 ### A. The hosted demo (fastest)
 
 1. Open https://bloqvia.app (or https://bloqvia.lovable.app) on a phone or a desktop browser.
-2. Tap **Start exploring**, then **Continue**. **See:** the map with three quests, no wallet UI at any point. About five seconds: the relayer is creating your `learner-….bloqvia.testnet` account and minting your Passport.
+2. Tap **Start exploring**, then **Create my account** — nothing to type. **See:** "Creating your NEAR account… about five seconds" while the relayer creates `learner-….bloqvia.testnet` and mints your Passport, then the map with three quests. No wallet UI at any point.
 3. Open **The Vault**, tap *Your public key*. **See:** "Quest complete", +100 BloqGold and 3 Key Fragments landing in the bar, "Saved on NEAR ✓", and **See it on the explorer**. Open it: a `complete_lesson` call on `core.bloqvia.testnet` signed by your learner account, gas paid by `bloqvia.testnet`. (Pick a wrong option first if you like: the contract rejects it and the app says so.)
 4. Finish the other two quests. **See:** the Passport card reads Level 3 and Bloq's door at the foot of the map opens.
 5. In the shop, sell two Key Fragments. **See:** Bloq's price for Key Fragments falls after the sale (the rule is in the ⓘ tooltip); your gold counts up.
