@@ -2,9 +2,9 @@
 
 Learn Web3 by playing it. A newcomer taps Start, plays three short quests, trades with a merchant whose prices move with what players do, and graduates — and only then learns that every step was a real transaction on NEAR, in an account that is theirs.
 
-Built at **NEAR HACKATHON** (Nov 1–14, 2026). Tracks: `games` (primary), `nfts`, `open`.
+Built at **NEAR HACKATHON** (Nov 1–14, 2026). Tracks: `games` (primary), `nfts`, `memecoins`, `open`.
 
-**Live on testnet:** app https://bloqvia.app (alternate: https://bloqvia.lovable.app) · relayer https://relay.bloqvia.app (alternate: https://bloqvia-production.up.railway.app) · contracts [`core.bloqvia.testnet`](https://testnet.nearblocks.io/address/core.bloqvia.testnet), [`passport.bloqvia.testnet`](https://testnet.nearblocks.io/address/passport.bloqvia.testnet), merchant [`bloq.bloqvia.testnet`](https://testnet.nearblocks.io/address/bloq.bloqvia.testnet).
+**Live on testnet:** app https://bloqvia.app (alternate: https://bloqvia.lovable.app) · relayer https://relay.bloqvia.app (alternate: https://bloqvia-production.up.railway.app) · contracts [`core.bloqvia.testnet`](https://testnet.nearblocks.io/address/core.bloqvia.testnet), [`passport.bloqvia.testnet`](https://testnet.nearblocks.io/address/passport.bloqvia.testnet), merchant [`bloq.bloqvia.testnet`](https://testnet.nearblocks.io/address/bloq.bloqvia.testnet), streak token [`streak.bloqvia.testnet`](https://testnet.nearblocks.io/address/streak.bloqvia.testnet).
 
 ## The problem
 
@@ -15,6 +15,7 @@ Onboarding to Web3 starts with a seed phrase, a wallet popup and a gas error. Mo
 - **A game loop with a real economy.** Quests mint items (NEP-245 multi-tokens) and gold. Bloq the merchant has a wallet, an inventory and one readable price rule: the more of an item he holds, the less he pays for it. Players selling an item lower its price for everyone. Graduation costs the three items plus Bloq's *current* price, so the cost of finishing follows the market.
 - **A credential that does something.** Every learner gets a Passport (NEP-171) at sign-in. Its level is updated on-chain per quest and it is non-transferable: a transfer hook panics, so it cannot be bought.
 - **Zero plumbing for the player.** Start creates a NEAR account with a function-call key scoped to one contract; a relayer pays every fee (NEP-366 meta-transactions). The player never sees a seed phrase, a popup or a gas prompt. The key is generated in the browser and handed to the player at the end, with the explorer links that prove what happened.
+- **A token the community earns together (Module A).** `bloqvia-streak` is a NEP-141 with the whole mechanic in the contract and no admin key: one check-in per account per day, a community target per day; a day that makes the target mints a fixed reward to everyone who checked in, a day that misses burns a fixed slice of the contract's treasury and resets the streak. Supply is a record of collective consistency. On testnet a "day" is 10 minutes so judges can watch it settle.
 - **Honest failure.** A wrong answer is rejected by the contract, not by the app: the relayer reads every receipt of the meta-transaction and shows the contract's own panic message ("Wrong answer") — a meta-transaction's top-level status would otherwise report success.
 
 ## How NEAR fits in
@@ -25,6 +26,7 @@ Onboarding to Web3 starts with a seed phrase, a wallet popup and a gas error. Mo
 | Nothing ever asks for gas | The learner signs a NEP-366 `DelegateAction`; the relayer wraps and pays |
 | Items, gold, prices | One NEP-245 contract (`bloqvia-core`); prices from `contracts/bloqvia-core/src/pricing.rs` |
 | "Your Passport levelled up" | `bloqvia-core` calls `bloqvia-passport.set_level` cross-contract; metadata is updated on-chain |
+| "Check in" on the map | `core.check_in` forwards the learner's own id to `streak.bloqvia.testnet`; the streak contract accepts only core and settles finished days itself (`settle()` is public) |
 | The reveal | Explorer links to the account, the transactions and the Passport; the key is handed over |
 
 ## Try it — "do X, see Y"
@@ -36,23 +38,24 @@ Testnet. No funds needed. Each step says what you should see.
 1. Open https://bloqvia.app (or https://bloqvia.lovable.app) on a phone or a desktop browser.
 2. Tap **Start exploring**, then **Create my account** — nothing to type. **See:** "Creating your NEAR account… about five seconds" while the relayer creates `learner-….bloqvia.testnet` and mints your Passport, then the map with three quests. No wallet UI at any point.
 3. Open **The Vault**, tap *Your public key*. **See:** "Quest complete", +100 BloqGold and 3 Key Fragments landing in the bar, "Saved on NEAR ✓", and **See it on the explorer**. Open it: a `complete_lesson` call on `core.bloqvia.testnet` signed by your learner account, gas paid by `bloqvia.testnet`. (Pick a wrong option first if you like: the contract rejects it and the app says so.)
-4. Finish the other two quests. **See:** the Passport card reads Level 3 and Bloq's door at the foot of the map opens.
-5. In the shop, sell two Key Fragments. **See:** Bloq's price for Key Fragments falls after the sale (the rule is in the ⓘ tooltip); your gold counts up.
-6. Tap **Graduate**. **See:** the Passport is sealed; the reveal screen shows your account, your Passport and your key, with explorer links.
+4. On the map, the **Community streak** card: tap **Check in**. **See:** "1 of 2 check-ins today" and "Checked in today ✓"; a second tap is impossible. Open "Last days": the chain's own record of met days (minted) and missed days (burned). Ten minutes later the day settles by itself at the next call from anyone.
+5. Finish the other two quests. **See:** the Passport card reads Level 3 and Bloq's door at the foot of the map opens.
+6. In the shop, sell two Key Fragments. **See:** Bloq's price for Key Fragments falls after the sale (the rule is in the ⓘ tooltip); your gold counts up.
+7. Tap **Graduate**. **See:** the Passport is sealed; the reveal screen shows your account, your Passport and your key, with explorer links.
 
 ### B. From a clean clone (what the AI judges run)
 
 Prereqs: Node 22+, Rust via `rustup` (each crate's `rust-toolchain.toml` pins 1.96 and the wasm target, so rustup installs them on first build), `cargo-near` 0.22+, `near-cli-rs` 0.30+, `bun` for the web app. Every command below runs from the repository root.
 
 1. `git clone <this repo> && cd bloqvia`
-2. Contracts: `(cd contracts/bloqvia-core && cargo test) && (cd contracts/bloqvia-passport && cargo test)`
-   **See:** `19 passed` then `6 passed`. Read `contracts/bloqvia-core/src/pricing.rs` (the price rule) and the test names in `contracts/bloqvia-core/src/lib.rs` (`complete_lesson_twice_fails`, `wrong_answer_fails`, `shop_closes_below_treasury_floor`) and `contracts/bloqvia-passport/src/lib.rs` (`passport_cannot_be_transferred`).
+2. Contracts: `(cd contracts/bloqvia-core && cargo test) && (cd contracts/bloqvia-passport && cargo test) && (cd contracts/bloqvia-streak && cargo test)`
+   **See:** `22 passed`, `6 passed`, `9 passed`. Read `contracts/bloqvia-core/src/pricing.rs` (the price rule) and the test names in `contracts/bloqvia-core/src/lib.rs` (`complete_lesson_twice_fails`, `wrong_answer_fails`, `shop_closes_below_treasury_floor`) and `contracts/bloqvia-passport/src/lib.rs` (`passport_cannot_be_transferred`).
 3. Offline economy fast-forward: `(cd scripts && npm i && npm run simulate:offline)`
-   **See:** a table of 12 rounds with 100 scripted players (no LLM). Bloq's buy price for Key Fragments falls from 88 to 17 as sellers dump them; 100/100 graduate; the treasury never goes near the floor of 500. The same table is committed as `docs/simulation-offline.md`; the live 8-player run through the hosted relayer is `docs/simulation-latest.md`.
+   **See:** a table of 12 rounds with 100 scripted players (no LLM). Bloq's buy price for Key Fragments falls from 88 to 17 as sellers dump them; 100/100 graduate; the treasury never goes near the floor of 500. The same table is committed as `docs/simulation-offline.md`; the live 8-player run through the hosted relayer is `docs/simulation-latest.md`. Then `(cd scripts && npm run streak:offline)` **See:** 60 days of the streak token under three behaviour scenarios and two parameter sets, committed as `docs/streak-simulation.md`.
 4. Relayer: `(cd relayer && npm i && npm test)` **See:** 8 tests pass (byte-exact NEP-366 payload round trip; a contract panic inside a delegated receipt is surfaced as the error; CORS wildcard rules).
 5. Deploy your own copy (optional, ~5 min): create `yourname.testnet` with the faucet, put its id and key in `relayer/.env` (copy `relayer/.env.example`), run `./contracts/deploy/deploy-testnet.sh`. **See:** `get_bloq` returns the seeded merchant and `get_lessons` the three lessons.
 6. Run the relayer against it: `npm --prefix relayer run dev` (reads `relayer/.env`). **See:** `GET http://localhost:8787/health` → `{ ok: true, core: …, passport: … }`.
-7. Live simulation through a relayer: `(cd scripts && npm run simulate -- --players 8 --rounds 5 --relayer https://relay.bloqvia.app)` — ours, or `--relayer http://localhost:8787` for yours. **See:** real accounts created, real transactions relayed, prices moving in `get_bloq` between rounds; the table is written to `docs/simulation-latest.md`.
+7. Live simulation through a relayer: `(cd scripts && npm run simulate -- --players 8 --rounds 5 --relayer https://relay.bloqvia.app)` — ours, or `--relayer http://localhost:8787` for yours. **See:** real accounts created, real transactions relayed, prices moving in `get_bloq` between rounds; the table is written to `docs/simulation-latest.md`. Add `--check-in` and every player also checks in once; the second attempt in the same 10-minute day is refused by the contract ("Already checked in today") and the Streak table at the end shows the day's count.
 8. Web app: `bun install && bun run dev`, open http://localhost:8080 and follow A. It plays on testnet through the hosted relayer by default; `VITE_RELAYER_URL=http://localhost:8787` in `.env.local` points it at your own, `VITE_GAME_MODE=mock` runs the in-memory mock.
 
 ## Repository layout
@@ -60,12 +63,13 @@ Prereqs: Node 22+, Rust via `rustup` (each crate's `rust-toolchain.toml` pins 1.
 ```
 contracts/bloqvia-core/      NEP-245 economy: gold, items, lessons, Bloq's shop, graduation   (Rust, cargo-near)
 contracts/bloqvia-passport/  NEP-171 non-transferable credential with on-chain level           (Rust, cargo-near)
-contracts/deploy/            init-args.testnet.json, deploy-testnet.sh
+contracts/bloqvia-streak/    NEP-141 community streak token, Module A: check-in, target, mint/burn (Rust, cargo-near)
+contracts/deploy/            init-args.testnet.json, deploy-testnet.sh, deploy-streak.sh
 relayer/                     node:http relayer: /register, /relay, allow-list, receipt check, NEP-366 (TypeScript, hosted on Railway)
 src/near/                    the client chain layer and the single React hook `useBloqvia`      (TypeScript)
 src/game/useGame.ts          the one-line switch between the chain store and the design mock
 src/content/lessons.json     the three lessons; answers hashed into the contract
-scripts/                     hash-lessons, seed-lessons, simulate (offline replica + live)
+scripts/                     hash-lessons, seed-lessons, simulate (offline replica + live, --check-in), streak-sim
 docs/                        FLOWS.md (Mermaid), SPIKE-AUTH.md, INTEGRATION.md, simulation-latest.md
 ```
 
@@ -80,7 +84,8 @@ docs/                        FLOWS.md (Mermaid), SPIKE-AUTH.md, INTEGRATION.md, 
 - Testnet only. Mainnet needs a funded relayer and a sign-in with recovery; both are post-hackathon.
 - Sign-in is an app-held key (`docs/SPIKE-AUTH.md`): the key lives in the browser that created it. Clear the site's data or change device without exporting it on the reveal screen and the account is orphaned. NEAR Auth (email login with recovery) is the planned replacement; it swaps one class behind the `LearnerSigner` interface.
 - Quiz answers travel in transaction arguments and the contract stores only their hash; the lesson text (including the answers, as any quiz) ships in the app bundle. The on-chain record is the completion, once per account, enforced by the contract.
-- Sybil: one tap = one account = one set of rewards. The relayer rate-limits per sender and funds each account with 0.01 NEAR; it does not stop someone tapping Start many times. The streak token (if present under `contracts/bloqvia-streak/`) states its own limits.
+- Sybil: one tap = one account = one set of rewards, and one account = one streak check-in per day. The relayer rate-limits per sender and funds each account with 0.01 NEAR; it does not stop someone tapping Start many times, and neither contract can tell two accounts of one person apart. The streak's community target is therefore reachable by one person with two browsers; on testnet that is the point (judges can watch a day settle), on mainnet the target and the funding policy would have to be set for a real population.
+- The streak's demo parameters (10-minute days, target 2, reward 10, burn 100, treasury 500,000) are chosen so the mechanic is visible within an hour; `docs/streak-simulation.md` shows the same rule under community-sized parameters.
 - The simulation's "players" are scripted strategies, not LLM agents, so the economy's behaviour is reproducible.
 
 ## Licence
