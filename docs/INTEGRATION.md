@@ -16,7 +16,7 @@ export const useGame: () => Game = useMock ? useMockGame : useBloqvia;
 ```
 
 - Default (Lovable preview, published site, a plain `bun run dev`): NEAR testnet
-  through the hosted relayer `https://bloqvia-production.up.railway.app` (Railway,
+  through the hosted relayer `https://relay.bloqvia.app` (Railway,
   root directory `relayer/`, variables = the names in `relayer/.env.example`).
 - Local relayer: `.env.local` with `VITE_RELAYER_URL=http://localhost:8787` and
   `cd relayer && npm run dev` — useful for its per-request log lines.
