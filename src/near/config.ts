@@ -8,7 +8,7 @@ export const NEAR_CONFIG = {
   rpcUrl: import.meta.env.VITE_NEAR_RPC_URL ?? "https://test.rpc.fastnear.com",
   coreContractId: import.meta.env.VITE_CORE_CONTRACT_ID ?? "core.bloqvia.testnet",
   passportContractId: import.meta.env.VITE_PASSPORT_CONTRACT_ID ?? "passport.bloqvia.testnet",
-  relayerUrl: (import.meta.env.VITE_RELAYER_URL ?? "http://localhost:8787").replace(/\/$/, ""),
+  relayerUrl: (import.meta.env.VITE_RELAYER_URL ?? "https://bloqvia-production.up.railway.app").replace(/\/$/, ""),
   explorerBase: import.meta.env.VITE_EXPLORER_BASE ?? "https://testnet.nearblocks.io",
 } as const;
 

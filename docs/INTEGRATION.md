@@ -11,14 +11,16 @@ interface of `src/game/types.ts` as a shared store (same shape as the mock).
 `src/game/useGame.ts` picks the implementation once per build:
 
 ```ts
-const useNear = import.meta.env.VITE_GAME_MODE === "near";
-export const useGame: () => Game = useNear ? useBloqvia : useMockGame;
+const useMock = import.meta.env.VITE_GAME_MODE === "mock";
+export const useGame: () => Game = useMock ? useMockGame : useBloqvia;
 ```
 
-- Lovable preview: no `VITE_GAME_MODE` → mock. Design work never needs the chain.
-- Local run on testnet: `.env.local` with `VITE_GAME_MODE=near` and
-  `VITE_RELAYER_URL=http://localhost:8787`, relayer running (`cd relayer && npm run dev`).
-- Hosted demo: the same two variables set in the host's env, pointing at the hosted relayer.
+- Default (Lovable preview, published site, a plain `bun run dev`): NEAR testnet
+  through the hosted relayer `https://bloqvia-production.up.railway.app` (Railway,
+  root directory `relayer/`, variables = the names in `relayer/.env.example`).
+- Local relayer: `.env.local` with `VITE_RELAYER_URL=http://localhost:8787` and
+  `cd relayer && npm run dev` — useful for its per-request log lines.
+- Mock: `VITE_GAME_MODE=mock` — design work without the chain.
 
 The dependency `near-api-js@^7.4.0` lives in the root `package.json`; the project's
 package manager is **bun** (`bun install`, `bun run dev`, `bun run build`). Do not run
