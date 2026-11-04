@@ -6,7 +6,7 @@
 import type { SignedDelegate } from "near-api-js";
 
 /** Methods a learner may call on bloqvia-core through the relayer. */
-export const ALLOWED_METHODS = ["complete_lesson", "sell_to_bloq", "buy_from_bloq", "graduate"] as const;
+export const ALLOWED_METHODS = ["complete_lesson", "sell_to_bloq", "buy_from_bloq", "graduate", "check_in"] as const;
 
 /** The same list, used when the relayer adds the learner's function-call key. */
 export const LEARNER_KEY_METHODS: string[] = [...ALLOWED_METHODS];

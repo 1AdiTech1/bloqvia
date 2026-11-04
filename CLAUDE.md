@@ -15,8 +15,9 @@ Tracks: games (primary), nfts, open. Read `README.md` first, then
 
 1. `npx skills add near/agent-skills` — the official NEAR agent skills; read
    `near-smart-contracts`, `near-api-js`, `near-cli-rs` before touching those areas.
-2. `cd contracts/bloqvia-core && cargo test` → expect 19 passed.
+2. `cd contracts/bloqvia-core && cargo test` → expect 22 passed.
    `cd ../bloqvia-passport && cargo test` → expect 6 passed.
+   `cd ../bloqvia-streak && cargo test` → expect 9 passed (Module A; on `main` only after Gate 1).
 3. `cd relayer && npm i && npm test` → expect 8 passed.
    `cd ../scripts && npm i && npm test` → expect 2 passed.
 If any of these fail on a clean clone, stop and report the full output; do not
@@ -43,6 +44,10 @@ If any of these fail on a clean clone, stop and report the full output; do not
   `git diff --cached | grep -E "ed25519:[1-9A-HJ-NP-Za-km-z]{60,}"` — it must
   print nothing (placeholders like `ed25519:REPLACE_ME` are fine; a real key is
   80+ base58 characters).
+- Before the repo goes public, scan the whole history, not just the index:
+  `git log -p --all | grep -E "ed25519:[1-9A-HJ-NP-Za-km-z]{60,}" | grep -vc "ed25519:5KqX9vTn"`
+  must print 0. (`5KqX9vTn…` is the mock's old fake key from `src/game/mockGame.ts`,
+  verified Nov 4; the current fake contains a `0`, which no real key can.)
 - Never make the repo public, push to `main` with failing tests, or run
   `deploy-testnet.sh` without Adi saying so in the conversation.
 - Rewards and prices are decided by the contract. Do not add owner methods
@@ -55,9 +60,10 @@ If any of these fail on a clean clone, stop and report the full output; do not
 
 | Task | Command | Expect |
 | --- | --- | --- |
-| Contract tests | `cargo test` in each crate | 19 / 6 passed |
+| Contract tests | `cargo test` in each crate | 22 / 6 / 9 passed |
 | Build wasm | `cargo near build non-reproducible-wasm` in each crate | `target/near/*.wasm` |
 | Deploy + seed (Adi's go-ahead) | `./contracts/deploy/deploy-testnet.sh` (reads `relayer/.env`) | `get_bloq`, `get_lessons` print |
+| Deploy Module A (Adi's go-ahead) | `./contracts/deploy/deploy-streak.sh` (after the line above) | `get_streak_contract`, `get_streak` print |
 | Relayer | `cd relayer && npm run dev` (loads `.env` via `--env-file`) | `GET /health` → `{ok:true}` |
 | Lessons changed | `cd scripts && npm run hash-lessons` then `npm run seed-lessons` | public JSON rewritten; new lessons added |
 | Tune economy | `cd scripts && npm run simulate:offline` | `docs/simulation-offline.md` |

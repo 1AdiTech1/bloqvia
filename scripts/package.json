@@ -10,7 +10,8 @@
     "simulate": "tsx simulate.ts",
     "simulate:offline": "tsx simulate.ts --offline --out docs/simulation-offline.md",
     "test": "tsx --test *.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "streak:offline": "tsx streak-sim.ts"
   },
   "dependencies": {
     "near-api-js": "^7.4.0"

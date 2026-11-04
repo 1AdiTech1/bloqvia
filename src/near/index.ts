@@ -7,4 +7,6 @@ export { createSigner, LocalKeySigner, NearAuthSigner } from "./signer";
 export type { LearnerSigner } from "./signer";
 export { useBloqvia } from "./useBloqvia";
 export type { Bloqvia, BloqviaState } from "./useBloqvia";
+export { useStreak } from "./useStreak";
+export type { StreakStore, StreakState } from "./useStreak";
 export * from "./types";
