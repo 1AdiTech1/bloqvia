@@ -215,7 +215,7 @@ const actions = {
   signOut: () => set(initial()),
   exportSecretKey: () =>
     raw.accountId
-      ? "ed25519:5KqX9vTn3bWcR8yHfL2mPzA7dE4sGjU6NkVoQx1rYtBi9MwCeZhJaFg3uDp8LsTnK2RvYbWx"
+      ? "ed25519:0mock0mock0mock0mock0mock0mock0mock0mock0mock0mock0mock0mock0mock0"
       : null,
   explorer: {
     tx: (h: string) => txUrl(h),
