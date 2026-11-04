@@ -58,7 +58,7 @@ function RevealInner() {
   const lastUrl = game.lastTx ? game.explorer.tx(game.lastTx.txHash) : accountUrl;
 
   const steps = [
-    "You signed in with your email — a NEAR account was created for you",
+    "You tapped Start — a NEAR account was created for you, and Bloqvia's relayer paid for it",
     ...LESSON_CONTENT.filter((l) => game.learner?.completed.includes(l.lesson_id)).map((l) => `Quest "${l.title}" — rewards minted to your account`),
     "Your trades with Bloq — settled by his smart contract",
     ...(graduated ? ["Graduation — your Passport was sealed"] : []),

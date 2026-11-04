@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 
 /** Three blocks assembling into the Bloqvia mark, looped. */
-export function LabLoader({ label, tone = "lime" }: { label?: string; tone?: "lime" | "navy" }) {
+export function LabLoader({ label, tone = "lime", size = 48 }: { label?: string; tone?: "lime" | "navy"; size?: number }) {
   const reduce = useReducedMotion();
   const fill = tone === "lime" ? "fill-lime" : "fill-navy";
   const blocks = [
@@ -11,7 +11,7 @@ export function LabLoader({ label, tone = "lime" }: { label?: string; tone?: "li
   ];
   return (
     <div className="flex flex-col items-center gap-3 py-2" role="status" aria-live="polite">
-      <svg width="48" height="48" viewBox="0 0 40 40" aria-hidden="true">
+      <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
         {blocks.map((b, i) => (
           <motion.rect
             key={i}

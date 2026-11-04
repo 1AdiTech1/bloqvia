@@ -46,7 +46,7 @@ export function AppChrome() {
             <span className="animate-pulse"><BloqMark size={24} tone="lime" /></span> Working on it…
           </motion.div>
         )}
-        {saved && !game.busy && (
+        {saved && !game.busy && path !== "/map" && (
           <motion.div key="saved" {...anim} className={`${pill} bg-lime font-semibold text-navy`}>
             <Check className="h-4 w-4" /> Saved on NEAR ✓
           </motion.div>

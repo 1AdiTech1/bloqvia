@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useGame } from "@/game/useGame";
 import { motion, useReducedMotion } from "framer-motion";
 import { Coins, KeyRound, Fuel, FileCheck2, BadgeCheck } from "lucide-react";
 import { Wordmark, BloqMark } from "@/components/Logo";
@@ -36,9 +37,9 @@ export function LandingPage() {
         <FinalCTA onStart={openSheet} />
       </main>
       <footer className="bg-navy py-8 text-center text-sm text-ivory/70">
-        Built on NEAR · NEAR Hackathon 2026 ·{" "}
-        <a href="https://github.com/your-org/bloqvia" target="_blank" rel="noreferrer" className="font-medium text-lime underline-offset-4 hover:underline">
-          Source code
+        Built on NEAR · NEAR testnet · NEAR Hackathon 2026 ·{" "}
+        <a href="https://github.com/1AdiTech1/bloqvia" target="_blank" rel="noreferrer" className="font-medium text-lime underline-offset-4 hover:underline">
+          Source on GitHub
         </a>
       </footer>
       <SignInSheet open={open} onClose={close} />
@@ -61,6 +62,8 @@ function Header({ onStart }: { onStart: () => void }) {
 
 function Hero({ onStart }: { onStart: () => void }) {
   const reduce = useReducedMotion();
+  const game = useGame();
+  const navigate = useNavigate();
   return (
     <section className="relative overflow-hidden bg-night pb-16 pt-28 text-ivory md:pb-24 md:pt-36">
       <div className="mx-auto grid max-w-7xl gap-10 px-5 md:px-10 lg:grid-cols-12 lg:items-end">
@@ -77,7 +80,11 @@ function Hero({ onStart }: { onStart: () => void }) {
             Discover blockchain, digital ownership and the technology changing how we interact with the world. No technical knowledge required.
           </motion.p>
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-            <CTA onClick={onStart}>Start exploring</CTA>
+            {game.accountId ? (
+              <CTA onClick={() => navigate({ to: "/map" })}>Continue to the map</CTA>
+            ) : (
+              <CTA onClick={onStart}>Start exploring</CTA>
+            )}
             <CTA variant="ghost-light" arrow={false} onClick={() => document.getElementById("discover")?.scrollIntoView()}>
               Discover Bloqvia
             </CTA>

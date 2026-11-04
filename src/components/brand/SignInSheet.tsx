@@ -1,28 +1,29 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useNavigate } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { useGame } from "@/game/useGame";
 import { CTA, ease } from "./primitives";
 import { BloqMark } from "@/components/Logo";
+import { LabLoader } from "@/components/LabLoader";
 
-/** Email sign-in bottom sheet: calls start() then goes to /map. */
+/** App-held key sign-in sheet: calls start() then goes to /map. */
 export function SignInSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const game = useGame();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const input = useRef<HTMLInputElement>(null);
+  const reduce = useReducedMotion();
+  const button = useRef<HTMLButtonElement>(null);
+  const returning = !!game.accountId;
 
   useEffect(() => {
     if (!open) return;
-    const t = setTimeout(() => input.current?.focus(), 250);
+    const t = setTimeout(() => button.current?.focus(), 250);
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => { clearTimeout(t); window.removeEventListener("keydown", onKey); };
   }, [open, onClose]);
 
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
+  const go = async () => {
     if (game.accountId) return navigate({ to: "/map" });
     try {
       await game.start();
@@ -35,14 +36,13 @@ export function SignInSheet({ open, onClose }: { open: boolean; onClose: () => v
   return (
     <AnimatePresence>
       {open && (
-        <motion.div className="fixed inset-0 z-40 flex items-end justify-center md:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <motion.div className="fixed inset-0 z-40 flex items-end justify-center md:items-center" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <button aria-label="Close" className="absolute inset-0 bg-navy/60 backdrop-blur-sm" onClick={onClose} />
-          <motion.form
+          <motion.div
             role="dialog"
             aria-modal="true"
             aria-labelledby="signin-title"
-            onSubmit={submit}
-            initial={{ y: 60, opacity: 0 }}
+            initial={reduce ? false : { y: 60, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 60, opacity: 0 }}
             transition={{ duration: 0.5, ease }}
@@ -52,23 +52,24 @@ export function SignInSheet({ open, onClose }: { open: boolean; onClose: () => v
               <X className="h-5 w-5" />
             </button>
             <BloqMark size={40} />
-            <h2 id="signin-title" className="mt-6 font-display text-3xl font-medium uppercase tracking-[-0.04em]">Begin with your email</h2>
-            <p className="mt-2 text-muted-foreground">No password, no downloads. We'll set everything up for you.</p>
-            <label htmlFor="signin-email" className="sr-only">Email</label>
-            <input
-              ref={input}
-              id="signin-email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="tap mt-6 w-full rounded-full border border-border bg-card px-5 text-base outline-none focus:border-navy"
-            />
-            <CTA type="submit" variant="navy" disabled={game.busy} className="mt-3 w-full">
-              {game.busy ? "Setting up…" : "Continue"}
-            </CTA>
-          </motion.form>
+            <h2 id="signin-title" className="mt-6 font-display text-3xl font-medium uppercase tracking-[-0.04em]">
+              {returning ? "Welcome back" : "Start without a wallet"}
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              {returning
+                ? "Your account is in this browser."
+                : "No seed phrase, no password, no downloads. We create a NEAR account for you right here in this browser and hold its key for you — you get the key at the end, with everything you earned."}
+            </p>
+            {game.busy && !returning ? (
+              <div className="mt-6 rounded-3xl bg-navy px-5 py-4">
+                <LabLoader size={32} label="Creating your NEAR account… about five seconds" />
+              </div>
+            ) : (
+              <CTA ref={button} type="button" variant="navy" onClick={go} className="mt-6 w-full">
+                {returning ? "Continue to the map" : "Create my account"}
+              </CTA>
+            )}
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
