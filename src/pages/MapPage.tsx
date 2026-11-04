@@ -10,6 +10,7 @@ import { PassportCard } from "@/components/PassportCard";
 import { QuizSheet } from "@/components/QuizSheet";
 import { ItemIcon } from "@/components/GameBits";
 import { InventoryBar } from "@/components/lab/InventoryBar";
+import { StreakCard } from "@/components/lab/StreakCard";
 import { Press, buzz, labEase } from "@/components/lab/motion";
 import { cn } from "@/lib/utils";
 
@@ -77,6 +78,7 @@ function MapInner() {
       <div className="flex flex-col gap-3">
         <PassportCard level={level} />
         <InventoryBar gold={held?.gold} items={held?.items} />
+        <StreakCard />
       </div>
 
       {completed.length === 0 && (
