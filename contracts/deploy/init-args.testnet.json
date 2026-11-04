@@ -16,5 +16,15 @@
   "passport": {
     "owner_id": "bloqvia.testnet",
     "core_id": "core.bloqvia.testnet"
+  },
+  "streak": {
+    "core_id": "core.bloqvia.testnet",
+    "params": {
+      "daily_target": 2,
+      "reward_per_checkin": "10",
+      "burn_per_miss": "100",
+      "day_length_seconds": 600
+    },
+    "treasury_seed": "500000"
   }
 }

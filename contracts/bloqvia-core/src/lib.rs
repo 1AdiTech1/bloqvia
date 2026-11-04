@@ -49,6 +49,21 @@ pub trait Passport {
     fn graduate(&mut self, account_id: AccountId);
 }
 
+/// Cross-contract interface of `bloqvia-streak` (Module A, optional).
+#[ext_contract(ext_streak)]
+pub trait StreakContract {
+    fn check_in_for(&mut self, account_id: AccountId);
+}
+
+/// `check_in` forwards to the streak contract, which may settle up to 30
+/// missed days (a burn each) in one call, so it gets a generous budget.
+const GAS_STREAK_CALL: Gas = Gas::from_tgas(30);
+
+/// The streak contract's id lives under its own storage key, outside the
+/// contract struct, so adding Module A did not change the deployed state
+/// layout (no migration on redeploy).
+const STREAK_ID_KEY: &[u8] = b"streak_id";
+
 #[derive(BorshStorageKey)]
 #[near(serializers = [borsh])]
 enum StorageKey {
@@ -196,6 +211,35 @@ impl Contract {
         ext_passport::ext(self.passport_id.clone())
             .with_static_gas(GAS_PASSPORT_CALL)
             .mint_passport(account_id)
+    }
+
+    /// Owner: point `check_in` at the streak contract (Module A). This is
+    /// configuration, not a power over balances: core never holds or moves
+    /// streak tokens, and the streak contract accepts calls only from core.
+    pub fn set_streak_contract(&mut self, account_id: Option<AccountId>) {
+        self.require_owner();
+        match account_id {
+            Some(id) => {
+                env::storage_write(STREAK_ID_KEY, id.as_bytes());
+            }
+            None => {
+                env::storage_remove(STREAK_ID_KEY);
+            }
+        }
+    }
+
+    /// Learner: one check-in per day on the streak contract. Forwarded with
+    /// the learner's own account id, so the streak contract knows who it was
+    /// without trusting the relayer.
+    pub fn check_in(&mut self) -> Promise {
+        let learner = env::predecessor_account_id();
+        require!(self.learners.contains(&learner), "Not a registered learner");
+        let streak_id = self
+            .get_streak_contract()
+            .unwrap_or_else(|| env::panic_str("Streak is not enabled"));
+        ext_streak::ext(streak_id)
+            .with_static_gas(GAS_STREAK_CALL)
+            .check_in_for(learner)
     }
 
     // ------------------------------------------------------------------
@@ -446,6 +490,13 @@ impl Contract {
 
     pub fn get_passport_contract(&self) -> AccountId {
         self.passport_id.clone()
+    }
+
+    /// The streak contract, if Module A is enabled.
+    pub fn get_streak_contract(&self) -> Option<AccountId> {
+        env::storage_read(STREAK_ID_KEY)
+            .and_then(|b| String::from_utf8(b).ok())
+            .and_then(|s| s.parse().ok())
     }
 }
 
@@ -775,5 +826,37 @@ mod tests {
         assert_eq!(answer_hash("l1", "Public Key"), answer_hash("l1", "  public key\n"));
         assert_ne!(answer_hash("l1", "public key"), answer_hash("l2", "public key"));
         assert_eq!(answer_hash("l1", "x").len(), 64);
+    }
+
+    #[test]
+    fn streak_is_off_until_the_owner_sets_it() {
+        let mut c = deployed(); // alice is registered here
+        assert_eq!(c.get_streak_contract(), None);
+        as_caller(owner());
+        c.set_streak_contract(Some(accounts(4)));
+        assert_eq!(c.get_streak_contract(), Some(accounts(4)));
+        as_caller(alice());
+        let _p = c.check_in(); // builds the forward; the promise itself runs on chain
+        as_caller(owner());
+        c.set_streak_contract(None);
+        assert_eq!(c.get_streak_contract(), None);
+    }
+
+    #[test]
+    #[should_panic(expected = "Streak is not enabled")]
+    fn check_in_panics_while_streak_is_off() {
+        let mut c = deployed();
+        as_caller(alice());
+        c.check_in();
+    }
+
+    #[test]
+    #[should_panic(expected = "Not a registered learner")]
+    fn check_in_needs_a_registered_learner() {
+        let mut c = deployed();
+        as_caller(owner());
+        c.set_streak_contract(Some(accounts(4)));
+        as_caller(accounts(5)); // never registered
+        c.check_in();
     }
 }
