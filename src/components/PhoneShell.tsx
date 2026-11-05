@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { BadgeCheck, Map, Store } from "lucide-react";
+import { BadgeCheck, Map, Store, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /** Centered 480px column on the navy night background. */
@@ -16,6 +16,7 @@ export function PhoneShell({ children, nav = false }: { children: ReactNode; nav
 const tabs = [
   { to: "/map", label: "Map", icon: Map },
   { to: "/shop", label: "Shop", icon: Store },
+  { to: "/cohort", label: "Cohort", icon: Users },
   { to: "/passport", label: "Passport", icon: BadgeCheck },
 ] as const;
 
@@ -27,7 +28,7 @@ function BottomNav() {
           <Link
             key={to}
             to={to}
-            className="tap flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-lavender transition-colors active:scale-[0.98]"
+            className="tap flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-lavender transition-colors active:scale-[0.98]"
             activeProps={{ className: "bg-lime !text-navy" }}
           >
             <Icon className="h-5 w-5" />

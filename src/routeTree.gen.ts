@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BrandRouteImport } from './routes/brand'
+import { Route as CohortRouteImport } from './routes/cohort'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as PassportRouteImport } from './routes/passport'
 import { Route as RevealRouteImport } from './routes/reveal'
@@ -24,6 +25,11 @@ const IndexRoute = IndexRouteImport.update({
 const BrandRoute = BrandRouteImport.update({
   id: '/brand',
   path: '/brand',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CohortRoute = CohortRouteImport.update({
+  id: '/cohort',
+  path: '/cohort',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MapRoute = MapRouteImport.update({
@@ -50,6 +56,7 @@ const ShopRoute = ShopRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/brand': typeof BrandRoute
+  '/cohort': typeof CohortRoute
   '/map': typeof MapRoute
   '/passport': typeof PassportRoute
   '/reveal': typeof RevealRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/brand': typeof BrandRoute
+  '/cohort': typeof CohortRoute
   '/map': typeof MapRoute
   '/passport': typeof PassportRoute
   '/reveal': typeof RevealRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/brand': typeof BrandRoute
+  '/cohort': typeof CohortRoute
   '/map': typeof MapRoute
   '/passport': typeof PassportRoute
   '/reveal': typeof RevealRoute
@@ -74,15 +83,25 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/brand' | '/map' | '/passport' | '/reveal' | '/shop'
+  fullPaths:
+    '/' | '/brand' | '/cohort' | '/map' | '/passport' | '/reveal' | '/shop'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/brand' | '/map' | '/passport' | '/reveal' | '/shop'
-  id: '__root__' | '/' | '/brand' | '/map' | '/passport' | '/reveal' | '/shop'
+  to: '/' | '/brand' | '/cohort' | '/map' | '/passport' | '/reveal' | '/shop'
+  id:
+    | '__root__'
+    | '/'
+    | '/brand'
+    | '/cohort'
+    | '/map'
+    | '/passport'
+    | '/reveal'
+    | '/shop'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BrandRoute: typeof BrandRoute
+  CohortRoute: typeof CohortRoute
   MapRoute: typeof MapRoute
   PassportRoute: typeof PassportRoute
   RevealRoute: typeof RevealRoute
@@ -103,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/brand'
       fullPath: '/brand'
       preLoaderRoute: typeof BrandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cohort': {
+      id: '/cohort'
+      path: '/cohort'
+      fullPath: '/cohort'
+      preLoaderRoute: typeof CohortRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/map': {
@@ -139,6 +165,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BrandRoute: BrandRoute,
+  CohortRoute: CohortRoute,
   MapRoute: MapRoute,
   PassportRoute: PassportRoute,
   RevealRoute: RevealRoute,
