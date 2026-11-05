@@ -64,6 +64,20 @@ const GAS_STREAK_CALL: Gas = Gas::from_tgas(30);
 /// layout (no migration on redeploy).
 const STREAK_ID_KEY: &[u8] = b"streak_id";
 
+/// Cross-contract interface of `bloqvia-bounties` (Module B, optional).
+#[ext_contract(ext_bounties)]
+pub trait BountiesContract {
+    fn claim_for(&mut self, account_id: AccountId, bounty_id: u64);
+}
+
+/// `claim_bounty` forwards to the board, which reads this contract back,
+/// then pays, or files a DAO proposal, in its callbacks: a long chain, so it
+/// gets a large budget. The relayer allows up to 150 TGas for this call.
+const GAS_BOUNTY_CALL: Gas = Gas::from_tgas(120);
+
+/// Same pattern as `STREAK_ID_KEY`: outside the struct, no migration.
+const BOUNTIES_ID_KEY: &[u8] = b"bounties_id";
+
 /// Lessons whose id starts with this are **bonus quests** (the daily quests
 /// written by the NEAR AI agent). They pay gold and an item like any lesson,
 /// but do not count toward the Passport level, which is reserved for the
@@ -262,6 +276,35 @@ impl Contract {
         ext_streak::ext(streak_id)
             .with_static_gas(GAS_STREAK_CALL)
             .check_in_for(learner)
+    }
+
+    /// Owner: point `claim_bounty` at the bounty board (Module B).
+    /// Configuration only: core holds no NEAR for bounties and the board
+    /// accepts `claim_for` only from core.
+    pub fn set_bounties_contract(&mut self, account_id: Option<AccountId>) {
+        self.require_owner();
+        match account_id {
+            Some(id) => {
+                env::storage_write(BOUNTIES_ID_KEY, id.as_bytes());
+            }
+            None => {
+                env::storage_remove(BOUNTIES_ID_KEY);
+            }
+        }
+    }
+
+    /// Learner: claim a bounty on the board. Forwarded with the learner's own
+    /// account id; the board then reads `get_learner` here to check the
+    /// requirement, so nothing the relayer sends can change who qualified.
+    pub fn claim_bounty(&mut self, bounty_id: u64) -> Promise {
+        let learner = env::predecessor_account_id();
+        require!(self.learners.contains(&learner), "Not a registered learner");
+        let bounties_id = self
+            .get_bounties_contract()
+            .unwrap_or_else(|| env::panic_str("Bounties are not enabled"));
+        ext_bounties::ext(bounties_id)
+            .with_static_gas(GAS_BOUNTY_CALL)
+            .claim_for(learner, bounty_id)
     }
 
     // ------------------------------------------------------------------
@@ -555,6 +598,12 @@ impl Contract {
     /// The streak contract, if Module A is enabled.
     pub fn get_streak_contract(&self) -> Option<AccountId> {
         env::storage_read(STREAK_ID_KEY)
+            .and_then(|b| String::from_utf8(b).ok())
+            .and_then(|s| s.parse().ok())
+    }
+
+    pub fn get_bounties_contract(&self) -> Option<AccountId> {
+        env::storage_read(BOUNTIES_ID_KEY)
             .and_then(|b| String::from_utf8(b).ok())
             .and_then(|s| s.parse().ok())
     }
@@ -915,7 +964,39 @@ mod tests {
     fn check_in_panics_while_streak_is_off() {
         let mut c = deployed();
         as_caller(alice());
-        c.check_in();
+        let _ = c.check_in();
+    }
+
+    #[test]
+    fn bounties_contract_is_owner_set_and_forwarded() {
+        let mut c = deployed();
+        assert_eq!(c.get_bounties_contract(), None);
+        as_caller(owner());
+        c.set_bounties_contract(Some(accounts(5)));
+        assert_eq!(c.get_bounties_contract(), Some(accounts(5)));
+        as_caller(alice());
+        let _ = c.claim_bounty(1); // a Promise to accounts(5).claim_for(alice, 1)
+        as_caller(owner());
+        c.set_bounties_contract(None);
+        assert_eq!(c.get_bounties_contract(), None);
+    }
+
+    #[test]
+    #[should_panic(expected = "Bounties are not enabled")]
+    fn claim_bounty_panics_while_bounties_are_off() {
+        let mut c = deployed();
+        as_caller(alice());
+        let _ = c.claim_bounty(1);
+    }
+
+    #[test]
+    #[should_panic(expected = "Not a registered learner")]
+    fn claim_bounty_needs_a_registered_learner() {
+        let mut c = deployed();
+        as_caller(owner());
+        c.set_bounties_contract(Some(accounts(5)));
+        as_caller(accounts(5));
+        let _ = c.claim_bounty(1);
     }
 
     #[test]
@@ -925,7 +1006,7 @@ mod tests {
         as_caller(owner());
         c.set_streak_contract(Some(accounts(4)));
         as_caller(accounts(5)); // never registered
-        c.check_in();
+        let _ = c.check_in();
     }
 
     fn add_daily(c: &mut Contract, id: &str) {

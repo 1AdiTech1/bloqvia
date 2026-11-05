@@ -26,5 +26,65 @@
       "day_length_seconds": 600
     },
     "treasury_seed": "500000"
+  },
+  "dao": {
+    "$comment": "Sputnik DAO v2 from the testnet factory (create-dao.sh). council is filled from COUNCIL=... at run time; bond 0.1 NEAR so the board can file medium claims.",
+    "name": "bloqvia-dao",
+    "purpose": "Bloqvia cohort: funds the bounty board and approves learner bounties by vote",
+    "proposal_bond": "100000000000000000000000",
+    "proposal_period": "604800000000000",
+    "threshold": [
+      1,
+      2
+    ]
+  },
+  "bounties": {
+    "owner_id": "bloqvia.testnet",
+    "dao_id": "bloqvia-dao.sputnik-v2.testnet",
+    "core_id": "core.bloqvia.testnet",
+    "small_cap": "500000000000000000000000",
+    "proposal_bond": "100000000000000000000000",
+    "seed": [
+      {
+        "title": "First graduate of the week",
+        "description": "Graduate: finish the three founding quests and seal your Passport at Bloq's shop. The chain checks it; the board pays at once.",
+        "tier": "Small",
+        "reward": "100000000000000000000000",
+        "requirement": "Graduated",
+        "max_claims": 20
+      },
+      {
+        "title": "Today's quest, done",
+        "description": "Complete the daily quest written by the AI agent (daily-2026-11-05). Paid by the board from the DAO's allowance.",
+        "tier": "Small",
+        "reward": "50000000000000000000000",
+        "requirement": {
+          "QuestCompleted": {
+            "lesson_id": "daily-2026-11-05"
+          }
+        },
+        "max_claims": 50
+      },
+      {
+        "title": "Teach one newcomer",
+        "description": "Reach Passport level 3, then write a three-line explanation of gas for a newcomer and post it as a comment on the DAO proposal the board files for you. The council pays with one vote.",
+        "tier": "Medium",
+        "reward": "1000000000000000000000000",
+        "requirement": {
+          "PassportLevel": {
+            "min": 3
+          }
+        },
+        "max_claims": 5
+      },
+      {
+        "title": "Run a Bloqvia session",
+        "description": "Graduates only: host a 30-minute session for newcomers and bring three of them to the map. Large reward: the board certifies that you qualified; the payment goes through the DAO's normal proposal.",
+        "tier": "Large",
+        "reward": "5000000000000000000000000",
+        "requirement": "Graduated",
+        "max_claims": 3
+      }
+    ]
   }
 }
