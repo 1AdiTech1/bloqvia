@@ -8,17 +8,18 @@ redesign; implement, run, verify, report.
 ## What this is
 
 A mobile-first web app that teaches Web3 by playing it on NEAR testnet.
-Tracks: games (primary), nfts, open. Read `README.md` first, then
+Tracks: games (primary), nfts, memecoins, social, open. Read `README.md` first, then
 `docs/INTEGRATION.md`, `docs/FLOWS.md`, `contracts/README.md`.
 
 ## First run on a fresh clone (once)
 
 1. `npx skills add near/agent-skills` — the official NEAR agent skills; read
    `near-smart-contracts`, `near-api-js`, `near-cli-rs` before touching those areas.
-2. `cd contracts/bloqvia-core && cargo test` → expect 27 passed.
+2. `cd contracts/bloqvia-core && cargo test` → expect 30 passed.
    `cd ../bloqvia-passport && cargo test` → expect 6 passed.
-   `cd ../bloqvia-streak && cargo test` → expect 9 passed (Module A; on `main` only after Gate 1).
-3. `cd relayer && npm i && npm test` → expect 20 passed.
+   `cd ../bloqvia-streak && cargo test` → expect 9 passed (Module A, merged).
+   `cd ../bloqvia-bounties && cargo test` → expect 14 passed (Module B, merged Nov 5 after its on-chain proof).
+3. `cd relayer && npm i && npm test` → expect 21 passed.
    `cd ../scripts && npm i && npm test` → expect 2 passed.
 If any of these fail on a clean clone, stop and report the full output; do not
 "fix" by changing tests.
@@ -33,8 +34,9 @@ If any of these fail on a clean clone, stop and report the full output; do not
 - Adi (with you) owns `contracts/`, `relayer/`, `scripts/`, `src/near/`,
   `src/content/`, `docs/`, `README.md`, `LICENSE`.
 - Modules A (`contracts/bloqvia-streak/`) and B (`contracts/bloqvia-bounties/`)
-  live on branches `module-a` / `module-b` and merge to `main` only through
-  their gate (see the roadmap). Never mention an unmerged module in `README.md`.
+  were built on branches `module-a` / `module-b` and merged to `main` through
+  their gates (Nov 4 and Nov 5). New work goes on `main` or a short-lived branch.
+  Never mention unmerged work in `README.md`.
 
 ## Rules that protect the submission
 
@@ -63,16 +65,19 @@ If any of these fail on a clean clone, stop and report the full output; do not
 
 | Task | Command | Expect |
 | --- | --- | --- |
-| Contract tests | `cargo test` in each crate | 27 / 6 / 9 passed |
+| Contract tests | `cargo test` in each crate | 30 / 6 / 9 / 14 passed |
 | Build wasm | `cargo near build non-reproducible-wasm` in each crate | `target/near/*.wasm` |
 | Deploy + seed (Adi's go-ahead) | `./contracts/deploy/deploy-testnet.sh` (reads `relayer/.env`) | `get_bloq`, `get_lessons` print |
 | Deploy Module A (Adi's go-ahead) | `./contracts/deploy/deploy-streak.sh` (after the line above) | `get_streak_contract`, `get_streak` print |
+| Create the DAO (Adi's go-ahead, once) | `COUNCIL=a.testnet,b.testnet ./contracts/deploy/create-dao.sh` | `get_policy` prints; `bloqvia-dao.sputnik-v2.testnet` exists |
+| Deploy Module B (Adi's go-ahead) | `./contracts/deploy/deploy-bounties.sh` (after deploy-testnet.sh) | `get_bounties_contract`, `get_config`, `get_bounties` print |
 | Relayer | `cd relayer && npm run dev` (loads `.env` via `--env-file`) | `GET /health` → `{ok:true}`; with `NEAR_AI_API_KEY` set, the daily quest agent seeds today's quest at start |
 | Daily quest now (Adi's go-ahead) | `curl -s -X POST localhost:8787/admin/quest -H "x-admin-token: $ADMIN_TOKEN"` | `{ seeded: true, lessonId: "daily-…" }`; `GET /quests` lists it |
 | Ask Bloq | `curl -s -X POST localhost:8787/ask -H "Content-Type: application/json" -d '{"question":"Who pays my gas?"}'` | `{ answer, generated_by }`; `[ask] …` log line; 503 without `NEAR_AI_API_KEY` |
 | Lessons changed | `cd scripts && npm run hash-lessons` then `npm run seed-lessons` | public JSON rewritten; new lessons added |
 | Tune economy | `cd scripts && npm run simulate:offline` | `docs/simulation-offline.md` |
 | Live proof | `cd scripts && npm run simulate -- --players 4 --rounds 3` | prices move in `get_bloq` |
+| Module B proof | `cd scripts && npm run bounty:claim -- --relayer http://localhost:8787 --bounty 1` | a fresh learner graduates and claims; `claim: Paid`, balance up by the reward |
 | View on chain | `near contract call-function as-read-only core.bloqvia.testnet get_bloq json-args '{}' network-config testnet now` | JSON |
 
 ## How to report

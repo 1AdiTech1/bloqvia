@@ -19,7 +19,9 @@ export const GOLD = "gold";
 export const ITEMS = ["key-fragment", "fuel-cell", "contract-seal"] as const;
 export type ItemId = (typeof ITEMS)[number];
 
-/** Gas attached to every learner call (graduate needs ~25; the relayer caps at 50). */
+/** Gas attached to every learner call (graduate needs ~25; the relayer caps at 150). */
 export const CALL_GAS_TGAS = "40";
+/** claim_bounty: core → board → core.get_learner → pay or DAO add_proposal → callback. */
+export const CLAIM_GAS_TGAS = "140";
 /** Blocks a signed delegate stays valid (~1 block/second). */
 export const DELEGATE_TTL_BLOCKS = 100;

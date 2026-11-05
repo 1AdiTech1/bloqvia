@@ -11,7 +11,8 @@
     "simulate:offline": "tsx simulate.ts --offline --out docs/simulation-offline.md",
     "test": "tsx --test *.test.ts",
     "typecheck": "tsc --noEmit",
-    "streak:offline": "tsx streak-sim.ts"
+    "streak:offline": "tsx streak-sim.ts",
+    "bounty:claim": "tsx bounty-claim.ts"
   },
   "dependencies": {
     "near-api-js": "^7.4.0"

@@ -6,13 +6,23 @@
 import type { SignedDelegate } from "near-api-js";
 
 /** Methods a learner may call on bloqvia-core through the relayer. */
-export const ALLOWED_METHODS = ["complete_lesson", "sell_to_bloq", "buy_from_bloq", "graduate", "check_in"] as const;
+export const ALLOWED_METHODS = ["complete_lesson", "sell_to_bloq", "buy_from_bloq", "graduate", "check_in", "claim_bounty"] as const;
 
-/** The same list, used when the relayer adds the learner's function-call key. */
+/**
+ * The same list, baked into the learner's function-call key at creation. The
+ * key stays limited to these methods for the account's whole life (a key
+ * cannot add methods to itself), so an account created before a method was
+ * added here cannot call it; the list is never made open-ended because the
+ * NEP-245 transfer methods on core must stay out of a learner's reach.
+ */
 export const LEARNER_KEY_METHODS: string[] = [...ALLOWED_METHODS];
 
-/** Hard cap per relayed call. graduate needs ~25 TGas (own work + 15 TGas of Passport calls). */
-export const MAX_GAS_PER_ACTION = 50_000_000_000_000n;
+/**
+ * Hard cap per relayed call. graduate needs ~25 TGas (own work + 15 TGas of
+ * Passport calls); claim_bounty forwards to the board, which reads core back
+ * and may file a DAO proposal, ~120 TGas end to end.
+ */
+export const MAX_GAS_PER_ACTION = 150_000_000_000_000n;
 
 /** Learners never attach NEAR. A non-zero deposit is a bug or an attack. */
 export const MAX_DEPOSIT = 0n;
