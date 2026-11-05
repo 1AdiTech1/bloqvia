@@ -69,6 +69,7 @@ If any of these fail on a clean clone, stop and report the full output; do not
 | Deploy Module A (Adi's go-ahead) | `./contracts/deploy/deploy-streak.sh` (after the line above) | `get_streak_contract`, `get_streak` print |
 | Relayer | `cd relayer && npm run dev` (loads `.env` via `--env-file`) | `GET /health` → `{ok:true}`; with `NEAR_AI_API_KEY` set, the daily quest agent seeds today's quest at start |
 | Daily quest now (Adi's go-ahead) | `curl -s -X POST localhost:8787/admin/quest -H "x-admin-token: $ADMIN_TOKEN"` | `{ seeded: true, lessonId: "daily-…" }`; `GET /quests` lists it |
+| Ask Bloq | `curl -s -X POST localhost:8787/ask -H "Content-Type: application/json" -d '{"question":"Who pays my gas?"}'` | `{ answer, generated_by }`; `[ask] …` log line; 503 without `NEAR_AI_API_KEY` |
 | Lessons changed | `cd scripts && npm run hash-lessons` then `npm run seed-lessons` | public JSON rewritten; new lessons added |
 | Tune economy | `cd scripts && npm run simulate:offline` | `docs/simulation-offline.md` |
 | Live proof | `cd scripts && npm run simulate -- --players 4 --rounds 3` | prices move in `get_bloq` |

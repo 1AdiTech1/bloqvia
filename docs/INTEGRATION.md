@@ -82,6 +82,18 @@ not change `b.learner.level`; the card is hidden in mock mode (`IS_MOCK` from
 The map shows `DailyQuestCard` (prompt 7) and `QuizSheet` resolves
 `daily ?? founding` content.
 
+## Ask Bloq (NEAR AI, text only)
+
+```tsx
+const bloq = useAskBloq();            // from "@/near"; local state per sheet
+await bloq.ask("Who pays my gas?", lessonId);   // lessonId optional: the quest on screen
+bloq.answer / bloq.provenance ({ model, chat_id, signature_kind }) / bloq.loading / bloq.error / bloq.reset()
+```
+
+`AskBloqSheet` + `AskBloqButton` (prompt 8) are the UI; hidden in mock mode.
+The relayer grounds the model in `relayer/src/ask.ts` `KNOWLEDGE` — when a
+game rule changes, change it there too.
+
 ## Amounts
 
 All token amounts cross the wire as decimal strings (`"100"`). Gold and items
