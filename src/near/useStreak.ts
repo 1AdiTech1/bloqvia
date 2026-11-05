@@ -111,12 +111,42 @@ const subscribe = (l: () => void) => {
   };
 };
 
+/**
+ * Background poll while a StreakCard is mounted and the tab is visible: other
+ * players' check-ins show up without a reload, and a day rollover that landed
+ * in the last second of a day (the chain reports seconds_left_in_day = 0 for
+ * the old day) heals on the next tick instead of sticking at 00:00.
+ */
+const POLL_MS = 30_000;
+let mounted = 0;
+let poll: ReturnType<typeof setInterval> | null = null;
+
+function startPolling(): void {
+  if (poll) return;
+  poll = setInterval(() => {
+    if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+    if (state.busy) return;
+    void refresh();
+  }, POLL_MS);
+}
+function stopPolling(): void {
+  if (poll) clearInterval(poll);
+  poll = null;
+}
+
 export function useStreak(): StreakStore {
   const value = useSyncExternalStore(subscribe, () => snapshot, () => SERVER_SNAPSHOT);
   useEffect(() => {
-    if (initialised) return;
-    initialised = true;
-    void refresh();
+    if (!initialised) {
+      initialised = true;
+      void refresh();
+    }
+    mounted += 1;
+    startPolling();
+    return () => {
+      mounted -= 1;
+      if (mounted === 0) stopPolling();
+    };
   }, []);
   return value;
 }
