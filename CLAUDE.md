@@ -15,10 +15,10 @@ Tracks: games (primary), nfts, open. Read `README.md` first, then
 
 1. `npx skills add near/agent-skills` — the official NEAR agent skills; read
    `near-smart-contracts`, `near-api-js`, `near-cli-rs` before touching those areas.
-2. `cd contracts/bloqvia-core && cargo test` → expect 22 passed.
+2. `cd contracts/bloqvia-core && cargo test` → expect 27 passed.
    `cd ../bloqvia-passport && cargo test` → expect 6 passed.
    `cd ../bloqvia-streak && cargo test` → expect 9 passed (Module A; on `main` only after Gate 1).
-3. `cd relayer && npm i && npm test` → expect 8 passed.
+3. `cd relayer && npm i && npm test` → expect 16 passed.
    `cd ../scripts && npm i && npm test` → expect 2 passed.
 If any of these fail on a clean clone, stop and report the full output; do not
 "fix" by changing tests.
@@ -52,6 +52,9 @@ If any of these fail on a clean clone, stop and report the full output; do not
   `deploy-testnet.sh` without Adi saying so in the conversation.
 - Rewards and prices are decided by the contract. Do not add owner methods
   that mint, move balances or change prices; the judges read for exactly that.
+- The AI (NEAR AI Cloud) only writes text: daily quests (hashed and seeded
+  like any lesson) and Ask Bloq answers. No model output may ever reach a
+  reward, a price or a balance. Keep it that way.
 - The README is written for an AI judge: "do X, see Y" steps, no marketing.
   Every step in it must be true on a clean clone the day it is written.
 - Pre-hackathon code is baseline; everything we write is new in this window.
@@ -60,11 +63,12 @@ If any of these fail on a clean clone, stop and report the full output; do not
 
 | Task | Command | Expect |
 | --- | --- | --- |
-| Contract tests | `cargo test` in each crate | 22 / 6 / 9 passed |
+| Contract tests | `cargo test` in each crate | 27 / 6 / 9 passed |
 | Build wasm | `cargo near build non-reproducible-wasm` in each crate | `target/near/*.wasm` |
 | Deploy + seed (Adi's go-ahead) | `./contracts/deploy/deploy-testnet.sh` (reads `relayer/.env`) | `get_bloq`, `get_lessons` print |
 | Deploy Module A (Adi's go-ahead) | `./contracts/deploy/deploy-streak.sh` (after the line above) | `get_streak_contract`, `get_streak` print |
-| Relayer | `cd relayer && npm run dev` (loads `.env` via `--env-file`) | `GET /health` → `{ok:true}` |
+| Relayer | `cd relayer && npm run dev` (loads `.env` via `--env-file`) | `GET /health` → `{ok:true}`; with `NEAR_AI_API_KEY` set, the daily quest agent seeds today's quest at start |
+| Daily quest now (Adi's go-ahead) | `curl -s -X POST localhost:8787/admin/quest -H "x-admin-token: $ADMIN_TOKEN"` | `{ seeded: true, lessonId: "daily-…" }`; `GET /quests` lists it |
 | Lessons changed | `cd scripts && npm run hash-lessons` then `npm run seed-lessons` | public JSON rewritten; new lessons added |
 | Tune economy | `cd scripts && npm run simulate:offline` | `docs/simulation-offline.md` |
 | Live proof | `cd scripts && npm run simulate -- --players 4 --rounds 3` | prices move in `get_bloq` |

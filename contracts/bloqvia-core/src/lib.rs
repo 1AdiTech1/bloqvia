@@ -24,7 +24,7 @@ use near_sdk::json_types::U128;
 use near_sdk::store::{IterableMap, LookupMap, LookupSet};
 use near_sdk::{
     env, ext_contract, near, require, AccountId, AccountIdRef, BorshStorageKey, Gas,
-    PanicOnDefault, Promise, PromiseError,
+    PanicOnDefault, Promise, PromiseError, PromiseOrValue,
 };
 use near_sdk_contract_tools::mt::metadata::{BaseMetadata, ContractMetadata, TokenMetadata};
 use near_sdk_contract_tools::mt::{
@@ -64,6 +64,19 @@ const GAS_STREAK_CALL: Gas = Gas::from_tgas(30);
 /// layout (no migration on redeploy).
 const STREAK_ID_KEY: &[u8] = b"streak_id";
 
+/// Lessons whose id starts with this are **bonus quests** (the daily quests
+/// written by the NEAR AI agent). They pay gold and an item like any lesson,
+/// but do not count toward the Passport level, which is reserved for the
+/// three founding quests, so the shop and graduation rules are unchanged.
+pub const BONUS_PREFIX: &str = "daily-";
+
+/// Public lesson text (concept, question, options, explanation, and the
+/// AI signature for generated quests) lives under its own storage key per
+/// lesson, outside the contract struct, so adding it needed no migration.
+const LESSON_TEXT_PREFIX: &[u8] = b"lt:";
+/// Hard cap on a lesson text blob (JSON), to keep storage costs predictable.
+pub const MAX_LESSON_TEXT_BYTES: usize = 4096;
+
 #[derive(BorshStorageKey)]
 #[near(serializers = [borsh])]
 enum StorageKey {
@@ -84,6 +97,15 @@ pub struct Lesson {
     pub reward_gold: U128,
     pub reward_item: String,
     pub reward_item_amount: U128,
+}
+
+/// A lesson plus its public text blob, if the owner attached one.
+#[near(serializers = [json])]
+#[derive(Clone, Debug)]
+pub struct LessonWithText {
+    pub lesson: Lesson,
+    pub bonus: bool,
+    pub text: Option<String>,
 }
 
 /// Bloq's current price for one item.
@@ -249,7 +271,7 @@ impl Contract {
     /// Completes a lesson. The caller is the learner. The contract hashes the
     /// answer, compares it to the stored hash, refuses a second completion,
     /// mints the fixed reward and levels the Passport.
-    pub fn complete_lesson(&mut self, lesson_id: String, answer: String) -> Promise {
+    pub fn complete_lesson(&mut self, lesson_id: String, answer: String) -> PromiseOrValue<()> {
         let learner = env::predecessor_account_id();
         require!(self.learners.contains(&learner), "Not a registered learner");
 
@@ -267,8 +289,14 @@ impl Contract {
         let key = completion_key(&learner, &lesson_id);
         require!(self.completions.insert(key), "Lesson already completed");
 
-        let level = self.completed_count.get(&learner).copied().unwrap_or(0) + 1;
-        self.completed_count.insert(learner.clone(), level);
+        let bonus = is_bonus(&lesson_id);
+        let level = if bonus {
+            self.completed_count.get(&learner).copied().unwrap_or(0)
+        } else {
+            let next = self.completed_count.get(&learner).copied().unwrap_or(0) + 1;
+            self.completed_count.insert(learner.clone(), next);
+            next
+        };
 
         let learner_ref: &AccountIdRef = &learner;
         self.mint_to(GOLD, lesson.reward_gold.0, learner_ref, "lesson reward");
@@ -285,13 +313,28 @@ impl Contract {
                 "account_id": learner,
                 "lesson_id": lesson_id,
                 "level": level,
+                "bonus": bonus,
                 "reward_gold": lesson.reward_gold,
                 "reward_item": lesson.reward_item,
                 "reward_item_amount": lesson.reward_item_amount,
             }),
         );
 
-        self.sync_passport(learner, level)
+        if bonus {
+            PromiseOrValue::Value(())
+        } else {
+            PromiseOrValue::Promise(self.sync_passport(learner, level))
+        }
+    }
+
+    /// Owner: attach the public text of a lesson (JSON: concept, question,
+    /// options, explanation, and for generated quests the model id and the
+    /// NEAR AI signature). Readable by anyone; the answer is never in it.
+    pub fn set_lesson_text(&mut self, lesson_id: String, text: String) {
+        self.require_owner();
+        require!(self.lessons.contains_key(&lesson_id), "Unknown lesson");
+        require!(text.len() <= MAX_LESSON_TEXT_BYTES, "Lesson text too long");
+        env::storage_write(&lesson_text_key(&lesson_id), text.as_bytes());
     }
 
     /// Sells `amount` of an item to Bloq at his current buy price, unit by unit.
@@ -484,6 +527,23 @@ impl Contract {
         self.completions.contains(&completion_key(&account_id, &lesson_id))
     }
 
+    pub fn get_lesson_text(&self, lesson_id: String) -> Option<String> {
+        env::storage_read(&lesson_text_key(&lesson_id)).and_then(|b| String::from_utf8(b).ok())
+    }
+
+    /// Every lesson with its public text (None for the founding three, whose
+    /// text ships with the app). Bonus quests are the ones starting `daily-`.
+    pub fn get_lessons_with_text(&self) -> Vec<LessonWithText> {
+        self.lessons
+            .values()
+            .map(|l| LessonWithText {
+                bonus: is_bonus(&l.lesson_id),
+                text: self.get_lesson_text(l.lesson_id.clone()),
+                lesson: l.clone(),
+            })
+            .collect()
+    }
+
     pub fn get_owner(&self) -> AccountId {
         self.owner_id.clone()
     }
@@ -572,6 +632,14 @@ impl Contract {
                     .on_passport_synced(account_id, level),
             )
     }
+}
+
+fn is_bonus(lesson_id: &str) -> bool {
+    lesson_id.starts_with(BONUS_PREFIX)
+}
+
+fn lesson_text_key(lesson_id: &str) -> Vec<u8> {
+    [LESSON_TEXT_PREFIX, lesson_id.as_bytes()].concat()
 }
 
 fn is_item(token_id: &str) -> bool {
@@ -858,5 +926,79 @@ mod tests {
         c.set_streak_contract(Some(accounts(4)));
         as_caller(accounts(5)); // never registered
         c.check_in();
+    }
+
+    fn add_daily(c: &mut Contract, id: &str) {
+        as_caller(owner());
+        c.add_lesson(Lesson {
+            lesson_id: id.into(),
+            title: "Daily quest".into(),
+            answer_hash: answer_hash(id, "True"),
+            reward_gold: U128(50),
+            reward_item: ITEMS[1].to_string(),
+            reward_item_amount: U128(1),
+        });
+    }
+
+    #[test]
+    fn bonus_quest_pays_but_does_not_level() {
+        let mut c = deployed();
+        add_daily(&mut c, "daily-2026-11-06");
+        as_caller(alice());
+        let _ = c.complete_lesson("lesson-1".into(), "public key".into());
+        as_caller(alice());
+        let r = c.complete_lesson("daily-2026-11-06".into(), "true".into());
+        assert!(matches!(r, PromiseOrValue::Value(())), "a bonus quest does not call the Passport");
+        let v = c.get_learner(alice());
+        assert_eq!(v.level, 1, "level counts founding quests only");
+        assert_eq!(v.gold.0, 150);
+        assert_eq!(c.balance_of(ITEMS[1], &alice()), 1);
+        assert!(v.completed.contains(&"daily-2026-11-06".to_string()));
+        assert!(c.is_completed(alice(), "daily-2026-11-06".into()));
+    }
+
+    #[test]
+    #[should_panic(expected = "Lesson already completed")]
+    fn bonus_quest_is_once_per_account_too() {
+        let mut c = deployed();
+        add_daily(&mut c, "daily-2026-11-06");
+        as_caller(alice());
+        let _ = c.complete_lesson("daily-2026-11-06".into(), "true".into());
+        as_caller(alice());
+        let _ = c.complete_lesson("daily-2026-11-06".into(), "true".into());
+    }
+
+    #[test]
+    fn lesson_text_is_owner_set_and_public() {
+        let mut c = deployed();
+        add_daily(&mut c, "daily-2026-11-06");
+        assert_eq!(c.get_lesson_text("daily-2026-11-06".into()), None);
+        as_caller(owner());
+        c.set_lesson_text("daily-2026-11-06".into(), r#"{"question":"Is NEAR a blockchain?","options":["True","False"]}"#.into());
+        assert!(c.get_lesson_text("daily-2026-11-06".into()).unwrap().contains("Is NEAR"));
+        let all = c.get_lessons_with_text();
+        assert_eq!(all.len(), 4);
+        let daily = all.iter().find(|l| l.lesson.lesson_id == "daily-2026-11-06").unwrap();
+        assert!(daily.bonus);
+        assert!(daily.text.is_some());
+        assert!(all.iter().filter(|l| !l.bonus).all(|l| l.text.is_none()));
+    }
+
+    #[test]
+    #[should_panic(expected = "Only the owner")]
+    fn lesson_text_needs_owner() {
+        let mut c = deployed();
+        add_daily(&mut c, "daily-2026-11-06");
+        as_caller(alice());
+        c.set_lesson_text("daily-2026-11-06".into(), "{}".into());
+    }
+
+    #[test]
+    #[should_panic(expected = "Lesson text too long")]
+    fn lesson_text_is_capped() {
+        let mut c = deployed();
+        add_daily(&mut c, "daily-2026-11-06");
+        as_caller(owner());
+        c.set_lesson_text("daily-2026-11-06".into(), "x".repeat(MAX_LESSON_TEXT_BYTES + 1));
     }
 }

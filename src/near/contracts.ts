@@ -6,7 +6,7 @@ import { JsonRpcProvider, actions, teraToGas } from "near-api-js";
 import { CALL_GAS_TGAS, NEAR_CONFIG } from "./config";
 import { relayerApi } from "./relayer";
 import type { LearnerSigner } from "./signer";
-import type { BloqView, ItemPrice, LearnerView, LessonPublic, MemberView, PassportView, PricingParams, RelayResult, StreakView } from "./types";
+import type { BloqView, ItemPrice, LearnerView, LessonPublic, LessonWithText, MemberView, PassportView, PricingParams, RelayResult, StreakView } from "./types";
 
 const provider = new JsonRpcProvider({ url: NEAR_CONFIG.rpcUrl });
 
@@ -22,6 +22,8 @@ export const views = {
   learner: (accountId: string) => view<LearnerView>(NEAR_CONFIG.coreContractId, "get_learner", { account_id: accountId }),
   passport: (accountId: string) =>
     view<PassportView | null>(NEAR_CONFIG.passportContractId, "get_passport", { account_id: accountId }),
+  /** Every lesson with its public text; bonus (daily) quests carry the AI provenance. */
+  lessonsWithText: () => view<LessonWithText[]>(NEAR_CONFIG.coreContractId, "get_lessons_with_text"),
   /** Module A: null when core has no streak contract set (module not deployed). */
   streakContract: () => view<string | null>(NEAR_CONFIG.coreContractId, "get_streak_contract"),
   streak: (streakId: string = NEAR_CONFIG.streakContractId) => view<StreakView>(streakId, "get_streak"),

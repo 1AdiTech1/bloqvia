@@ -73,3 +73,18 @@ export interface StreakView {
   params: StreakParams; last: DayResult | null; history: DayResult[];
 }
 export interface MemberView { account_id: string; checked_in_today: boolean; last_checkin_day: number | null; total_checkins: number; balance: string; }
+
+// ---- Daily quests (NEAR AI agent) ----
+export interface LessonWithText { lesson: LessonPublic; bonus: boolean; text: string | null; }
+export interface AiSignature { text: string; signature: string; signing_address: string; signing_algo: string; signature_kind: string; }
+export interface GeneratedBy {
+  provider: string; model: string; chat_id: string; request_sha256: string; response_sha256: string;
+  signature: AiSignature | null; generated_at: string;
+}
+/** Same shape as src/game/content.ts LessonContent minus `answer`, plus provenance. */
+export interface DailyQuest {
+  lesson_id: string; title: string; topic: string; concept: string; question: string; options: string[];
+  success: string; near_reveal: string; explanation: string;
+  reward_gold: string; reward_item: string; reward_item_amount: string;
+  generated_by: GeneratedBy;
+}

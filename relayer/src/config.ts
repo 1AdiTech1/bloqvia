@@ -9,6 +9,10 @@ export interface RelayerConfig {
   learnerFundingNear: string;
   corsOrigins: string[];
   port: number;
+  /** NEAR AI Cloud (optional). Without a key the daily quest and Ask Bloq are off. */
+  ai: { apiKey: string; baseUrl: string; questModel: string; chatModel: string } | null;
+  /** Shared secret for POST /admin/*; without it those routes are off. */
+  adminToken: string | null;
 }
 
 function required(name: string): string {
@@ -36,5 +40,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): RelayerConfig 
     learnerFundingNear: env.LEARNER_FUNDING_NEAR ?? "0.01",
     corsOrigins: (env.CORS_ORIGINS ?? "http://localhost:5173").split(",").map((s) => s.trim()).filter(Boolean),
     port: Number(env.PORT ?? 8787),
+    ai: env.NEAR_AI_API_KEY?.trim()
+      ? {
+          apiKey: env.NEAR_AI_API_KEY.trim(),
+          baseUrl: (env.NEAR_AI_BASE_URL ?? "https://cloud-api.near.ai/v1").replace(/\/$/, ""),
+          questModel: env.NEAR_AI_MODEL_QUEST ?? "Qwen/Qwen3.6-35B-A3B-FP8",
+          chatModel: env.NEAR_AI_MODEL_CHAT ?? "z-ai/glm-5.3-flash",
+        }
+      : null,
+    adminToken: env.ADMIN_TOKEN?.trim() || null,
   };
 }

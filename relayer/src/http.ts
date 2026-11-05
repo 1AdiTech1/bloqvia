@@ -4,6 +4,8 @@
  *   GET  /health             -> { ok, relayer, core, passport, network }
  *   POST /register           -> { publicKey } | { accountId }   -> RegisterResult
  *   POST /relay              -> { payload: <base64 SignedDelegate> } -> RelayResult
+ *   GET  /quests             -> every lesson with its public text (bonus quests carry the AI signature)
+ *   POST /admin/quest        -> { date?: "YYYY-MM-DD" } + header x-admin-token -> generate + seed now
  *
  * Wrap `handle()` in a Vercel/Netlify function if you host it serverless.
  */
@@ -11,7 +13,8 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { registerExistingAccount, registerLearner } from "./accounts.js";
 import { PolicyError } from "./policy.js";
 import { relay } from "./relay.js";
-import type { NearContext } from "./near.js";
+import { generateDailyQuest } from "./quests.js";
+import { view, type NearContext } from "./near.js";
 
 async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
   const chunks: Buffer[] = [];
@@ -58,7 +61,23 @@ export async function handle(ctx: NearContext, req: IncomingMessage, res: Server
         relayer: ctx.config.relayerAccountId,
         core: ctx.config.coreContractId,
         passport: ctx.config.passportContractId,
+        ai: ctx.config.ai ? { questModel: ctx.config.ai.questModel, chatModel: ctx.config.ai.chatModel } : null,
       }, origin, allowed);
+    }
+
+    if (req.method === "GET" && url.pathname === "/quests") {
+      const lessons = await view<unknown[]>(ctx, ctx.config.coreContractId, "get_lessons_with_text");
+      return send(res, 200, { lessons }, origin, allowed);
+    }
+
+    if (req.method === "POST" && url.pathname === "/admin/quest") {
+      if (!ctx.config.adminToken || req.headers["x-admin-token"] !== ctx.config.adminToken) throw new PolicyError("Forbidden", 403);
+      if (!ctx.config.ai) throw new PolicyError("NEAR_AI_API_KEY is not set", 503);
+      const body = await readJson(req);
+      const date = typeof body.date === "string" ? new Date(`${body.date}T12:00:00Z`) : new Date();
+      if (Number.isNaN(date.getTime())) throw new PolicyError("date must be YYYY-MM-DD");
+      const result = await generateDailyQuest(ctx, ctx.config.ai, ctx.config.ai.questModel, date);
+      return send(res, 200, result, origin, allowed);
     }
 
     if (req.method === "POST" && url.pathname === "/register") {
