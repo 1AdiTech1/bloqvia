@@ -3,11 +3,15 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check, ExternalLink, RotateCcw, X } from "lucide-react";
 import { useGame } from "@/game/useGame";
+import { useDailyQuests, type GeneratedBy } from "@/near";
+import { formatQuestDate } from "./lab/DailyQuestCard";
 import { LESSON_CONTENT, type LessonContent } from "@/game/content";
 import { RewardChip, ItemIcon } from "./GameBits";
 import { LabLoader } from "./LabLoader";
 import { Press, labEase } from "./lab/motion";
 import { cn } from "@/lib/utils";
+
+type SheetLesson = Omit<LessonContent, "answer"> & { answer?: string; explanation?: string; generated_by?: GeneratedBy };
 
 type Flight = { id: string; from: DOMRect; to: DOMRect };
 
@@ -18,8 +22,14 @@ type Flight = { id: string; from: DOMRect; to: DOMRect };
 export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: string; onClose: () => void; onLanded: () => void; saved: boolean }) {
   const game = useGame();
   const reduce = useReducedMotion();
+  const daily = useDailyQuests().quests.find((q) => q.lesson_id === lessonId);
   const index = LESSON_CONTENT.findIndex((l) => l.lesson_id === lessonId);
-  const lesson = LESSON_CONTENT[index] as LessonContent & { explanation?: string };
+  const founding = LESSON_CONTENT[index];
+  const lesson: SheetLesson | undefined = daily ?? founding;
+  useEffect(() => {
+    if (!lesson) onClose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson]);
   const [picked, setPicked] = useState<string | null>(null);
   const [wrong, setWrong] = useState<string[]>([]);
   const [shake, setShake] = useState(0);
@@ -28,7 +38,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
   const firstOption = useRef<HTMLButtonElement>(null);
 
   const choose = async (opt: string) => {
-    if (game.busy) return;
+    if (game.busy || !lesson) return;
     setPicked(opt);
     try {
       await game.completeLesson(lesson.lesson_id, opt);
@@ -43,7 +53,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
 
   // Rewards land: chips fly to the inventory bar, then hand over to the map.
   useEffect(() => {
-    if (!done) return;
+    if (!done || !lesson) return;
     window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
     const ids = ["gold", lesson.reward_item];
     const t1 = setTimeout(() => {
@@ -61,6 +71,8 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done]);
 
+  if (!lesson) return null;
+  const gen = daily?.generated_by;
   const lastWrong = wrong.length > 0 && !done;
 
   return (
@@ -80,7 +92,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
 
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-lavender-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]">{lesson.topic}</span>
-          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Chapter {index + 1}</span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{daily ? `Daily quest · ${formatQuestDate(daily.lesson_id.slice(6))}` : `Chapter ${index + 1}`}</span>
         </div>
 
         {!done ? (
@@ -150,6 +162,21 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
             <div className="mt-4 rounded-3xl bg-navy p-5 text-ivory">
               <h3 className="font-display text-lg font-medium text-lime">What just happened on NEAR</h3>
               <p className="mt-2 text-sm leading-relaxed text-ivory/80">{lesson.near_reveal}</p>
+              {gen && (
+                <div className="mt-4 border-t border-ivory/15 pt-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-lavender">Who wrote this quest</p>
+                  <p className="mt-2 text-sm leading-relaxed text-ivory/80">
+                    An AI agent (<code className="font-mono text-xs">{gen.model}</code>) on NEAR AI Cloud wrote it; the relayer hashed the answer and stored the quest on the Bloqvia contract, so your answer was checked by the chain, not by the AI.
+                  </p>
+                  {gen.signature?.signature_kind === "provider_tee" && (
+                    <p className="mt-2 text-sm leading-relaxed text-ivory/70">Signed inside a TEE (hardware enclave) by the model's provider.</p>
+                  )}
+                  <p className="mt-2 break-all font-mono text-xs text-ivory/70">chat {gen.chat_id}</p>
+                  <a href="https://cloud.near.ai/verify" target="_blank" rel="noreferrer" className="tap mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-lime underline-offset-4 hover:underline">
+                    Verify the signature <ExternalLink className="h-4 w-4" />
+                  </a>
+                </div>
+              )}
               {game.lastTx && (
                 <a href={game.lastTx.url} target="_blank" rel="noreferrer" className="tap mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-lime underline-offset-4 hover:underline">
                   See it on the explorer <ExternalLink className="h-4 w-4" />

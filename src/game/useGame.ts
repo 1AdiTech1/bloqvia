@@ -11,3 +11,6 @@ import { useBloqvia } from "../near";
 const useMock = import.meta.env.VITE_GAME_MODE === "mock";
 
 export const useGame: () => Game = useMock ? useMockGame : useBloqvia;
+
+/** True when this build plays the in-memory mock instead of the chain. */
+export const IS_MOCK = useMock;

@@ -11,6 +11,7 @@ import { QuizSheet } from "@/components/QuizSheet";
 import { ItemIcon } from "@/components/GameBits";
 import { InventoryBar } from "@/components/lab/InventoryBar";
 import { StreakCard } from "@/components/lab/StreakCard";
+import { DailyQuestCard } from "@/components/lab/DailyQuestCard";
 import { Press, buzz, labEase } from "@/components/lab/motion";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,7 @@ function MapInner() {
 
   const learner = game.learner!;
   const completed = learner.completed;
+  const foundingDone = completed.filter((id) => !id.startsWith("daily-"));
   const level = heldLevel ?? learner.level;
 
   const openQuest = (id: string) => {
@@ -79,9 +81,10 @@ function MapInner() {
         <PassportCard level={level} />
         <InventoryBar gold={held?.gold} items={held?.items} />
         <StreakCard />
+        <DailyQuestCard onPlay={openQuest} />
       </div>
 
-      {completed.length === 0 && (
+      {foundingDone.length === 0 && (
         <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-lime">Three quests. One merchant. A Passport that's yours.</p>
       )}
 
@@ -104,7 +107,7 @@ function MapInner() {
 
         {LESSON_CONTENT.map((l, i) => {
           const done = completed.includes(l.lesson_id);
-          const available = !completed.includes(l.lesson_id) && i === completed.length;
+          const available = !completed.includes(l.lesson_id) && i === foundingDone.length;
           const pos = STOPS[i] ?? { x: 50, y: 0 };
           return (
             <div key={l.lesson_id} className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2" style={{ left: `${pos.x}%`, top: pos.y }}>
