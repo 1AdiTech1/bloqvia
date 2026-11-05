@@ -10,7 +10,7 @@ export interface RelayerConfig {
   corsOrigins: string[];
   port: number;
   /** NEAR AI Cloud (optional). Without a key the daily quest and Ask Bloq are off. */
-  ai: { apiKey: string; baseUrl: string; questModel: string; chatModel: string } | null;
+  ai: { apiKey: string; baseUrl: string; questModel: string; chatModel: string; askDailyCap: number } | null;
   /** Shared secret for POST /admin/*; without it those routes are off. */
   adminToken: string | null;
 }
@@ -46,6 +46,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): RelayerConfig 
           baseUrl: (env.NEAR_AI_BASE_URL ?? "https://cloud-api.near.ai/v1").replace(/\/$/, ""),
           questModel: env.NEAR_AI_MODEL_QUEST ?? "Qwen/Qwen3.6-35B-A3B-FP8",
           chatModel: env.NEAR_AI_MODEL_CHAT ?? "z-ai/glm-5.3-flash",
+          askDailyCap: Number(env.ASK_DAILY_CAP ?? 400),
         }
       : null,
     adminToken: env.ADMIN_TOKEN?.trim() || null,

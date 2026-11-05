@@ -6,6 +6,7 @@
  *   POST /relay              -> { payload: <base64 SignedDelegate> } -> RelayResult
  *   GET  /quests             -> every lesson with its public text (bonus quests carry the AI signature)
  *   POST /admin/quest        -> { date?: "YYYY-MM-DD" } + header x-admin-token -> generate + seed now
+ *   POST /ask                -> { question, lessonId?, accountId? } -> { answer, generated_by }  (Ask Bloq, grounded, signed)
  *
  * Wrap `handle()` in a Vercel/Netlify function if you host it serverless.
  */
@@ -14,6 +15,7 @@ import { registerExistingAccount, registerLearner } from "./accounts.js";
 import { PolicyError } from "./policy.js";
 import { relay } from "./relay.js";
 import { generateDailyQuest } from "./quests.js";
+import { createAskBloq, type AskBloq } from "./ask.js";
 import { view, type NearContext } from "./near.js";
 
 async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
@@ -47,6 +49,16 @@ function send(res: ServerResponse, status: number, body: unknown, origin: string
   res.end(JSON.stringify(body));
 }
 
+let askBloq: AskBloq | null = null;
+
+/** Who is asking: the learner account when it looks like one, else the client IP. */
+export function askerKey(req: IncomingMessage, accountId: unknown): string {
+  if (typeof accountId === "string" && /^[a-z0-9._-]{2,64}\.(testnet|near)$/.test(accountId)) return accountId;
+  const fwd = req.headers["x-forwarded-for"];
+  const ip = (Array.isArray(fwd) ? fwd[0] : fwd)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+  return `ip:${ip}`;
+}
+
 export async function handle(ctx: NearContext, req: IncomingMessage, res: ServerResponse): Promise<void> {
   const origin = req.headers.origin;
   const allowed = ctx.config.corsOrigins;
@@ -77,6 +89,17 @@ export async function handle(ctx: NearContext, req: IncomingMessage, res: Server
       const date = typeof body.date === "string" ? new Date(`${body.date}T12:00:00Z`) : new Date();
       if (Number.isNaN(date.getTime())) throw new PolicyError("date must be YYYY-MM-DD");
       const result = await generateDailyQuest(ctx, ctx.config.ai, ctx.config.ai.questModel, date);
+      return send(res, 200, result, origin, allowed);
+    }
+
+    if (req.method === "POST" && url.pathname === "/ask") {
+      if (!ctx.config.ai) throw new PolicyError("Ask Bloq is off: NEAR_AI_API_KEY is not set", 503);
+      askBloq ??= createAskBloq(ctx, ctx.config.ai, ctx.config.ai.chatModel, { dailyCap: ctx.config.ai.askDailyCap });
+      const body = await readJson(req);
+      const result = await askBloq.ask(
+        { question: body.question as string, lessonId: typeof body.lessonId === "string" ? body.lessonId : undefined },
+        askerKey(req, body.accountId),
+      );
       return send(res, 200, result, origin, allowed);
     }
 

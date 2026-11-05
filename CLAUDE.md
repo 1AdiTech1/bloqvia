@@ -18,7 +18,7 @@ Tracks: games (primary), nfts, open. Read `README.md` first, then
 2. `cd contracts/bloqvia-core && cargo test` → expect 27 passed.
    `cd ../bloqvia-passport && cargo test` → expect 6 passed.
    `cd ../bloqvia-streak && cargo test` → expect 9 passed (Module A; on `main` only after Gate 1).
-3. `cd relayer && npm i && npm test` → expect 16 passed.
+3. `cd relayer && npm i && npm test` → expect 20 passed.
    `cd ../scripts && npm i && npm test` → expect 2 passed.
 If any of these fail on a clean clone, stop and report the full output; do not
 "fix" by changing tests.

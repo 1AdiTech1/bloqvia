@@ -1,6 +1,6 @@
 /** HTTP client for the Bloqvia relayer. The relayer pays every fee. */
 import { NEAR_CONFIG } from "./config";
-import type { RegisterResult, RelayResult } from "./types";
+import type { AskResult, RegisterResult, RelayResult } from "./types";
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${NEAR_CONFIG.relayerUrl}${path}`, {
@@ -20,6 +20,9 @@ export const relayerApi = {
   registerAccount: (accountId: string) => post<RegisterResult>("/register", { accountId }),
   /** Relays one allow-listed signed delegate. */
   relay: (payload: string) => post<RelayResult>("/relay", { payload }),
+  /** Ask Bloq: a grounded, signed answer from the model on NEAR AI Cloud. Text only. */
+  ask: (question: string, lessonId?: string, accountId?: string | null) =>
+    post<AskResult>("/ask", { question, lessonId, accountId: accountId ?? undefined }),
   health: async () => {
     const res = await fetch(`${NEAR_CONFIG.relayerUrl}/health`);
     return (await res.json()) as { ok: boolean; core: string; passport: string; network: string };

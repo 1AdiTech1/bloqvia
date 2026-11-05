@@ -88,3 +88,9 @@ export interface DailyQuest {
   reward_gold: string; reward_item: string; reward_item_amount: string;
   generated_by: GeneratedBy;
 }
+
+/** POST /ask — what the model said and how to verify that it said it. */
+export interface AskResult {
+  answer: string;
+  generated_by: { provider: string; model: string; chat_id: string; signature_kind: string | null };
+}
