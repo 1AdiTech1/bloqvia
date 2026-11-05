@@ -32,11 +32,46 @@ Mobile variant: same scene recomposed vertically, the lime block in the upper ha
 
 > Three small sculptural objects on a navy plinth, evenly spaced: a lime key fragment, a lavender fuel cell shaped like a rounded capsule, and an ivory seal shaped like a rounded square with a soft embossed ring; behind them a tall slim passport-like navy card with one lime edge. Museum-display lighting. [style block]
 
+## 6. The daily quest — 1:1 (new Nov 5: a quest a day, written by an AI agent, verified by the chain)
+
+> A sealed chamber of translucent lavender glass, block-shaped, standing on a navy plinth; inside it a small sculptural writing machine made of rounded blocks, its lime stylus mid-stroke. From a narrow slot at the front a single ivory page is emerging, closed with a lime wax seal shaped like a rounded square. Morning light from the right. The scene says: written inside a sealed box, then handed out signed. [style block]
+
+Use: the landing section about the daily quest; the X post about NEAR AI. The glass chamber is the TEE, the seal is the signature; never show text on the page.
+
+## 7. Ask Bloq — 1:1 (new Nov 5)
+
+> Bloq (the companion below, same design) sitting on a low navy step with an open book made of two ivory blocks on his lap, a single lavender speech-shape floating above his head: a rounded block with one soft corner pulled out like a tail, empty, no text. Calm, attentive posture, the book lit by a warm key light. The scene says: he answers from the book, not from thin air. [style block]
+
+Use: the Ask Bloq sheet header (small), the landing page.
+
+## 8. The cohort — 3:2 (new Nov 5: a DAO owns the bounty board)
+
+> A round council table made of one wide navy block, three rounded lavender seats around it (one empty), and beside the table a tall ivory pegboard with four small lime and coral blocks pinned to it at different heights like notices. On the table a small sculptural vault, its door opening because two lime keys turn at once. Soft spotlight on the table, the pegboard half in shadow. The scene says: the group decides, the board posts the tasks, the vault opens by vote. [style block]
+
+Use: the landing section about the cohort; the submission deck. The empty seat is deliberate (a seat for the next graduate).
+
+## 9. The community streak — 3:2 (Module A, missing from the first set)
+
+> A row of nine rounded blocks laid out like days on a calendar, viewed slightly from above: the first six lit from within in lime, the seventh coral and dim, the last two navy and unlit; a small warm flame hovering above the sixth block. Nothing else in the frame but a satin navy floor and soft haze. The scene says: days made together, one missed, the streak counting again. [style block]
+
+Use: the streak card's info panel (small), the landing page.
+
+## Three tiers — 3:1 strip (optional, for the README or the deck)
+
+> Three plinths side by side, left to right small, medium, large: on the small one a tiny lime block vending machine dropping a coin-sized rounded block into a tray; on the medium one a single lavender seat with a raised rounded hand-shape beside a small vault; on the large one the full round council table from the cohort image, miniature. Same lighting across all three. [style block]
+
 ## Bloq, the companion — 1:1 (for the Lab section and later the shop)
 
 > A friendly non-human companion made of three stacked rounded blocks, navy body with a lime top block that reads as a head, two small ivory eyes, no mouth, a lavender scarf-like band; standing in three-quarter view with calm posture. Sophisticated character design, not a mascot for children. [style block]
 
-Keep Bloq's design consistent across generations: reuse the seed/reference image once you have one you like.
+Keep Bloq's design consistent across generations: reuse the seed/reference image once you have one you like. In Venice, generate the hero first, lock its seed, and reuse that seed with Bloq's prompt and with 7 (Ask Bloq) so the companion's proportions stay the same across the three images.
+
+## Landing page lines that go with the new images (for Maria, one line each)
+
+- Daily quest: "A new quest every morning, written by an AI agent on NEAR AI Cloud and signed inside a secure enclave; the chain checks your answer, not the AI."
+- Ask Bloq: "Stuck? Ask Bloq. He answers in plain words from the game's own rules — and never hands out quest answers."
+- The cohort: "Graduates join a cohort with its own treasury: a DAO posts bounties, the chain checks who qualified, and rewards are paid by vote or at once."
+- Streak: "Check in once a day. When the community makes the day's target, everyone who showed up is minted a STREAK token; miss it and the treasury burns."
 
 ## Logo mark reference (if you want an image to hand to Lovable)
 
