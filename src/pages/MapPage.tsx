@@ -14,6 +14,7 @@ import { StreakCard } from "@/components/lab/StreakCard";
 import { DailyQuestCard } from "@/components/lab/DailyQuestCard";
 import { Press, buzz, labEase } from "@/components/lab/motion";
 import { cn } from "@/lib/utils";
+import { AskBloqButton, AskBloqSheet } from "@/components/lab/AskBloqSheet";
 
 // Positions along the winding path (percent of width, px from top). Index 3 = shop door.
 const STOPS: { x: number; y: number }[] = [
@@ -43,6 +44,7 @@ function MapInner() {
   const [held, setHeld] = useState<Held | null>(null);
   const [heldLevel, setHeldLevel] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
+  const [asking, setAsking] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const learner = game.learner!;
@@ -166,12 +168,14 @@ function MapInner() {
           ) : (
             <p className="text-sm text-lavender">Finish the three quests to meet Bloq</p>
           )}
+          <AskBloqButton label="Ask Bloq a question" onClick={() => setAsking(true)} className="text-lavender" />
         </div>
       </div>
 
       <AnimatePresence>
         {open && <QuizSheet key={open} lessonId={open} onClose={close} onLanded={landed} saved={saved} />}
       </AnimatePresence>
+      <AskBloqSheet open={asking} onClose={() => setAsking(false)} context="map" />
     </>
   );
 }

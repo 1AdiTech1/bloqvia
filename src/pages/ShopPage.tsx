@@ -12,6 +12,7 @@ import { InventoryBar } from "@/components/lab/InventoryBar";
 import { AnimatedNumber, Press, buzz, labEase } from "@/components/lab/motion";
 import type { ItemPrice } from "@/game/types";
 import { cn } from "@/lib/utils";
+import { AskBloqButton, AskBloqSheet } from "@/components/lab/AskBloqSheet";
 
 export function ShopPage() {
   return (
@@ -44,6 +45,7 @@ function ShopInner() {
     { ok: Number(learner.gold) >= fee, label: `Fee: ${fee} BloqGold` },
   ];
 
+  const [asking, setAsking] = useState(false);
   const onTraded = (id: string) => { setLastItem(id); setTrades((t) => t + 1); buzz(); };
 
   const doGraduate = async () => {
@@ -83,6 +85,10 @@ function ShopInner() {
           <TradeCard key={p.token_id} price={p} have={itemAmount(learner.items, p.token_id)} gold={Number(learner.gold)} shopOpen={bloq.shop_open} onTraded={onTraded} />
         ))}
       </div>
+      <div className="mt-3 flex justify-center">
+        <AskBloqButton label="Ask Bloq why prices move" onClick={() => setAsking(true)} className="text-lavender" />
+      </div>
+      <AskBloqSheet open={asking} onClose={() => setAsking(false)} context="shop" />
 
       <section className="mt-8 rounded-3xl bg-ivory p-6 text-navy shadow-lift">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Final step</p>

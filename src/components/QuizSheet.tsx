@@ -10,6 +10,7 @@ import { RewardChip, ItemIcon } from "./GameBits";
 import { LabLoader } from "./LabLoader";
 import { Press, labEase } from "./lab/motion";
 import { cn } from "@/lib/utils";
+import { AskBloqButton, AskBloqSheet } from "./lab/AskBloqSheet";
 
 type SheetLesson = Omit<LessonContent, "answer"> & { answer?: string; explanation?: string; generated_by?: GeneratedBy };
 
@@ -36,6 +37,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
   const [done, setDone] = useState(false);
   const [flights, setFlights] = useState<Flight[]>([]);
   const firstOption = useRef<HTMLButtonElement>(null);
+  const [asking, setAsking] = useState(false);
 
   const choose = async (opt: string) => {
     if (game.busy || !lesson) return;
@@ -86,6 +88,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
         className="relative max-h-[80vh] w-full max-w-[480px] overflow-y-auto rounded-t-[2rem] bg-ivory px-6 pb-8 pt-4 text-navy shadow-lift"
       >
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-navy/15" />
+        <AskBloqSheet open={asking && !done} onClose={() => setAsking(false)} lessonId={lesson.lesson_id} context="quiz" />
         <Press onClick={onClose} aria-label="Close" className="absolute right-3 top-3 flex items-center justify-center rounded-full text-navy/60">
           <X className="h-5 w-5" />
         </Press>
@@ -99,6 +102,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
           <>
             <h2 className="mt-4 font-display text-3xl font-medium uppercase leading-none tracking-[-0.04em]">{lesson.title}</h2>
             <p className="mt-4 text-[15px] leading-relaxed text-navy/80">{lesson.concept}</p>
+            <AskBloqButton label="Ask Bloq about this" onClick={() => setAsking(true)} className="-ml-3 mt-2 text-navy/70" />
             <p className="mt-6 font-display text-xl font-medium leading-snug">{lesson.question}</p>
             <motion.div
               key={shake}
