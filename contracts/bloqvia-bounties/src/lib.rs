@@ -484,7 +484,7 @@ pub fn unmet(req: &Requirement, l: &LearnerView) -> Option<&'static str> {
 
 fn proposal_text(b: &Bounty, claimer: &AccountId) -> String {
     format!(
-        "Bloqvia bounty #{} \"{}\" ({:?}): {} qualified on chain ({}). Pay {} NEAR.",
+        "Bloqvia bounty #{} \"{}\" ({:?}): {} qualified on chain ({}). Pay {}.",
         b.id,
         b.title,
         b.tier,

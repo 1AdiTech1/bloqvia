@@ -72,6 +72,10 @@ sequenceDiagram
 | Nov 8–10 | Slack: polish, the "normal proposal" path demoed, X post material | — |
 | Nov 11, 13:00 | Merge to `main` or stay unmerged | — |
 
+## Status
+
+- **Nov 5, 14:20 — gate passed, two days early.** DAO created (`bloqvia-dao.sputnik-v2.testnet`, council `bloqvia.testnet`, bond 0.1 NEAR, threshold 1 of 2); board deployed with four seed bounties; `scripts/bounty-claim.ts --bounty 1` → `claim: Paid`, learner 0.01 → 0.11 NEAR (tx `GMNgxm1A…`); `--bounty 3` → proposal #0 filed by the board, approved with one `act_proposal` vote, DAO paid 1 NEAR. Merged to `main` the same afternoon so Lovable can build the board page (prompt 9).
+
 ## Open questions
 
 - [ ] Is the Sputnik v2 testnet factory (`sputnik-v2.testnet`) live? (`get_dao_list` view — Adi runs it Nov 5.)

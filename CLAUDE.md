@@ -8,7 +8,7 @@ redesign; implement, run, verify, report.
 ## What this is
 
 A mobile-first web app that teaches Web3 by playing it on NEAR testnet.
-Tracks: games (primary), nfts, open. Read `README.md` first, then
+Tracks: games (primary), nfts, memecoins, social, open. Read `README.md` first, then
 `docs/INTEGRATION.md`, `docs/FLOWS.md`, `contracts/README.md`.
 
 ## First run on a fresh clone (once)
@@ -18,7 +18,7 @@ Tracks: games (primary), nfts, open. Read `README.md` first, then
 2. `cd contracts/bloqvia-core && cargo test` → expect 30 passed.
    `cd ../bloqvia-passport && cargo test` → expect 6 passed.
    `cd ../bloqvia-streak && cargo test` → expect 9 passed (Module A, merged).
-   `cd ../bloqvia-bounties && cargo test` → expect 14 passed (Module B; on `main` only after its gate).
+   `cd ../bloqvia-bounties && cargo test` → expect 14 passed (Module B, merged Nov 5 after its on-chain proof).
 3. `cd relayer && npm i && npm test` → expect 21 passed.
    `cd ../scripts && npm i && npm test` → expect 2 passed.
 If any of these fail on a clean clone, stop and report the full output; do not
@@ -34,8 +34,9 @@ If any of these fail on a clean clone, stop and report the full output; do not
 - Adi (with you) owns `contracts/`, `relayer/`, `scripts/`, `src/near/`,
   `src/content/`, `docs/`, `README.md`, `LICENSE`.
 - Modules A (`contracts/bloqvia-streak/`) and B (`contracts/bloqvia-bounties/`)
-  live on branches `module-a` / `module-b` and merge to `main` only through
-  their gate (see the roadmap). Never mention an unmerged module in `README.md`.
+  were built on branches `module-a` / `module-b` and merged to `main` through
+  their gates (Nov 4 and Nov 5). New work goes on `main` or a short-lived branch.
+  Never mention unmerged work in `README.md`.
 
 ## Rules that protect the submission
 
