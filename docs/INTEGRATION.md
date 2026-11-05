@@ -64,6 +64,24 @@ await b.graduate();
 contract's panic message verbatim (e.g. "Wrong answer", "Shop closed: …"),
 which is what the UI shows. `b.clearError()` exists on the chain store only.
 
+## Daily quests (written by the NEAR AI agent)
+
+```tsx
+const { quests, loading, error } = useDailyQuests();   // from "@/near"; chain only, no relayer
+// quests[0] is the newest: lesson_id "daily-YYYY-MM-DD", title, topic, concept, question,
+// options, success, near_reveal, explanation, reward_gold/reward_item/reward_item_amount,
+// and generated_by { model, chat_id, request_sha256, response_sha256, signature, generated_at }.
+// There is no answer field; play it with the normal b.completeLesson(lesson_id, option).
+```
+
+Rules the screens must keep: a daily id can appear in `b.learner.completed`,
+so founding-quest availability is computed from
+`completed.filter((id) => !id.startsWith("daily-"))`; a daily completion does
+not change `b.learner.level`; the card is hidden in mock mode (`IS_MOCK` from
+`src/game/useGame.ts`) because the mock cannot verify an AI-written answer.
+The map shows `DailyQuestCard` (prompt 7) and `QuizSheet` resolves
+`daily ?? founding` content.
+
 ## Amounts
 
 All token amounts cross the wire as decimal strings (`"100"`). Gold and items
