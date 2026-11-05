@@ -10,6 +10,8 @@ export type { Bloqvia, BloqviaState } from "./useBloqvia";
 export { useStreak } from "./useStreak";
 export { useDailyQuests, parseDailyQuest } from "./useDailyQuests";
 export { useAskBloq } from "./useAskBloq";
+export { useBounties, unmet as bountyUnmet, statusLabel as claimStatusLabel } from "./useBounties";
+export type { BountiesStore, BountiesState, DaoView } from "./useBounties";
 export type { AskBloqState } from "./useAskBloq";
 export type { DailyQuestsStore, DailyQuestsState } from "./useDailyQuests";
 export type { StreakStore, StreakState } from "./useStreak";

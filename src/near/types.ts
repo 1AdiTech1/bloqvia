@@ -94,3 +94,29 @@ export interface AskResult {
   answer: string;
   generated_by: { provider: string; model: string; chat_id: string; signature_kind: string | null };
 }
+
+// ---------- Module B: bounties + DAO ----------
+export type Tier = "Small" | "Medium" | "Large";
+export type Requirement = { PassportLevel: { min: number } } | { QuestCompleted: { lesson_id: string } } | "Graduated";
+export type ClaimStatus = "Pending" | "Paid" | { Proposed: { proposal_id: number } } | "Eligible";
+export interface Bounty {
+  id: number; title: string; description: string; tier: Tier;
+  /** yoctoNEAR as a string. */
+  reward: string;
+  requirement: Requirement; max_claims: number; claims: number; open: boolean; created_by: string; created_ns: number;
+}
+export interface Claim { bounty_id: number; account_id: string; status: ClaimStatus; at_ns: number; }
+export interface BountiesConfig {
+  owner_id: string; dao_id: string; core_id: string; small_cap: string; proposal_bond: string; allowance: string; paid_total: string; bounties_total: number;
+}
+/** The slice of Sputnik v2's proposal we show. `kind` is left loose on purpose. */
+export interface DaoProposal {
+  id: number; proposer: string; description: string; kind: Record<string, unknown> | string;
+  status: "InProgress" | "Approved" | "Rejected" | "Removed" | "Expired" | "Moved" | "Failed";
+  vote_counts: Record<string, [number, number, number]>; votes: Record<string, "Approve" | "Reject" | "Remove">; submission_time: string;
+}
+export interface DaoPolicy {
+  roles: { name: string; kind: "Everyone" | { Group: string[] }; permissions: string[] }[];
+  default_vote_policy: { weight_kind: string; quorum: string; threshold: [number, number] | string };
+  proposal_bond: string; proposal_period: string;
+}

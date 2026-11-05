@@ -3,10 +3,13 @@
  * Views go straight to RPC. Changes are signed by the learner and relayed.
  */
 import { JsonRpcProvider, actions, teraToGas } from "near-api-js";
-import { CALL_GAS_TGAS, NEAR_CONFIG } from "./config";
+import { CALL_GAS_TGAS, CLAIM_GAS_TGAS, NEAR_CONFIG } from "./config";
 import { relayerApi } from "./relayer";
 import type { LearnerSigner } from "./signer";
-import type { BloqView, ItemPrice, LearnerView, LessonPublic, LessonWithText, MemberView, PassportView, PricingParams, RelayResult, StreakView } from "./types";
+import type {
+  BloqView, BountiesConfig, Bounty, Claim, DaoPolicy, DaoProposal, ItemPrice, LearnerView, LessonPublic, LessonWithText, MemberView,
+  PassportView, PricingParams, RelayResult, StreakView,
+} from "./types";
 
 const provider = new JsonRpcProvider({ url: NEAR_CONFIG.rpcUrl });
 
@@ -29,14 +32,33 @@ export const views = {
   streak: (streakId: string = NEAR_CONFIG.streakContractId) => view<StreakView>(streakId, "get_streak"),
   member: (accountId: string, streakId: string = NEAR_CONFIG.streakContractId) =>
     view<MemberView>(streakId, "get_member", { account_id: accountId }),
+  /** Module B: null when core has no bounty board set (module not deployed). */
+  bountiesContract: () => view<string | null>(NEAR_CONFIG.coreContractId, "get_bounties_contract"),
+  bountiesConfig: (boardId: string) => view<BountiesConfig>(boardId, "get_config"),
+  bounties: (boardId: string) => view<Bounty[]>(boardId, "get_bounties", { limit: 100 }),
+  claimsFor: (boardId: string, accountId: string) => view<Claim[]>(boardId, "get_claims_for", { account_id: accountId }),
+  recentClaims: (boardId: string) => view<Claim[]>(boardId, "get_recent_claims", {}),
+  proposalText: (boardId: string, bountyId: number, accountId: string) =>
+    view<string>(boardId, "get_proposal_text", { bounty_id: bountyId, account_id: accountId }),
+  /** The DAO (Sputnik v2) read straight from chain: who decides, what is pending. */
+  daoPolicy: (daoId: string) => view<DaoPolicy>(daoId, "get_policy"),
+  daoProposals: (daoId: string, fromIndex = 0, limit = 50) => view<DaoProposal[]>(daoId, "get_proposals", { from_index: fromIndex, limit }),
+  daoLastProposalId: (daoId: string) => view<number>(daoId, "get_last_proposal_id"),
+  /** Any account's NEAR balance in yocto (string). */
+  accountBalance: async (accountId: string): Promise<string> => {
+    const a = await provider.viewAccount({ accountId });
+    return String(a.amount);
+  },
 };
 
-function call(method: string, args: Record<string, unknown>) {
-  return actions.functionCall(method, args, teraToGas(CALL_GAS_TGAS), 0n);
+type TGas = `${number}`;
+
+function call(method: string, args: Record<string, unknown>, gasTgas: TGas = CALL_GAS_TGAS) {
+  return actions.functionCall(method, args, teraToGas(gasTgas), 0n);
 }
 
-async function send(signer: LearnerSigner, method: string, args: Record<string, unknown>): Promise<RelayResult> {
-  const payload = await signer.signDelegate(NEAR_CONFIG.coreContractId, [call(method, args)]);
+async function send(signer: LearnerSigner, method: string, args: Record<string, unknown>, gasTgas?: TGas): Promise<RelayResult> {
+  const payload = await signer.signDelegate(NEAR_CONFIG.coreContractId, [call(method, args, gasTgas)]);
   return relayerApi.relay(payload);
 }
 
@@ -51,4 +73,6 @@ export const game = {
   graduate: (signer: LearnerSigner) => send(signer, "graduate", {}),
   /** Module A: one check-in per streak day, forwarded by core to the streak contract. */
   checkIn: (signer: LearnerSigner) => send(signer, "check_in", {}),
+  /** Module B: claim a bounty; core forwards to the board, which checks the requirement against core. */
+  claimBounty: (signer: LearnerSigner, bountyId: number) => send(signer, "claim_bounty", { bounty_id: bountyId }, CLAIM_GAS_TGAS),
 };

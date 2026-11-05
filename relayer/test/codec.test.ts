@@ -10,12 +10,12 @@ import type { SignedDelegate } from "near-api-js";
 import { decodeSignedDelegateBase64, encodeSignedDelegateBase64 } from "../src/codec.js";
 import { PolicyError, assertAllowed } from "../src/policy.js";
 
-function sample(methodName = "complete_lesson", receiverId = "core.bloqvia.testnet"): SignedDelegate {
+function sample(methodName = "complete_lesson", receiverId = "core.bloqvia.testnet", gasTgas: `${number}` = "20"): SignedDelegate {
   const key = KeyPair.fromRandom("ed25519");
   const delegateAction = new DelegateAction({
     senderId: "learner-abc.bloqvia.testnet",
     receiverId,
-    actions: [actions.functionCall(methodName, { lesson_id: "the-vault", answer: "public key" }, teraToGas("20"), 0n)],
+    actions: [actions.functionCall(methodName, { lesson_id: "the-vault", answer: "public key" }, teraToGas(gasTgas), 0n)],
     nonce: 42n,
     maxBlockHeight: 1_000n,
     publicKey: key.getPublicKey(),
@@ -48,4 +48,10 @@ test("policy rejects a foreign receiver, a foreign method and an unregistered se
     () => assertAllowed(sample(), { ...ctx, isRegistered: async () => false }),
     (e: unknown) => e instanceof PolicyError && e.status === 403,
   );
+});
+
+test("policy relays claim_bounty with its long gas budget but caps everything at 150 TGas", async () => {
+  const ctx = { coreContractId: "core.bloqvia.testnet", isRegistered: async () => true };
+  await assertAllowed(sample("claim_bounty", "core.bloqvia.testnet", "140"), ctx);
+  await assert.rejects(() => assertAllowed(sample("claim_bounty", "core.bloqvia.testnet", "151"), ctx), /Gas above/);
 });
