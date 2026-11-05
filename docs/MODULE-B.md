@@ -74,7 +74,7 @@ sequenceDiagram
 
 ## Status
 
-- **Nov 5, 14:20 — gate passed, two days early.** DAO created (`bloqvia-dao.sputnik-v2.testnet`, council `bloqvia.testnet`, bond 0.1 NEAR, threshold 1 of 2); board deployed with four seed bounties; `scripts/bounty-claim.ts --bounty 1` → `claim: Paid`, learner 0.01 → 0.11 NEAR (tx `GMNgxm1A…`); `--bounty 3` → proposal #0 filed by the board, approved with one `act_proposal` vote, DAO paid 1 NEAR. Merged to `main` the same afternoon so Lovable can build the board page (prompt 9).
+- **Nov 5, 14:20 — gate passed, two days early.** DAO created (`bloqvia-dao.sputnik-v2.testnet`, council `bloqvia.testnet`, bond 0.1 NEAR, threshold 1 of 2); board deployed with four seed bounties; `scripts/bounty-claim.ts --bounty 1` → `claim: Paid`, learner 0.01 → 0.11 NEAR (tx `GMNgxm1A…`); `--bounty 3` → proposal #0 filed by the board, approved with one `act_proposal` vote, DAO paid 1 NEAR. Merged to `main` the same afternoon; Lovable built the Cohort tab (prompt 9, `8bd038a`), verified from a clean learner: today's quest → Claim → Paid. DAO funded the board by proposal #2 (2 NEAR; #1 for 3 NEAR failed because the DAO must keep ~2.7 NEAR for its own storage — rejected; the DAO was topped up with 4 NEAR from `bloqvia.testnet`). Allowance 2.13 NEAR.
 
 ## Open questions
 

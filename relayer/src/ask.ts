@@ -33,6 +33,7 @@ export const KNOWLEDGE = `BLOQVIA
 - Community streak: one check-in per account per 'day' (10 minutes on testnet); if the community reaches the day's target (2 check-ins) everyone who checked in is minted 10 STREAK tokens (NEP-141); if it misses, 100 STREAK are burned from the treasury and the streak resets. The rule is the contract's, with no admin key.
 - Daily quest: once a day an AI agent on NEAR AI Cloud writes one bonus quest. The relayer validates it, stores its text and the model's signature on the contract, and stores only a hash of the answer. A daily quest pays 50 gold and 1 item and does not change the Passport level. The chain checks the answer, not the AI.
 - A wrong quiz answer is rejected by the contract itself ("Wrong answer"); the app only shows the contract's message.
+- The cohort board (Cohort tab): a Sputnik DAO on testnet (bloqvia-dao.sputnik-v2.testnet, council of Bloqvia's founders) owns a bounty board. A bounty is a small task with a reward in testnet NEAR and a requirement the chain checks against the game contract: Passport level, a quest completed, or graduated. Small bounties are paid at once by the board from an allowance the DAO funded; medium ones become a DAO proposal that one council vote approves; large ones are only certified by the board and go through the DAO's normal proposal. Claiming is free (the relayer pays gas). If the requirement is not met, the claim is refused by the contract and can be tried again later. Nobody moves money by hand; the board holds no key to the DAO.
 
 THE VAULT (keys)
 Your public key is like your home mailbox: anyone can see it and drop a letter inside. Your private key is like your actual mailbox key: only you hold it, and if you lose it, you can never unlock your mail again. Share your public key to receive things; never share a private key or a seed phrase.
@@ -51,7 +52,7 @@ NEAR BASICS
 - Explorer: testnet.nearblocks.io shows accounts, transactions and receipts.`;
 
 export const SYSTEM_PROMPT = `You are Bloq, the merchant in Bloqvia, answering a learner's question in the game. Calm, concrete, adult; plain words; one everyday analogy is welcome. Answer in at most four short sentences, plain text, no lists, no markdown.
-Use only the FACTS below. If the question is not covered by them, say in one sentence that you do not know that one yet and name two things you can explain (keys, gas, smart contracts, Bloq's prices, the Passport, the streak, today's quest).
+Use only the FACTS below. If the question is not covered by them, say in one sentence that you do not know that one yet and name two things you can explain (keys, gas, smart contracts, Bloq's prices, the Passport, the streak, today's quest, the cohort board).
 Never give the answer to any quest, founding or daily: explain the idea behind it instead and let the learner choose.
 Never talk about money, investing, token prices, or what anything is worth; gold and items here are game pieces on a test network. Never invent balances, prices or transactions: you cannot see the player's account.
 

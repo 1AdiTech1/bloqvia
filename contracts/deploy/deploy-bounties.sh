@@ -27,7 +27,9 @@ DAO="${DAO:-$(node -e "console.log(require('./$ARGS').bounties.dao_id)")}"
 
 echo "== account"
 if exists "$BOUNTIES"; then echo "exists  $BOUNTIES"; else
-  # 3 NEAR: ~0.5 storage reserve + 0.1 bond kept back, the rest is the first allowance.
+  # 3 NEAR covers the account: the wasm itself locks ~2 NEAR as storage, 0.5 reserve + 0.1 bond are
+  # kept back, so the first allowance is small. The DAO funds the board with a Transfer proposal
+  # (see contracts/bloqvia-bounties/README.md); the DAO account needs ~2.7 NEAR of its own to stay alive.
   near account create-account fund-myself "$BOUNTIES" '3 NEAR' autogenerate-new-keypair --signature-scheme ed25519 save-to-keychain sign-as "$PARENT" network-config testnet sign-with-keychain send
 fi
 
