@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useReducedMotion } from "framer-motion";
@@ -599,16 +599,22 @@ function Progress() {
     el.style.setProperty("--mx", (x * 2).toFixed(2));
   };
   const untilt = (e: React.PointerEvent<HTMLButtonElement>) => { ["--rx", "--ry", "--mx"].forEach((k) => e.currentTarget.style.removeProperty(k)); };
+  const narrow = useMedia("(max-width: 959px)");
+  const box = useRef<HTMLDivElement>(null);
+  const pass = useRef<HTMLButtonElement>(null);
+  const hop = useRef<ProgHopHandle>(null);
+  const [passOn, setPassOn] = useState(false);
 
   return (
-    <section ref={section} id="progress" className={cn(SECTION, "bg-ivory")}>
-      <div className={cn(WRAP, "grid grid-cols-1 items-center gap-9 min-[960px]:grid-cols-2 min-[960px]:gap-14")}>
+    <section ref={section} id="progress" className={cn(SECTION, "bg-ivory", narrow && "lv-prog-hop")}>
+      <div ref={box} className={cn(WRAP, "relative grid grid-cols-1 items-center gap-9 min-[960px]:grid-cols-2 min-[960px]:gap-14")}>
+        {narrow && <ProgHop ref={hop} box={box} onPass={setPassOn} />}
         <div>
           <h2 className="lv-h2 !mt-0">Your progress, made visible</h2>
           <p className="lv-sub">Every step counts. Learn something new, complete a chapter, and collect reminders of how far you've come.</p>
-          <div className="mt-[30px] grid grid-cols-1 gap-3.5 min-[461px]:grid-cols-2">
+          <div className={cn("mt-[30px] grid grid-cols-1 gap-3.5 min-[461px]:grid-cols-2", narrow && "pt-[100px]")}>
             {progItems.map((it, i) => (
-              <button key={it.name} type="button" onMouseEnter={() => pick(i)} onFocus={() => pick(i)} onClick={() => pick(i)} className={cn("lv-card lv-it", active === i && "on")}>
+              <button key={it.name} type="button" data-hop="" data-prop={it.prop} data-say={it.say} {...(narrow ? {} : { onMouseEnter: () => pick(i), onFocus: () => pick(i), onClick: () => pick(i) })} className={cn("lv-card lv-it", active === i && "on")}>
                 <i aria-hidden="true" style={it.icon} className="grid place-items-center">{it.Icon ? <it.Icon size={18} strokeWidth={2.2} /> : <BloqCoin size={26} />}</i>
                 <b>{it.name}</b>
                 <small>{it.body}</small>
@@ -624,17 +630,19 @@ function Progress() {
             <span className="lv-lights violet rev" style={{ ["--t" as string]: "16s", ["--d" as string]: "-6s" }}><i className="lv-comet" /></span>
             <span className="lv-lights violet in" style={{ ["--t" as string]: "8s", ["--d" as string]: "-3s" }}><i className="lv-comet" /></span>
           </span>
-          <div ref={host} className="lv-prog-bloq" onClick={celebrate}>
-            <Bloq ref={bloq} hat="grad" prop={prop} pose="hold" label="Bloq graduating" className="w-full" />
-            <SpeechBubble text={line} />
-          </div>
-          <div className="lv-pass-wrap">
+          {!narrow && (
+            <div ref={host} className="lv-prog-bloq" onClick={celebrate}>
+              <Bloq ref={bloq} hat="grad" prop={prop} pose="hold" label="Bloq graduating" className="w-full" />
+              <SpeechBubble text={line} />
+            </div>
+          )}
+          <div className="lv-pass-wrap" data-panel="">
             <button
+              ref={pass}
               type="button"
-              className="lv-pass"
+              className={cn("lv-pass", narrow && passOn && "on")}
               aria-label="Bloqvia Web3 Passport, example: level 3 of 3, soulbound NFT on NEAR testnet"
-              onMouseEnter={celebrate}
-              onClick={celebrate}
+              {...(narrow ? { onClick: () => hop.current?.cheer() } : { onMouseEnter: celebrate, onClick: celebrate })}
               onPointerMove={tilt}
               onPointerLeave={untilt}
             >
@@ -659,7 +667,7 @@ function Progress() {
                 <defs><path id="lv-sealpath" d="M50 50 m-38 0 a38 38 0 1 1 76 0 a38 38 0 1 1 -76 0" /></defs>
                 <g className="spinner"><text fontFamily="JetBrains Mono, monospace" fontSize="8.6" fontWeight="700" letterSpacing="2.6" fill="#d4f033"><textPath href="#lv-sealpath">EARNED · NOT BOUGHT · VERIFIED ON CHAIN · </textPath></text></g>
                 <circle cx="50" cy="50" r="27" fill="none" stroke="#d4f033" strokeWidth="1.5" strokeDasharray="3 3" />
-                <g transform="translate(36 37)"><rect x="0" y="18" width="28" height="8" rx="4" fill="#d4f033" /><rect x="0" y="9" width="24" height="8" rx="4" fill="#a6c21a" /><rect x="0" y="0" width="20" height="8" rx="4" fill="#d4f033" /></g>
+                <g transform="translate(36 37)"><g className="sealc"><rect x="0" y="18" width="28" height="8" rx="4" fill="#d4f033" /><rect x="0" y="9" width="24" height="8" rx="4" fill="#a6c21a" /><rect x="0" y="0" width="20" height="8" rx="4" fill="#d4f033" /></g></g>
               </svg>
               <span className="mrz" aria-hidden="true">P&lt;BLQ&lt;LEARNER&lt;7C4F&lt;&lt;BLOQVIA&lt;TESTNET&lt;&lt;&lt;&lt;&lt;<br />NEP171&lt;SOULBOUND&lt;&lt;LVL3&lt;&lt;KEYS&lt;GAS&lt;CONTRACTS&lt;&lt;</span>
               <span className="scan" aria-hidden="true" />
@@ -670,6 +678,143 @@ function Progress() {
     </section>
   );
 }
+
+/* ---------------- Progress: travelling Bloq on phones/tablets ---------------- */
+
+type ProgHopHandle = { cheer: () => void };
+const PASS_LINE = "Graduate and your Passport is sealed for good. That's the one you can't buy.";
+
+/** Below 960px: one Bloq seated on the reward card in view, then jumping into the Passport panel. */
+const ProgHop = forwardRef<ProgHopHandle, { box: React.RefObject<HTMLDivElement | null>; onPass: (on: boolean) => void }>(function ProgHop({ box, onPass }, ref) {
+  const still = useReducedMotion();
+  const host = useRef<HTMLDivElement>(null);
+  const bloq = useRef<BloqHandle>(null);
+  const [line, say] = useSay();
+  const [quiet, setQuiet] = useState(false);
+  const [pose, setPose] = useState<BloqPose>("sit");
+  const [prop, setProp] = useState<BloqProp>("coin");
+  const [inPanel, setInPanel] = useState(false);
+  const stillRef = useRef(still);
+  stillRef.current = still;
+  const passRef = useRef(onPass);
+  passRef.current = onPass;
+  const st = useRef({ at: -2 as number, started: false, timers: [] as number[] });
+
+  const speak = useCallback((t: string) => { setQuiet(false); say(t); bloq.current?.talk(talkMs(t)); }, [say]);
+  const sparks = useCallback(() => burst(host.current, "spark", 12, stillRef.current), []);
+  useImperativeHandle(ref, () => ({
+    cheer: () => {
+      if (st.current.at !== -1) return;
+      setPose("cheer"); bloq.current?.setMood("laugh", 1600); bloq.current?.jump(); window.setTimeout(sparks, 300);
+    },
+  }), [sparks]);
+
+  useEffect(() => {
+    const el = host.current, b = box.current;
+    if (!el || !b) return;
+    const s = st.current;
+    const cards = () => Array.from(b.querySelectorAll<HTMLElement>("[data-hop]"));
+    const panel = () => b.querySelector<HTMLElement>(".lv-panel");
+    const clear = () => { s.timers.forEach((t) => window.clearTimeout(t)); s.timers = []; };
+    const later = (ms: number, f: () => void) => { s.timers.push(window.setTimeout(f, stillRef.current ? 0 : ms)); };
+    const place = (i: number, animate: boolean) => {
+      const br = b.getBoundingClientRect();
+      const anim = animate && !stillRef.current;
+      el.style.transition = anim ? "transform .6s cubic-bezier(.34,1.3,.64,1), width .6s cubic-bezier(.34,1.3,.64,1)" : "none";
+      let x: number, y: number, w: number;
+      if (i === -1) {
+        const pr = panel()?.getBoundingClientRect();
+        if (!pr) return;
+        w = 112; x = pr.left - br.left + 14; y = pr.bottom - br.top - 14 - (w * 4) / 3;
+      } else {
+        const c = cards()[i];
+        if (!c) return;
+        const r = c.getBoundingClientRect();
+        w = 86; x = r.right - br.left - w - 12; y = r.top - br.top - (w * 4) / 3 * 0.75 + 4;
+      }
+      el.style.width = `${w}px`;
+      el.style.transform = `translate(${x}px, ${y}px)`;
+    };
+    const target = () => {
+      const vh = window.innerHeight;
+      const pr = panel()?.getBoundingClientRect();
+      if (pr && pr.top < vh * 0.62) return -1;
+      const mid = vh * 0.45;
+      let best = 0, d = Infinity;
+      cards().forEach((c, i) => {
+        const r = c.getBoundingClientRect();
+        const dd = Math.abs(r.top + r.height / 2 - mid);
+        if (dd < d) { d = dd; best = i; }
+      });
+      return best;
+    };
+    const markCard = (i: number) => cards().forEach((c, k) => c.classList.toggle("on", k === i));
+    const settle = (i: number) => {
+      if (i === -1) {
+        setProp("badge"); setPose("cheer"); bloq.current?.setMood("laugh", 1600); bloq.current?.jump();
+        window.setTimeout(sparks, stillRef.current ? 0 : 300);
+        passRef.current(true);
+        later(640, () => { setPose("hold"); speak(PASS_LINE); });
+      } else {
+        setPose("sit");
+        const t = cards()[i]?.dataset["say"];
+        if (t) speak(t);
+      }
+    };
+    const go = (i: number, animate: boolean) => {
+      clear();
+      const from = s.at;
+      s.at = i;
+      setInPanel(i === -1);
+      if (i !== -1) passRef.current(false);
+      markCard(i);
+      const p = i === -1 ? null : (cards()[i]?.dataset["prop"] as BloqProp | undefined);
+      if (!animate || stillRef.current) {
+        place(i, false);
+        if (p) setProp(p);
+        settle(i);
+        return;
+      }
+      setQuiet(true);
+      setPose("idle");
+      bloq.current?.jump();
+      later(120, () => { place(i, true); if (p) setProp(p); });
+      later(i === -1 ? 760 : 700, () => settle(i));
+      void from;
+    };
+
+    place(0, false);
+    let raf = 0;
+    const onScroll = () => {
+      if (raf || !s.started) return;
+      raf = requestAnimationFrame(() => { raf = 0; const i = target(); if (i !== s.at) go(i, true); });
+    };
+    const io = new IntersectionObserver((es) => es.forEach((e) => {
+      if (e.isIntersecting && !s.started) { s.started = true; go(target(), false); }
+    }), { threshold: 0.1 });
+    io.observe(b);
+    const onResize = () => place(s.at === -2 ? 0 : s.at, false);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
+    return () => {
+      io.disconnect(); clear();
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      cards().forEach((c) => c.classList.remove("on"));
+      passRef.current(false);
+    };
+  }, [box, speak, sparks]);
+
+  return (
+    <div ref={host} className="absolute left-0 top-0 z-[4] w-[86px] cursor-pointer" onClick={() => { bloq.current?.jump(); bloq.current?.setMood("laugh", 900); }}>
+      <div className="relative">
+        <Bloq ref={bloq} hat="grad" prop={prop} pose={pose} label="Bloq graduating" className="w-full" />
+        <SpeechBubble text={quiet ? null : line} className={inPanel ? "hop-say hop-up" : "hop-say"} />
+      </div>
+    </div>
+  );
+});
 
 /* ---------------- Ready when you are ---------------- */
 

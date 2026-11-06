@@ -400,3 +400,10 @@ html.touch-sb::-webkit-scrollbar { display: none; }
 /* Phone landing: HopBloq's bubble sits to his left. */
 .bloq-say.hop-say { left: auto; right: 74px; bottom: 34%; max-width: 168px; font-size: 13px; line-height: 1.4; padding: 10px 13px; --ox: 100%; }
 .bloq-say.hop-say::after { bottom: 16px; left: auto; right: -7px; transform: rotate(-45deg); }
+
+/* Progress section on phones/tablets: travelling Bloq + seal stamp (prompt 19). */
+.bloq-say.hop-say.hop-up { right: auto; left: 0; bottom: 100%; max-width: 230px; margin-bottom: 8px; --ox: 0%; }
+.bloq-say.hop-say.hop-up::after { left: 22px; right: auto; bottom: -7px; }
+.lv-prog-hop .lv-pass .sealc { transform-box: fill-box; transform-origin: center; transform: scale(0) rotate(-30deg); transition: transform .5s cubic-bezier(.34,1.56,.64,1); }
+.lv-prog-hop .lv-pass.on .sealc { transform: none; }
+@media (prefers-reduced-motion: reduce) { .lv-prog-hop .lv-pass .sealc { transition: none; } }
