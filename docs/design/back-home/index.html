@@ -1,0 +1,157 @@
+<title>Back to the Website</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="rig.css">
+<style>
+/* Layout: three options side by side; each shows the desktop rail and the phone header / tab pill as they would look in the game. Bloqvia game tokens (single dark look). */
+:root {
+  --night: #131f33; --navy: #16243a; --navy-2: #22324c; --ivory: #f6f3ec; --lime: #d4f033; --lav: #c9b8ec; --muted: #8e9bb3;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--night); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 56px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 22px; }
+header h1 { margin: 0; font: 600 24px/1.2 var(--display); letter-spacing: -.02em; }
+header p { margin: 6px 0 0; color: var(--lav); max-width: 70ch; }
+.opts { display: grid; gap: 18px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1000px) { .opts { grid-template-columns: 1fr; max-width: 520px; } }
+.opt { min-width: 0; background: rgb(34 50 76 / .45); border: 1px solid rgb(246 243 236 / .08); border-radius: 24px; padding: 20px; display: grid; gap: 16px; align-content: start; }
+.opt h2 { margin: 0; font: 600 18px/1.2 var(--display); letter-spacing: -.01em; }
+.opt h2 small { display: block; margin-top: 4px; font: 400 14px/1.45 var(--body); color: var(--lav); letter-spacing: 0; }
+.tag { font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.rec { color: var(--lime); }
+
+/* ---- desktop rail mock (220px, as in the game) ---- */
+.rail { width: 220px; height: 470px; max-width: 100%; margin-inline: auto; background: linear-gradient(180deg, #16243a, #182840); border-radius: 18px; padding: 22px 16px 16px; display: flex; flex-direction: column; gap: 22px; box-shadow: inset 0 0 0 1px rgb(246 243 236 / .06); }
+.logo { display: inline-flex; align-items: center; gap: 9px; color: var(--ivory); text-decoration: none; font: 600 21px/1 var(--display); letter-spacing: -.02em; }
+.logo svg { width: 30px; height: 27px; flex: none; }
+.home-link { display: inline-flex; align-items: center; gap: 7px; margin-top: -12px; font: 500 13px/1 var(--body); color: var(--lav); text-decoration: none; padding: 7px 10px 7px 6px; border-radius: 10px; align-self: flex-start; }
+.home-link svg { width: 15px; height: 15px; }
+.home-link:hover, .home-link:focus-visible { color: var(--lime); background: rgb(212 240 51 / .08); }
+.tabs { display: flex; flex-direction: column; gap: 5px; }
+.tab { height: 44px; border-radius: 14px; display: flex; align-items: center; gap: 11px; padding: 0 14px; font: 500 14.5px/1 var(--display); color: var(--lav); }
+.tab svg { width: 19px; height: 19px; }
+.tab.on { background: var(--lime); color: var(--navy); }
+.tab.home { color: var(--ivory); }
+.sep { height: 1px; background: rgb(246 243 236 / .1); margin: 2px 6px; }
+.agent { margin-top: auto; display: flex; align-items: center; gap: 11px; background: var(--navy-2); border-radius: 16px; padding: 12px; }
+.pod { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: #2b3d5c; box-shadow: 0 0 0 2px var(--lime); flex: none; position: relative; }
+.pod > div { position: absolute; left: -24%; top: -10%; width: 148%; }
+.agent b { display: block; font: 600 14.5px/1.1 var(--display); }
+.agent span { font-size: 12px; color: var(--lav); display: inline-flex; align-items: center; gap: 5px; }
+.agent span::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--lime); }
+.back-row { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; margin-top: -12px; border-radius: 12px; color: var(--lav); font: 500 13.5px/1 var(--body); border: 1px dashed rgb(201 184 236 / .3); }
+.back-row svg { width: 16px; height: 16px; }
+
+/* ---- phone mock (360px) ---- */
+.phone { width: 330px; max-width: 100%; margin-inline: auto; background: linear-gradient(180deg, #16243a, #1a2a43); border-radius: 22px; padding: 14px 14px 12px; display: grid; gap: 54px; box-shadow: inset 0 0 0 1px rgb(246 243 236 / .06); }
+.ph-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ph-head .logo { font-size: 18px; gap: 7px; }
+.ph-head .logo svg { width: 25px; height: 22px; }
+.ph-back { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--ivory); }
+.ph-back > svg { width: 18px; height: 18px; color: var(--lav); }
+.pill { display: inline-flex; align-items: center; gap: 7px; background: var(--ivory); color: var(--navy); border-radius: 999px; padding: 4px 12px 4px 4px; font: 600 12px/1 var(--display); }
+.pill i { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #d8d2e6; display: grid; place-items: center; font: 700 10px/1 var(--mono); font-style: normal; }
+.navpill { display: flex; gap: 8px; align-items: center; }
+.navpill .p { flex: 1; display: flex; justify-content: space-around; background: var(--navy-2); border-radius: 999px; padding: 5px; }
+.navpill .p div { flex: 1; display: grid; justify-items: center; gap: 2px; padding: 6px 0; border-radius: 999px; font: 600 8.5px/1 var(--display); letter-spacing: .05em; text-transform: uppercase; color: var(--lav); }
+.navpill .p div svg { width: 17px; height: 17px; }
+.navpill .p div.on { background: var(--lime); color: var(--navy); }
+.navpill .dock { width: 46px; height: 46px; border-radius: 50%; background: var(--navy-2); box-shadow: 0 0 0 2px var(--lime); overflow: hidden; position: relative; flex: none; }
+.navpill .dock > div { position: absolute; left: -24%; top: -10%; width: 148%; }
+.note { margin: 0; font-size: 13.5px; color: var(--lav); }
+.note b { color: var(--ivory); font-weight: 600; }
+a:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></symbol>
+  <symbol id="i-store" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-house" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+  <symbol id="i-logo" viewBox="0 0 30 27"><rect x="0" y="0" width="20" height="7.5" rx="3.75" fill="#d4f033"/><rect x="0" y="9.5" width="25" height="7.5" rx="3.75" fill="#b9d42a"/><rect x="0" y="19" width="30" height="7.5" rx="3.75" fill="#d4f033"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header>
+    <h1>Back to the website from the game</h1>
+    <p>Three places for the way back to bloqvia.app's home page. Each shows the left menu on desktop and the top of the screen on a phone.</p>
+  </header>
+
+  <div class="opts">
+    <!-- 1 -->
+    <section class="opt" aria-labelledby="o1">
+      <h2 id="o1"><span class="tag rec">1 · Recommended</span><br>Under the logo<small>A small “← Bloqvia home” under the logo. The logo links home too, as on most sites.</small></h2>
+      <div class="rail">
+        <a class="logo" href="#o1"><svg><use href="#i-logo"/></svg>Bloqvia</a>
+        <a class="home-link" href="#o1"><svg><use href="#i-back"/></svg>Bloqvia home</a>
+        <div class="tabs">
+          <div class="tab on"><svg><use href="#i-map"/></svg>Map</div>
+          <div class="tab"><svg><use href="#i-store"/></svg>Shop</div>
+          <div class="tab"><svg><use href="#i-users"/></svg>Missions</div>
+          <div class="tab"><svg><use href="#i-badge"/></svg>Passport</div>
+        </div>
+        <div class="agent"><div class="pod"><div class="agent-rig"></div></div><div><b>Ask Bloq</b><span>AI agent · online</span></div></div>
+      </div>
+      <div class="phone">
+        <div class="ph-head"><a class="ph-back" href="#o1" aria-label="Bloqvia home"><svg><use href="#i-back"/></svg><span class="logo"><svg><use href="#i-logo"/></svg>Bloqvia</span></a><span class="pill"><i>0</i>Level 0</span></div>
+        <div class="navpill"><div class="p"><div class="on"><svg><use href="#i-map"/></svg>Map</div><div><svg><use href="#i-store"/></svg>Shop</div><div><svg><use href="#i-users"/></svg>Missions</div><div><svg><use href="#i-badge"/></svg>Passport</div></div><div class="dock"><div class="agent-rig"></div></div></div>
+      </div>
+      <p class="note"><b>Phone:</b> a ← before the logo at the top; tapping either goes home. Visible on every screen, takes no extra space.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="opt" aria-labelledby="o2">
+      <h2 id="o2"><span class="tag">2</span><br>At the bottom of the menu<small>“← Back to the website” under the Ask Bloq card, out of the way of the game.</small></h2>
+      <div class="rail">
+        <span class="logo"><svg><use href="#i-logo"/></svg>Bloqvia</span>
+        <div class="tabs">
+          <div class="tab on"><svg><use href="#i-map"/></svg>Map</div>
+          <div class="tab"><svg><use href="#i-store"/></svg>Shop</div>
+          <div class="tab"><svg><use href="#i-users"/></svg>Missions</div>
+          <div class="tab"><svg><use href="#i-badge"/></svg>Passport</div>
+        </div>
+        <div class="agent"><div class="pod"><div class="agent-rig"></div></div><div><b>Ask Bloq</b><span>AI agent · online</span></div></div>
+        <div class="back-row"><svg><use href="#i-back"/></svg>Back to the website</div>
+      </div>
+      <div class="phone">
+        <div class="ph-head"><a class="ph-back" href="#o2" aria-label="Bloqvia home"><svg><use href="#i-back"/></svg><span class="logo"><svg><use href="#i-logo"/></svg>Bloqvia</span></a><span class="pill"><i>0</i>Level 0</span></div>
+        <div class="navpill"><div class="p"><div class="on"><svg><use href="#i-map"/></svg>Map</div><div><svg><use href="#i-store"/></svg>Shop</div><div><svg><use href="#i-users"/></svg>Missions</div><div><svg><use href="#i-badge"/></svg>Passport</div></div><div class="dock"><div class="agent-rig"></div></div></div>
+      </div>
+      <p class="note"><b>Phone:</b> same as option 1, since phones have no left menu. On desktop it's the least visible of the three.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="opt" aria-labelledby="o3">
+      <h2 id="o3"><span class="tag">3</span><br>A fifth tab: Home<small>“Home” with a house icon as the first tab, above Map.</small></h2>
+      <div class="rail">
+        <span class="logo"><svg><use href="#i-logo"/></svg>Bloqvia</span>
+        <div class="tabs">
+          <div class="tab home"><svg><use href="#i-house"/></svg>Home</div>
+          <div class="sep"></div>
+          <div class="tab on"><svg><use href="#i-map"/></svg>Map</div>
+          <div class="tab"><svg><use href="#i-store"/></svg>Shop</div>
+          <div class="tab"><svg><use href="#i-users"/></svg>Missions</div>
+          <div class="tab"><svg><use href="#i-badge"/></svg>Passport</div>
+        </div>
+        <div class="agent"><div class="pod"><div class="agent-rig"></div></div><div><b>Ask Bloq</b><span>AI agent · online</span></div></div>
+      </div>
+      <div class="phone">
+        <div class="ph-head"><span class="logo"><svg><use href="#i-logo"/></svg>Bloqvia</span><span class="pill"><i>0</i>Level 0</span></div>
+        <div class="navpill"><div class="p"><div><svg><use href="#i-house"/></svg>Home</div><div class="on"><svg><use href="#i-map"/></svg>Map</div><div><svg><use href="#i-store"/></svg>Shop</div><div><svg><use href="#i-users"/></svg>Missions</div><div><svg><use href="#i-badge"/></svg>Pass</div></div><div class="dock"><div class="agent-rig"></div></div></div>
+      </div>
+      <p class="note"><b>Phone:</b> a fifth item in the tab pill. The labels get tight at 360px (“Passport” would need shortening).</p>
+    </section>
+  </div>
+</div>
+
+<script src="bloq-rig.js"></script>
+<script>
+  document.querySelectorAll(".agent-rig").forEach((el) => new Bloq(el, { hat: "agent", outfit: "agent", pose: "idle" }));
+  document.querySelectorAll('a[href^="#o"]').forEach((a) => a.addEventListener("click", (e) => e.preventDefault()));
+</script>

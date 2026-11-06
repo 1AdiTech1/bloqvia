@@ -1,0 +1,133 @@
+<title>Bloq on the Sign-in Card</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="rig.css">
+<style>
+/* Layout: the sign-in window centred on a blurred landing backdrop; Bloq walks along its top edge and sits down. Bloqvia tokens (single dark look). */
+:root {
+  --navy: #16243a; --navy-2: #22324c; --ivory: #f6f3ec; --lime: #d4f033; --lav: #c9b8ec; --text: #5a6477;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: radial-gradient(120% 80% at 70% 0%, #2b3d5c 0%, var(--navy) 55%, #101b2c 100%); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 18px; }
+header h1 { font: 600 22px/1.2 var(--display); letter-spacing: -.02em; margin: 0; }
+header p { margin: 6px 0 0; color: var(--lav); max-width: 66ch; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--lav); font-size: 13px; }
+.bar button { font: 600 13px/1 var(--display); color: var(--ivory); background: var(--navy-2); border: 1px solid rgb(246 243 236 / .14); border-radius: 999px; padding: 11px 16px; cursor: pointer; }
+.bar button[aria-pressed="true"] { background: var(--lav); color: var(--navy); border-color: var(--lav); }
+.bar button.replay { background: var(--lime); color: var(--navy); border-color: var(--lime); }
+.bar button:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+
+.stage { position: relative; border-radius: 24px; overflow: hidden; padding: 190px 16px 80px; display: grid; place-items: center;
+  background: linear-gradient(180deg, rgb(22 36 58 / .6), rgb(22 36 58 / .85)), repeating-linear-gradient(120deg, rgb(201 184 236 / .05) 0 2px, transparent 2px 46px), #1d2a40; }
+
+/* ---- the sign-in window ---- */
+.card { position: relative; width: min(448px, 100%); background: var(--ivory); color: var(--navy); border-radius: 32px; padding: 28px 24px 26px; container-type: inline-size; box-shadow: 0 30px 70px rgb(5 10 20 / .45); }
+.narrow .card { width: min(328px, 100%); }
+.close { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent; color: var(--navy); display: grid; place-items: center; cursor: pointer; }
+.close:hover { background: rgb(22 36 58 / .07); }
+.close svg { width: 20px; height: 20px; }
+.mark { display: block; width: 40px; height: 40px; }
+.card h2 { margin: 22px 0 0; font: 600 min(25px, 7.6cqi)/1.05 var(--display); letter-spacing: -.04em; text-transform: uppercase; white-space: nowrap; }
+.card p { margin: 10px 0 0; color: var(--text); font-size: 15.5px; line-height: 1.55;
+  text-align: justify; text-align-last: left; hyphens: auto; -webkit-hyphens: auto; text-wrap: pretty; }
+/* Phone-width card: too few words per line to justify without gaps, so flush left. */
+@container (max-width: 400px) { .card p { text-align: left; } }
+.cta { margin-top: 22px; width: 100%; height: 60px; border: 0; border-radius: 999px; background: var(--navy); color: var(--ivory); font: 600 15px/1 var(--display); letter-spacing: .16em; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; }
+.cta svg { width: 18px; height: 18px; }
+
+/* ---- Bloq on the top edge ----
+   Standing: his feet on the edge (feet are at 96% of his box). Sitting: the seat line (75% of his box)
+   comes down onto the edge, so he drops by 21% of his height, legs over the front, seat shadow on the card. */
+.bloq { position: absolute; left: 0; bottom: calc(100% - var(--h) * .04); width: var(--w); z-index: 3; cursor: pointer; will-change: transform; }
+.bloq .bq-host { width: 100%; filter: drop-shadow(0 6px 6px rgb(10 16 30 / .18)); }
+.bloq .giggle { animation: giggle .9s cubic-bezier(.3,1.6,.5,1); transform-origin: 50% 75%; }
+@keyframes giggle { 0% { transform: none } 20% { transform: scale(1.06, .92) } 45% { transform: scale(.96, 1.06) rotate(-3deg) } 70% { transform: scale(1.02, .98) rotate(2deg) } 100% { transform: none } }
+.hint { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); font: 500 12px/1 var(--mono); color: var(--lav); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .bloq .giggle { animation: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Bloq on “Start without a wallet”</h1>
+    <p>When the window opens, Bloq walks along its top edge, stops right of centre and sits down, legs over the front. Tap him: he laughs and bounces in his seat. Press “Replay” to watch the entrance again.</p>
+  </header>
+  <div class="bar" role="group" aria-label="Preview controls">
+    <button type="button" class="replay" id="replay">Replay entrance</button>
+    <span style="margin-left:6px">Width:</span>
+    <button type="button" data-w="desk" aria-pressed="true">desktop 448px</button>
+    <button type="button" data-w="narrow" aria-pressed="false">phone 360px</button>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="card" role="dialog" aria-labelledby="t" id="card">
+      <button class="close" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <svg class="mark" viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="5" width="25" height="9" rx="4.5" fill="#16243a"/><rect x="5" y="15.5" width="28" height="9" rx="4.5" fill="#3b4658"/><rect x="5" y="26" width="30" height="9" rx="4.5" fill="#16243a"/></svg>
+      <h2 id="t">Start without a wallet</h2>
+      <p lang="en">No seed phrase, no password, no downloads. We create a NEAR account for you right here in this browser and hold its key for you — you get the key at the end, with everything you earned.</p>
+      <button class="cta" type="button">Create my account <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <div class="bloq" id="bloq" role="img" aria-label="Bloq in his cap, sitting on the window"><div id="rig"></div></div>
+    </div>
+    <span class="hint">tap Bloq</span>
+  </div>
+</div>
+
+<script src="bloq-rig.js"></script>
+<script>
+(() => {
+  const card = document.getElementById("card"), host = document.getElementById("bloq"), rigEl = document.getElementById("rig");
+  const b = new Bloq(rigEl, { hat: "cap", pose: "idle" });
+  const moving = () => !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let timers = [], seated = false;
+  const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+  const size = () => {
+    const w = card.offsetWidth < 400 ? 96 : 112;               // a touch smaller on phones
+    host.style.setProperty("--w", w + "px"); host.style.setProperty("--h", (w * 4 / 3) + "px");
+    return { w, h: w * 4 / 3 };
+  };
+  const spot = (w) => card.offsetWidth - w - (card.offsetWidth < 400 ? 50 : 62);   // right of centre, clear of the ×
+  const move = (x, y, ms, ease = "linear") => { host.style.transition = ms ? `transform ${ms}ms ${ease}` : "none"; host.style.transform = `translate(${x}px, ${y}px)`; };
+
+  function enter() {
+    timers.forEach(clearTimeout); timers = []; seated = false;
+    const { w, h } = size(), x1 = spot(w), drop = h * 0.21;
+    b.setPose("idle", true);
+    if (!moving()) { b.setPose("sit", true); move(x1, drop, 0); seated = true; return; }
+    const x0 = 26;                                              // starts at the left end of the edge
+    move(x0, 0, 0); b.face("right").walking(true);
+    const dur = Math.max(700, (x1 - x0) * 4);
+    later(() => move(x1, 0, dur), 30);
+    later(() => {                                               // arrive, turn to face you, sit down
+      b.walking(false); b.face("right").setPose("sit");
+      move(x1, drop, 420, "cubic-bezier(.3,.7,.4,1)");
+      later(() => { seated = true; b.setMood("laugh", 900); }, 430);
+    }, dur + 40);
+  }
+
+  // Tap: laugh and bounce in his seat. He never jumps off the edge.
+  host.addEventListener("pointerdown", () => {
+    b.setMood("laugh", 1400);
+    if (!seated || !moving()) return;
+    rigEl.classList.remove("giggle"); void rigEl.offsetWidth; rigEl.classList.add("giggle");
+  });
+  host.addEventListener("pointerenter", () => seated && b.setMood("laugh", 700));
+  window.addEventListener("pointermove", (e) => {
+    if (!seated) return;
+    const r = host.getBoundingClientRect();
+    const dx = (e.clientX - (r.left + r.width / 2)) / (innerWidth / 2), dy = (e.clientY - (r.top + r.height * .3)) / (innerHeight / 2);
+    b.look(Math.max(-1, Math.min(1, dx)), Math.max(-1, Math.min(1, dy)));
+  });
+
+  document.getElementById("replay").addEventListener("click", enter);
+  document.querySelectorAll("[data-w]").forEach((x) => x.addEventListener("click", () => {
+    document.getElementById("stage").classList.toggle("narrow", x.dataset.w === "narrow");
+    document.querySelectorAll("[data-w]").forEach((y) => y.setAttribute("aria-pressed", String(y === x)));
+    enter();
+  }));
+  setTimeout(enter, 500);
+})();
+</script>
