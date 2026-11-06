@@ -6,7 +6,7 @@ export { relayerApi } from "./relayer";
 export { createSigner, LocalKeySigner, NearAuthSigner } from "./signer";
 export type { LearnerSigner } from "./signer";
 export { useBloqvia } from "./useBloqvia";
-export type { Bloqvia, BloqviaState } from "./useBloqvia";
+export type { Bloqvia, BloqviaState, TxEntry } from "./useBloqvia";
 export { useStreak } from "./useStreak";
 export { useDailyQuests, parseDailyQuest } from "./useDailyQuests";
 export { useAskBloq } from "./useAskBloq";

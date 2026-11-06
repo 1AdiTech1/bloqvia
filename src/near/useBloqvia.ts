@@ -7,6 +7,7 @@
  *   b.completeLesson(id, answer)    // -> { txHash }
  *   b.sellToBloq(item, 1) / b.buyFromBloq(item, 1) / b.graduate()
  *   b.learner, b.bloq, b.lessons, b.passport, b.lastTx, b.busy, b.error
+ *   b.txLog                         // this account's game transactions, newest first (kept in this browser)
  *
  * It is ONE store shared by every component (useSyncExternalStore), the same
  * shape as src/game/mockGame.ts, so RequireAccount, the map, the quiz sheet
@@ -20,6 +21,19 @@ import { explorer } from "./explorer";
 import { createSigner, type LearnerSigner } from "./signer";
 import type { BloqView, LearnerView, LessonPublic, PassportView, RelayResult } from "./types";
 
+/** One game transaction this browser sent, for the "On NEAR" panel. Newest first in `txLog`. */
+export interface TxEntry {
+  kind: "quest" | "sell" | "buy" | "graduate";
+  /** lesson id for a quest, token id for a trade */
+  ref?: string;
+  amount?: number;
+  txHash: string;
+  url: string;
+  methods: string[];
+  /** ms since epoch */
+  at: number;
+}
+
 export interface BloqviaState {
   accountId: string | null;
   learner: LearnerView | null;
@@ -27,6 +41,7 @@ export interface BloqviaState {
   bloq: BloqView | null;
   lessons: LessonPublic[];
   lastTx: (RelayResult & { url: string }) | null;
+  txLog: TxEntry[];
   busy: boolean;
   error: string | null;
 }
@@ -57,6 +72,7 @@ const INITIAL: BloqviaState = {
   bloq: null,
   lessons: [],
   lastTx: null,
+  txLog: [],
   busy: true, // until the session is restored on the client
   error: null,
 };
@@ -70,6 +86,28 @@ function set(patch: Partial<BloqviaState>): void {
   state = { ...state, ...patch };
   snapshot = build();
   listeners.forEach((l) => l());
+}
+
+// The tx log lives in localStorage per account (newest first, at most 40). Display only: nothing reads it back
+// into game logic, and it holds hashes and labels, never keys.
+const LOG_MAX = 40;
+const logKey = (accountId: string) => `bloqvia:txlog:${accountId}`;
+function readLog(accountId: string | null): TxEntry[] {
+  if (!accountId || typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(logKey(accountId));
+    const v: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(v) ? (v as TxEntry[]).slice(0, LOG_MAX) : [];
+  } catch {
+    return [];
+  }
+}
+function pushLog(entry: Omit<TxEntry, "url" | "at">): void {
+  const accountId = state.accountId;
+  const next: TxEntry[] = [{ ...entry, url: explorer.tx(entry.txHash), at: Date.now() }, ...state.txLog].slice(0, LOG_MAX);
+  set({ txLog: next });
+  if (!accountId || typeof window === "undefined") return;
+  try { window.localStorage.setItem(logKey(accountId), JSON.stringify(next)); } catch { /* storage full or blocked: keep it in memory */ }
 }
 
 function getSigner(): LearnerSigner {
@@ -124,18 +162,21 @@ function init(): void {
   if (initialised) return;
   initialised = true;
   const s = getSigner();
-  set({ accountId: s.accountId(), busy: false });
+  const accountId = s.accountId();
+  set({ accountId, txLog: readLog(accountId), busy: false });
   void refresh();
 }
 
 async function run(
   fn: (s: LearnerSigner) => Promise<RelayResult>,
   expect: (l: LearnerView | null) => boolean,
+  log: Omit<TxEntry, "url" | "at" | "txHash" | "methods">,
 ): Promise<RelayResult> {
   set({ busy: true, error: null });
   try {
     const result = await fn(getSigner());
     set({ lastTx: { ...result, url: explorer.tx(result.txHash) } });
+    pushLog({ ...log, txHash: result.txHash, methods: result.methods });
     await refreshUntil(expect);
     return result;
   } catch (e) {
@@ -151,7 +192,7 @@ const actions = {
     set({ busy: true, error: null });
     try {
       const accountId = await getSigner().ensureAccount();
-      set({ accountId });
+      set({ accountId, txLog: readLog(accountId) });
       await refresh();
       return accountId;
     } catch (e) {
@@ -166,12 +207,14 @@ const actions = {
     run(
       (s) => game.completeLesson(s, lessonId, answer),
       (l) => !!l && l.completed.includes(lessonId),
+      { kind: "quest", ref: lessonId },
     ),
   sellToBloq: (tokenId: string, amount = 1) => {
     const before = state.learner?.gold;
     return run(
       (s) => game.sellToBloq(s, tokenId, amount),
       (l) => !!l && l.gold !== before,
+      { kind: "sell", ref: tokenId, amount },
     );
   },
   buyFromBloq: (tokenId: string, amount = 1) => {
@@ -179,16 +222,18 @@ const actions = {
     return run(
       (s) => game.buyFromBloq(s, tokenId, amount),
       (l) => !!l && l.gold !== before,
+      { kind: "buy", ref: tokenId, amount },
     );
   },
   graduate: () =>
     run(
       (s) => game.graduate(s),
       (l) => !!l && l.graduated,
+      { kind: "graduate" },
     ),
   signOut: (): void => {
     signer?.signOut();
-    set({ accountId: null, learner: null, passport: null, lastTx: null, error: null });
+    set({ accountId: null, learner: null, passport: null, lastTx: null, txLog: [], error: null });
   },
   exportSecretKey: (): string | null => signer?.exportSecretKey() ?? null,
   clearError: (): void => set({ error: null }),

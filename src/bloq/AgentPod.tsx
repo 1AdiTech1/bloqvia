@@ -24,19 +24,21 @@ export interface AgentPodHandle {
 export interface AgentPodProps {
   /** Diameter of the window in px (32 for inline links, 52 for a sheet header, 58 for the dock). */
   size?: number;
+  /** false keeps him inside the window (for headers inside a box that clips, like the landing chat panel). Default true. */
+  lean?: boolean;
   className?: string;
 }
 
 const still = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export const AgentPod = forwardRef<AgentPodHandle, AgentPodProps>(function AgentPod({ size = 32, className }, ref) {
+export const AgentPod = forwardRef<AgentPodHandle, AgentPodProps>(function AgentPod({ size = 32, lean = true, className }, ref) {
   const pod = useRef<HTMLSpanElement>(null);
   const bloq = useRef<BloqHandle>(null);
   const timers = useRef<number[]>([]);
   useEffect(() => () => timers.current.forEach(window.clearTimeout), []);
 
-  const lean = (ms: number) => {
-    const el = pod.current; if (!el) return;
+  const leanOut = (ms: number) => {
+    const el = pod.current; if (!el || !lean) return;
     el.classList.add("pop");
     timers.current.push(window.setTimeout(() => el.classList.remove("pop"), ms));
   };
@@ -44,20 +46,20 @@ export const AgentPod = forwardRef<AgentPodHandle, AgentPodProps>(function Agent
   useImperativeHandle(ref, () => ({
     peek: (ms = 2200) => {
       if (still()) return;
-      lean(ms);
+      leanOut(ms);
       timers.current.push(window.setTimeout(() => bloq.current?.jump(), 350));
     },
     jump: () => bloq.current?.jump(),
     talk: (ms) => bloq.current?.talk(ms),
-  }), []);
+  }), [lean]);
 
   return (
     <span
       ref={pod}
       aria-hidden="true"
-      className={["bloq-pod", className ?? ""].join(" ")}
+      className={["bloq-pod", lean ? "" : "still", className ?? ""].join(" ")}
       style={{ "--s": `${size}px` } as CSSProperties}
-      onPointerDown={() => { lean(900); bloq.current?.jump(); bloq.current?.setMood("laugh", 900); }}
+      onPointerDown={() => { leanOut(900); bloq.current?.jump(); bloq.current?.setMood("laugh", 900); }}
       onPointerEnter={() => bloq.current?.setMood("laugh", 700)}
     >
       <span className="clip">

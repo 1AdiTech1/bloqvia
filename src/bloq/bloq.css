@@ -119,6 +119,9 @@
 .bloq-pod .clip > div { position: absolute; width: calc(var(--s) * 1.42); left: calc(var(--s) * .23); top: calc(var(--s) * 1.06); transition: transform .55s cubic-bezier(.34,1.56,.64,1); }
 .bloq-pod:hover .clip > div, .bloq-pod.pop .clip > div,
 :where(button, a, [role="button"]):is(:hover, :focus-visible) .bloq-pod .clip > div { transform: translateY(calc(var(--s) * -.5)); }
+/* lean={false}: a plain round avatar, clipped to the circle (same framing as the window at rest) */
+.bloq-pod.still .clip { inset: 0; border-radius: 50%; overflow: hidden; -webkit-mask: none; mask: none; }
+.bloq-pod.still .clip > div, :where(button, a, [role="button"]):is(:hover, :focus-visible) .bloq-pod.still .clip > div { left: calc(var(--s) * -.22); top: calc(var(--s) * -.19); transform: none; }
 @media (prefers-reduced-motion: reduce) { .bloq-pod .clip > div { transition: none; } }
 
 /* ---------- ChainTrail: the journey map as a NEAR world ---------- */
@@ -204,3 +207,8 @@
   .bloq-trail *, .bloq-trail *::before, .bloq-trail *::after, .bloq-ticker i { animation: none !important; transition-duration: 0s !important; }
   .bloq-trail .chunk { display: none; }
 }
+
+/* ---------- BloqFace: only the head, cut under the chin ---------- */
+.bloq-face { position: relative; flex: none; cursor: pointer; clip-path: inset(-45% -30% 0 -30%); } /* cut only under the chin */
+.bloq-face > div { position: absolute; left: 0; top: 0; width: 100%; }
+.bloq-face .bq-shadow { display: none; }

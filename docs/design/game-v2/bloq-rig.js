@@ -84,8 +84,8 @@
           <path d="M78 98 C74 56 106 30 152 28 C198 27 230 56 226 98 C190 90 114 90 78 98 Z" fill="${P}" ${o}/>
           <path d="M98 52 C110 40 126 34 142 32" fill="none" stroke="${PL}" stroke-width="6" stroke-linecap="round"/>
           <rect x="142" y="48" width="20" height="8" rx="4" fill="${L}" ${o5}/><rect x="140" y="59" width="24" height="8" rx="4" fill="${LD}" ${o5}/><rect x="138" y="70" width="28" height="8" rx="4" fill="${L}" ${o5}/>
-          <path d="M80 94 C110 104 194 104 224 94 C218 104 190 111 152 111 C116 111 88 104 80 94 Z" fill="${L}" ${o}/>
-          <path d="M98 101 C124 106 180 106 206 101" fill="none" stroke="${LD}" stroke-width="4" stroke-linecap="round"/>
+          <path d="M76 96 C110 86 194 86 228 96 L226 102 C192 113 112 113 78 102 Z" fill="#D4F033" ${o}/>
+          <path d="M96 103 C124 109 180 109 208 103" fill="none" stroke="${LD}" stroke-width="4" stroke-linecap="round"/>
           <ellipse cx="152" cy="30" rx="7" ry="5.5" fill="${L}" ${o5}/>
         </g><g class="v-side"><path d="M76 104 C72 58 104 30 152 28 C200 27 230 56 228 100 C190 90 112 92 76 104 Z" fill="${P}" ${o}/>
           <path d="M98 52 C110 40 126 34 142 32" fill="none" stroke="${PL}" stroke-width="6" stroke-linecap="round"/>
@@ -195,7 +195,7 @@
     badge: `<path d="M-8 -34 L-15 -10 L-7 -14 L-3 -6 L2 -30 Z M8 -34 L15 -10 L7 -14 L3 -6 L-2 -30 Z" fill="${P}" ${o5}/>
           <circle cx="0" cy="-46" r="17" fill="${L}" ${o5}/><path d="M0 -56 l3 7 h7 l-5.5 4.5 l2 7 l-6.5 -4 l-6.5 4 l2 -7 l-5.5 -4.5 h7 Z" fill="${INK}"/>`,
     coin: `<circle cx="0" cy="-44" r="18" fill="${L}" ${o5}/><circle cx="0" cy="-44" r="11" fill="none" stroke="${INK}" stroke-width="2.5" opacity=".55"/>
-          <path d="M-3 -51 h5 a4 3.5 0 0 1 0 7 h-5 Z M-3 -44 h6 a4 3.5 0 0 1 0 7 h-6 Z" fill="none" stroke="${INK}" stroke-width="2.5"/>`,
+          <g transform="translate(-7.6 -51.2) scale(.35)"><rect x="1" y="29" width="42" height="12" rx="6" fill="${INK}"/><rect x="1" y="15.5" width="36" height="12" rx="6" fill="${INK}" opacity=".78"/><rect x="1" y="2" width="31" height="12" rx="6" fill="${INK}"/></g>`,
   };
   const GLOWS = new Set(["star", "chip", "key", "fuel", "scroll", "bulb", "cube", "magnifier", "passport", "badge", "coin"]);
 
