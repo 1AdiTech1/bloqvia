@@ -1,3 +1,4 @@
+import { BloqCoin } from "@/bloq";
 import { forwardRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { BatteryCharging, FileCheck2, KeyRound } from "lucide-react";
@@ -17,8 +18,8 @@ export function itemLabel(id: string) {
 /** Coin-like lime disc for BloqGold. */
 export function GoldDisc({ className }: { className?: string | undefined }) {
   return (
-    <span className={cn("relative inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-lime ring-2 ring-lime/40", className)} aria-hidden="true">
-      <span className="h-1/2 w-1/2 rounded-full border border-navy/50" />
+    <span className={cn("relative inline-flex h-4 w-4 shrink-0 items-center justify-center", className)} aria-hidden="true">
+      <BloqCoin size={20} className="h-full w-full" />
     </span>
   );
 }

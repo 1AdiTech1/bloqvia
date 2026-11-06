@@ -8,7 +8,7 @@ import { AskDock } from "@/components/brand/AskDock";
 import { useGame } from "@/game/useGame";
 import { cn } from "@/lib/utils";
 import {
-  BlockSea, Bloq, BloqviaLogo, FloatingCubes, SpeechBubble, talkMs, useSay,
+  BlockSea, Bloq, BloqCoin, BloqviaLogo, FloatingCubes, SpeechBubble, talkMs, useSay,
   type BloqHandle, type BloqHat, type BloqPose, type BloqProp, type FloatingCubesHandle,
 } from "@/bloq";
 
@@ -39,20 +39,33 @@ export function LandingPage() {
   const [open, setOpen] = useState(false);
   const openSheet = useCallback(() => setOpen(true), []);
   const close = useCallback(() => setOpen(false), []);
+  const game = useGame();
+  const navigate = useNavigate();
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  /** Start buttons: signed in → the "already started" popover; signed out → the sign-in sheet. */
+  const startOrRemind = useCallback((e?: React.MouseEvent<HTMLElement>) => {
+    if (game.accountId && e) setAnchor(e.currentTarget);
+    else setOpen(true);
+  }, [game.accountId]);
+  /** Explore ↗: signed in → map, signed out → sheet. */
+  const explore = useCallback(() => {
+    if (game.accountId) navigate({ to: "/map" });
+    else setOpen(true);
+  }, [game.accountId, navigate]);
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-ivory text-navy">
+    <div className="relative min-h-screen overflow-x-clip bg-ivory text-navy">
       <main>
-        <Hero onStart={openSheet} />
+        <Hero onStart={openSheet} onHeaderStart={startOrRemind} />
         <Context />
-        <Chapters />
-        <ExperienceLab onStart={openSheet} />
+        <Chapters onExplore={explore} />
+        <ExperienceLab onStart={startOrRemind} />
         <Progress />
-        <Ready onStart={openSheet} />
+        <Ready onStart={startOrRemind} />
       </main>
       <footer className="bg-navy pb-24 text-ivory/80 sm:pb-20">
         <div className={cn(WRAP, "flex flex-col gap-3 py-[30px] text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between")}>
-          <span>BLOQVIA · A friendlier way into Web3.</span>
+          <span className="normal-case">Bloqvia · A friendlier way into Web3.</span>
           <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ivory/60">
             <span>Built on NEAR · NEAR testnet · NEAR Hackathon 2026</span>
             <a href="https://github.com/1AdiTech1/bloqvia" target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center font-medium text-lime no-underline hover:underline">Source on GitHub</a>
@@ -60,8 +73,38 @@ export function LandingPage() {
           <a href="#top" className="inline-flex min-h-11 items-center font-display text-base font-medium text-lime no-underline">Back to top ↑</a>
         </div>
       </footer>
+      {anchor && <StartedPopover anchor={anchor} onClose={() => setAnchor(null)} />}
       <SignInSheet open={open} onClose={close} />
       <AskDock />
+    </div>
+  );
+}
+
+/** Small ivory popover under a Start button for players who already have an account. */
+function StartedPopover({ anchor, onClose }: { anchor: HTMLElement; onClose: () => void }) {
+  const navigate = useNavigate();
+  const box = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  useEffect(() => {
+    const r = anchor.getBoundingClientRect();
+    const w = Math.min(300, innerWidth - 24);
+    const left = Math.max(12, Math.min(r.left + scrollX, scrollX + innerWidth - w - 12));
+    setPos({ top: r.bottom + scrollY + 12, left });
+    const t = window.setTimeout(onClose, 6000);
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onDown = (e: PointerEvent) => {
+      const n = e.target as Node;
+      if (!box.current?.contains(n) && !anchor.contains(n)) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onDown);
+    return () => { window.clearTimeout(t); window.removeEventListener("keydown", onKey); document.removeEventListener("pointerdown", onDown); };
+  }, [anchor, onClose]);
+  if (!pos) return null;
+  return (
+    <div ref={box} role="status" className="absolute z-50 w-[min(300px,calc(100vw-24px))] rounded-[16px] bg-ivory p-4 text-navy shadow-[0_18px_44px_rgb(22_36_58/.22)] ring-1 ring-navy/10" style={{ top: pos.top, left: pos.left }}>
+      <p className="text-[15px] leading-snug">You've already started. Your progress is waiting on the map.</p>
+      <button type="button" onClick={() => navigate({ to: "/map" })} className="lv-btn lv-btn-lime mt-3 w-full !py-3 !text-[15px] !shadow-none">Continue to the map</button>
     </div>
   );
 }
@@ -71,7 +114,7 @@ const SECTION = "relative py-[clamp(72px,9vw,116px)]";
 
 /* ---------------- Hero (with the header) ---------------- */
 
-function Hero({ onStart }: { onStart: () => void }) {
+function Hero({ onStart, onHeaderStart }: { onStart: () => void; onHeaderStart: (e: React.MouseEvent<HTMLElement>) => void }) {
   const still = useReducedMotion();
   const game = useGame();
   const navigate = useNavigate();
@@ -148,7 +191,7 @@ function Hero({ onStart }: { onStart: () => void }) {
             <a href="#context">The big picture</a>
             <a href="#chapters">Chapters</a>
             <a href="#lab">Experience Lab</a>
-            <button type="button" onClick={start} className="lv-btn lv-btn-lime !px-5 !py-[13px] !text-[15px] !shadow-none">
+            <button type="button" onClick={(e) => { celebrate(); onHeaderStart(e); }} className="lv-btn lv-btn-lime !px-5 !py-[13px] !text-[15px] !shadow-none">
               Start learning
             </button>
           </nav>
@@ -411,7 +454,7 @@ const chapterCards: (PerchCard & { Icon: LucideIcon; title: string; body: string
   { key: "03 Smart Agreements", Icon: FileCheck2, title: "Smart contracts", body: "Think of rules that run when agreed conditions are met. Learn what they can, and can't, do.", hat: "beret", prop: "scroll", say: "A smart contract is a vending machine made of code, with the rules printed on it for everyone.", bg: "bg-lime-pale border-[#dfe9b8]" },
 ];
 
-function Chapters() {
+function Chapters({ onExplore }: { onExplore: () => void }) {
   const p = usePerch({ hat: "beanie", prop: "bulb" }, "Three chapters, one idea each. Point at one and I'll dress for it.");
   return (
     <section ref={p.section} id="chapters" className={cn(SECTION, "bg-ivory")}>
@@ -433,7 +476,13 @@ function Chapters() {
                 </span>
                 <b className="mt-1.5 font-display text-[1.4rem] font-medium leading-[1.2] tracking-[-0.02em]">{c.title}</b>
                 <small className="text-[15.5px] text-muted-foreground">{c.body}</small>
-                <span className="mt-auto self-start border-b-[2.5px] border-navy pb-[5px] font-display text-[17px] font-medium">Explore ↗</span>
+                <span
+                  role="link"
+                  tabIndex={0}
+                  onClick={(e) => { e.stopPropagation(); onExplore(); }}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); onExplore(); } }}
+                  className="lv-explore mt-auto inline-flex min-h-11 items-center self-start font-display text-[17px] font-medium"
+                >Explore ↗</span>
               </button>
             ))}
           </div>
@@ -452,7 +501,7 @@ const labCards: (PerchCard & { title: string; body: string })[] = [
   { key: "passport", title: "The Passport", body: "Keep track of your journey.", hat: "aviator", prop: "passport", say: "Your Passport is an NFT that levels up on chain. Nobody can sell you one." },
 ];
 
-function ExperienceLab({ onStart }: { onStart: () => void }) {
+function ExperienceLab({ onStart }: { onStart: (e?: React.MouseEvent<HTMLElement>) => void }) {
   const p = usePerch({ hat: "tophat", prop: "cube" }, "Everything in the Lab is a real NEAR testnet transaction you can check.");
   return (
     <section ref={p.section} id="lab" className={cn(SECTION, "lv-dark bg-navy text-ivory")}>
@@ -475,7 +524,7 @@ function ExperienceLab({ onStart }: { onStart: () => void }) {
           </div>
         </div>
         <div className="mt-10">
-          <button type="button" onClick={onStart} className="lv-btn lv-btn-lime">Enter the Experience Lab</button>
+          <button type="button" onClick={(e) => onStart(e)} className="lv-btn lv-btn-lime">Enter the Experience Lab</button>
         </div>
       </div>
     </section>
@@ -542,7 +591,7 @@ function Progress() {
           <div className="mt-[30px] grid grid-cols-1 gap-3.5 min-[461px]:grid-cols-2">
             {progItems.map((it, i) => (
               <button key={it.name} type="button" onMouseEnter={() => pick(i)} onFocus={() => pick(i)} onClick={() => pick(i)} className={cn("lv-card lv-it", active === i && "on")}>
-                <i aria-hidden="true" style={it.icon} className="grid place-items-center">{it.Icon && <it.Icon size={18} strokeWidth={2.2} />}</i>
+                <i aria-hidden="true" style={it.icon} className="grid place-items-center">{it.Icon ? <it.Icon size={18} strokeWidth={2.2} /> : <BloqCoin size={26} />}</i>
                 <b>{it.name}</b>
                 <small>{it.body}</small>
               </button>
@@ -608,7 +657,7 @@ function Progress() {
 
 const SPLASH_COLORS = ["var(--lime)", "#b47ff0", "#ffffff"];
 
-function Ready({ onStart }: { onStart: () => void }) {
+function Ready({ onStart }: { onStart: (e?: React.MouseEvent<HTMLElement>) => void }) {
   const still = useReducedMotion();
   const section = useRef<HTMLElement>(null);
   const rider = useRef<HTMLDivElement>(null);
@@ -666,8 +715,8 @@ function Ready({ onStart }: { onStart: () => void }) {
           <div className="mt-[26px]">
             <button
               type="button"
-              className="lv-btn lv-btn-navy"
-              onClick={() => { bloq.current?.wobble(); onStart(); }}
+              className="lv-btn lv-btn-navy lv-btn-ready"
+              onClick={(e) => { bloq.current?.wobble(); onStart(e); }}
               onMouseEnter={() => { bloq.current?.rideWave(true); bloq.current?.setMood("laugh", 900); }}
               onMouseLeave={() => bloq.current?.rideWave(false)}
             >

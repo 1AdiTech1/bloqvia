@@ -203,6 +203,10 @@
 
   .lv-nav a { text-decoration: none; opacity: .92; background: linear-gradient(100deg, var(--ivory) 0 45%, #ebfb7a 50%, var(--lime) 62%, var(--lime-d) 80%, var(--lime)) 0 0 / 240% 100% no-repeat; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; transition: background-position .55s cubic-bezier(.22,1,.36,1), opacity .2s; }
   .lv-nav a:hover, .lv-nav a:focus-visible { opacity: 1; background-position: 100% 0; }
+  .lv-explore { cursor: pointer; text-decoration: none; background: linear-gradient(100deg, var(--navy) 0 45%, #9fc21f 50%, var(--lime-d) 62%, #6f8f0f 80%, var(--lime-d)) 0 0 / 240% 100% no-repeat; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; transition: background-position .55s cubic-bezier(.22,1,.36,1); }
+  .lv-explore:hover, .lv-explore:focus-visible, .lv-card:hover .lv-explore { background-position: 100% 0; }
+  .lv-btn-navy.lv-btn-ready { box-shadow: 4px 4px 0 rgb(92 96 112 / .55); }
+  .lv-btn-navy.lv-btn-ready:hover { box-shadow: 6px 6px 0 rgb(92 96 112 / .55); }
   @media (max-width: 759px) { .lv-nav a { display: none; } }
 
   .lv-ring { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid rgb(247 244 235 / .07); }

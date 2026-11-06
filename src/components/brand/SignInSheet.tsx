@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { useGame } from "@/game/useGame";
 import { CTA, ease } from "./primitives";
 import { BloqMark } from "@/components/Logo";
+import { BloqFace } from "@/bloq";
 import { LabLoader } from "@/components/LabLoader";
 
 /** App-held key sign-in sheet: calls start() then goes to /map. */
@@ -46,13 +47,16 @@ export function SignInSheet({ open, onClose }: { open: boolean; onClose: () => v
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 60, opacity: 0 }}
             transition={{ duration: 0.5, ease }}
+            style={{ containerType: "inline-size" }}
             className="relative w-full max-w-md rounded-t-[2rem] bg-ivory p-7 pb-10 text-navy shadow-lift md:rounded-[2rem] md:p-9"
           >
             <button type="button" onClick={onClose} aria-label="Close" className="tap absolute right-4 top-4 flex items-center justify-center rounded-full hover:bg-navy/5">
               <X className="h-5 w-5" />
             </button>
             <BloqMark size={40} />
-            <h2 id="signin-title" className="mt-6 font-display text-3xl font-medium uppercase tracking-[-0.04em]">
+            <BloqFace size={80} hat="cap" className="!absolute right-[60px] top-[14px]" />
+            <h2 id="signin-title" style={{ fontSize: "min(25px, 7.6cqi)" }}
+              className="mt-6 whitespace-nowrap font-display font-medium uppercase tracking-[-0.04em]">
               {returning ? "Welcome back" : "Start without a wallet"}
             </h2>
             <p className="mt-2 text-muted-foreground">

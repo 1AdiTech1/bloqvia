@@ -128,8 +128,8 @@ export function AskDock() {
       </div>
 
       <section id="lv-ask-chat" className="lv-chat" role="dialog" aria-label="Ask Bloq" hidden={!open}>
-        <div className="lv-chat-head">
-          <AgentPod size={40} ref={chatPod} />
+        <div className="lv-chat-head" style={{ paddingTop: 40 }}>
+          <AgentPod size={44} ref={chatPod} />
           <div>
             <b>Ask Bloq</b>
             <small><i className="lv-live" />AI agent on NEAR AI Cloud</small>
