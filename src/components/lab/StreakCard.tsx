@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check, ChevronDown, Info, X } from "lucide-react";
 import { useStreak } from "@/near";
@@ -24,6 +24,21 @@ function StreakInner() {
   const [log, setLog] = useState(false);
   const logBtn = useRef<HTMLButtonElement>(null);
   const logPanel = useRef<HTMLDivElement>(null);
+  const [logUp, setLogUp] = useState(false);
+  useLayoutEffect(() => {
+    if (!log) { setLogUp(false); return; }
+    const place = () => {
+      const panel = logPanel.current;
+      const card = panel?.offsetParent as HTMLElement | null;
+      if (!panel || !card) return;
+      // Where the panel's bottom would sit if it hung below the card (top: 100% - 12px).
+      const bottomIfDown = card.getBoundingClientRect().bottom - 12 + panel.getBoundingClientRect().height;
+      setLogUp(bottomIfDown > window.innerHeight - 16);
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [log]);
   useEffect(() => {
     if (!log) return;
     const down = (e: PointerEvent) => {
@@ -193,7 +208,7 @@ function StreakInner() {
         <div
           ref={logPanel}
           id="streak-last-days"
-          className="bq-pop absolute left-[10px] right-[10px] top-[calc(100%-12px)] z-30 rounded-[18px] bg-card py-3 pr-2 text-navy shadow-[0_22px_50px_rgb(0_0_0/.35),0_0_0_1px_#e3dccb]"
+          className={cn("bq-pop absolute left-[10px] right-[10px] z-30 rounded-[18px] bg-card py-3 pr-2 text-navy shadow-[0_22px_50px_rgb(0_0_0/.35),0_0_0_1px_#e3dccb]", logUp ? "bq-pop-up top-auto bottom-[56px]" : "top-[calc(100%-12px)]")}
         >
           {history.length === 0 ? (
             <p className="px-4 text-sm text-navy/60">No days recorded yet.</p>

@@ -365,3 +365,19 @@
   100% { transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { .si-bounce { animation: none; } }
+
+/* Shared inset lime scroll bar. The Firefox properties are gated so Chrome keeps the webkit rules (and draws no arrows). */
+.bq-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.bq-scroll::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+.bq-scroll::-webkit-scrollbar-track { background: transparent; }
+.bq-scroll::-webkit-scrollbar-thumb { background: #d4f033; border-radius: 999px; }
+.bq-scroll::-webkit-scrollbar-thumb:hover { background: #a6c21a; }
+@supports (-moz-appearance: none) { .bq-scroll { scrollbar-width: thin; scrollbar-color: #d4f033 transparent; } }
+@keyframes bq-pop-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.bq-pop { animation: bq-pop-in .22s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .bq-pop { animation: none; } }
+/* Game pages: the page behind the game is navy, never the landing's ivory. */
+html.bq-game, html.bq-game body { background: var(--navy); }
+@keyframes bq-pop-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.bq-pop.bq-pop-up { animation-name: bq-pop-up; }
+@media (prefers-reduced-motion: reduce) { .bq-pop.bq-pop-up { animation: none; } }

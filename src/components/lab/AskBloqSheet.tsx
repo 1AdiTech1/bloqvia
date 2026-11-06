@@ -99,7 +99,7 @@ function AskBloqPanel({ onClose, lessonId, context }: Props) {
         <div className="flex items-center gap-3 pr-10 pt-[18px]">
           <div className="shrink-0"><AgentPod size={52} ref={pod} /></div>
           <div>
-            <h2 className="font-display text-2xl font-medium uppercase leading-none tracking-[-0.04em]">Ask Bloq</h2>
+            <h2 className="font-display text-2xl font-medium leading-none tracking-[-0.02em]">Ask Bloq</h2>
             <p className="mt-1 text-sm text-muted-foreground">Plain-words answers from Bloq. He explains; he never hands out quest answers.</p>
           </div>
         </div>

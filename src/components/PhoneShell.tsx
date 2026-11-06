@@ -22,6 +22,10 @@ export function PhoneShell({
   const returnTo = useRef<HTMLElement | null>(null);
   const showPanel = nav || chain;
   const ask = (el: HTMLElement) => { returnTo.current = el; setAsking(true); };
+  useEffect(() => {
+    document.documentElement.classList.add("bq-game");
+    return () => document.documentElement.classList.remove("bq-game");
+  }, []);
 
   return (
     <div className="min-h-screen w-full overflow-x-clip bg-night text-ivory">
