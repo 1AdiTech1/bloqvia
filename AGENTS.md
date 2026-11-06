@@ -11,3 +11,4 @@
 
 ## Rules
 - Brand primitives (Section, Eyebrow, Display, Illustration, CTA, Reveal) live in src/components/brand/ and colours come from tokens in src/styles.css; legacy token names (moss, sun, etc.) alias the new palette so un-restyled screens keep working.
+- Landing v2 styles are plain `lv-*` classes in src/styles.css (@layer components), ported from docs/design/landing-v2; the landing drives Bloq only through the `@/bloq` public API.
