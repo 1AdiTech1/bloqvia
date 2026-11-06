@@ -236,7 +236,9 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
       for (let i = from + 1; i <= to && !cancelled; i++) {
         const a = rest(i - 1), L0 = geo.stopLen[i - 1] ?? 0, L1 = geo.stopLen[i] ?? 0, s0 = pointAt(L0);
         await glide(a, { x: s0.x, y: s0.y + 8 }, 420);
-        let face: "left" | "right" = "right";
+        // null, not "right": he may arrive at the stop facing left (from the glide), and the first
+        // step must turn him to the road's direction or he walks the whole stretch backwards.
+        let face: "left" | "right" | null = null;
         await anim(Math.max(1400, (L1 - L0) * 7.5), (k) => {
           const L = L0 + (L1 - L0) * k, p = pointAt(L), q = pointAt(Math.min(geo.len, L + 3)), f = q.x >= p.x ? "right" : "left";
           if (f !== face) { face = f; setFacing(f); }

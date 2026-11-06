@@ -1,0 +1,272 @@
+<title>Bloqvia Fixes Round 14</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="rig.css">
+<style>
+/* Layout: one numbered section per fix (the numbers are Adi's bug list, in his order), each with a working mock of the fixed screen. Bloqvia game tokens (single dark look). */
+:root {
+  --night: #131f33; --navy: #16243a; --navy-2: #22324c; --navy-3: #2b3d5c; --ivory: #f6f3ec; --card: #fffdf7;
+  --lime: #d4f033; --lime-d: #a6c21a; --lav: #c9b8ec; --lav-bg: #efe7fb; --coral: #f08a74; --muted: #5a6477;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--night); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+.wrap { max-width: 1060px; margin: 0 auto; display: grid; gap: 40px; }
+header h1 { margin: 0; font: 600 26px/1.15 var(--display); letter-spacing: -.02em; }
+header p { margin: 8px 0 0; color: var(--lav); max-width: 70ch; }
+section { display: grid; gap: 14px; }
+.hd { display: flex; gap: 14px; align-items: baseline; }
+.no { font: 700 13px/1 var(--mono); color: var(--navy); background: var(--lime); border-radius: 8px; padding: 6px 8px; flex: none; }
+.hd h2 { margin: 0; font: 600 19px/1.25 var(--display); letter-spacing: -.01em; }
+.hd p { margin: 4px 0 0; color: var(--lav); font-size: 14.5px; max-width: 76ch; }
+.frame { position: relative; border-radius: 22px; background: linear-gradient(180deg, #172640, #1a2944); box-shadow: inset 0 0 0 1px rgb(246 243 236 / .06); padding: 22px; overflow: hidden; }
+.cap { font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: #8e9bb3; margin-bottom: 10px; }
+.pair { display: grid; gap: 18px; grid-template-columns: 1fr 1fr; }
+@media (max-width: 760px) { .pair { grid-template-columns: 1fr; } }
+button { font: inherit; }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+
+/* 1 · walking direction */
+.road { position: relative; height: 150px; border-radius: 14px; background: repeating-linear-gradient(90deg, rgb(212 240 51 / .0) 0 16px, rgb(212 240 51 / .0) 16px 22px), #1d2c47; overflow: hidden; }
+.road::after { content: ""; position: absolute; left: 0; right: 0; bottom: 26px; height: 14px; background: repeating-linear-gradient(90deg, var(--lime) 0 16px, transparent 16px 24px); opacity: .85; border-radius: 4px; }
+.road .who { position: absolute; bottom: 30px; width: 74px; left: 0; animation: stroll 4.2s linear infinite; }
+@keyframes stroll { from { transform: translateX(-80px) } to { transform: translateX(calc(var(--w, 460px))) } }
+.road .lbl { position: absolute; top: 10px; left: 12px; font: 600 12px/1 var(--mono); }
+.bad .lbl { color: var(--coral); } .good .lbl { color: var(--lime); }
+.road .arrow { position: absolute; top: 10px; right: 12px; font: 600 12px/1 var(--mono); color: #8e9bb3; }
+
+/* 2 · quest window */
+.qstage { position: relative; height: 620px; padding-top: 110px; border-radius: 16px; background: #0f1a2c; display: grid; place-items: center; }
+.qstage .dim { position: absolute; inset: 0; background: rgb(10 16 30 / .55); border-radius: 16px; }
+.qwin { position: relative; width: min(520px, 100%); height: 410px; background: var(--ivory); color: var(--navy); border-radius: 28px; box-shadow: 0 30px 70px rgb(0 0 0 / .45); }
+/* The scroller is inset from the card's edges (14px top/bottom, 8px right), so the bar sits inside the card,
+   clear of the rounded corners. Chrome/Edge/Safari: the ::-webkit-scrollbar rules (6px, lime, round, no arrows).
+   Firefox only: thin + lime. The standard properties are kept out of Chrome on purpose: when Chrome sees them it
+   ignores the ::-webkit rules and draws its own bar with arrow buttons. */
+.qwin .scroll { position: absolute; inset: 14px 8px 14px 0; overflow-y: auto; padding: 16px 20px 12px 30px; }
+.bq-scroll::-webkit-scrollbar { width: 6px; }
+.bq-scroll::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+.bq-scroll::-webkit-scrollbar-track { background: transparent; }
+.bq-scroll::-webkit-scrollbar-thumb { background: var(--lime); border-radius: 999px; }
+.bq-scroll::-webkit-scrollbar-thumb:hover { background: var(--lime-d); }
+@supports (-moz-appearance: none) { .bq-scroll { scrollbar-width: thin; scrollbar-color: var(--lime) transparent; } }
+.qwin .x { position: absolute; top: 14px; right: 14px; z-index: 4; width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent; color: var(--navy); display: grid; place-items: center; cursor: pointer; }
+.qwin .x:hover { background: rgb(22 36 58 / .08); }
+.qwin .x svg { width: 20px; height: 20px; }
+.qwin .qb { position: absolute; right: 68px; bottom: calc(100% - 6px); width: 86px; z-index: 3; }
+.chips { display: flex; gap: 10px; align-items: center; }
+.chip { font: 600 11px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; background: var(--lav-bg); border-radius: 999px; padding: 8px 12px; }
+.chip.plain { background: none; color: #5d6779; padding-inline: 0; }
+.qwin h3 { margin: 14px 0 0; font: 700 30px/1.05 var(--display); letter-spacing: -.04em; text-transform: uppercase; }
+.qwin p { margin: 10px 0 0; color: #4d5769; line-height: 1.6; }
+.qwin .q { margin-top: 18px; font: 500 19px/1.35 var(--display); color: var(--navy); }
+.opt { margin-top: 12px; height: 56px; border-radius: 999px; border: 2px solid #e3dccb; background: var(--card); display: flex; align-items: center; justify-content: space-between; padding: 0 22px; font-weight: 600; }
+.opt small { font: 500 12px/1 var(--mono); color: #7c8495; }
+.reopen { position: absolute; z-index: 5; inset: auto 0 0 0; margin: auto; top: 0; width: max-content; height: max-content; border: 0; border-radius: 999px; background: var(--lime); color: var(--navy); font: 600 15px/1 var(--display); padding: 14px 20px; cursor: pointer; }
+.note { margin: 0; font-size: 13.5px; color: var(--lav); }
+.note b { color: var(--ivory); font-weight: 600; }
+
+/* 3 + 4 · map cards */
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; max-width: 720px; margin-inline: auto; }
+@media (max-width: 620px) { .cards { grid-template-columns: 1fr; } }
+.sc { position: relative; background: var(--ivory); color: var(--navy); border-radius: 26px; padding: 20px; display: flex; flex-direction: column; }
+.eb { font: 600 11px/1 var(--display); letter-spacing: .18em; text-transform: uppercase; color: #5d6779; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.best { font: 600 12px/1 var(--body); letter-spacing: 0; text-transform: none; color: var(--navy); background: #e6d8fa; border-radius: 999px; padding: 6px 10px; }
+.big { margin-top: 8px; font: 600 48px/1 var(--display); letter-spacing: -.04em; }
+.big span { font: 500 18px/1 var(--display); letter-spacing: 0; margin-left: 4px; }
+.bar { margin-top: 14px; height: 6px; border-radius: 3px; background: #e6e1d4; }
+.bar i { display: block; width: 0%; height: 100%; border-radius: inherit; background: var(--lime-d); }
+.sub { margin-top: 10px; font-size: 14px; } .sub small { display: block; color: #7c8495; font-size: 12px; }
+.btn { height: 46px; border: 0; border-radius: 999px; background: var(--lime); color: var(--navy); font: 600 16px/1 var(--display); width: 100%; cursor: pointer; }
+.sc .btn { margin-top: 14px; }
+.hold { margin-top: 10px; font-size: 13.5px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.hold a { color: var(--navy); font-weight: 600; text-decoration: none; transition: color .2s; }
+.hold a:hover, .hold a:focus-visible { color: #6f8f0f; }
+.ld { margin-top: auto; padding-top: 12px; border-top: 1px solid #e3dccb; }
+.ld > button { width: 100%; background: none; border: 0; padding: 4px 0 0; display: flex; justify-content: space-between; align-items: center; color: var(--navy); font: 500 15px/1.2 var(--body); cursor: pointer; min-height: 36px; }
+.ld svg { width: 18px; height: 18px; transition: transform .25s; }
+.ld[data-open="true"] svg { transform: rotate(180deg); }
+.pop { position: absolute; left: 10px; right: 10px; top: calc(100% - 12px); z-index: 6; background: var(--card); color: var(--navy); border-radius: 18px; padding: 12px 14px; box-shadow: 0 22px 50px rgb(0 0 0 / .35), 0 0 0 1px #e3dccb; transform-origin: 50% 0; animation: pop .22s cubic-bezier(.2,.9,.3,1.2); }
+@keyframes pop { from { opacity: 0; transform: translateY(-6px) scale(.98) } }
+.pop ul { list-style: none; margin: 0 -6px 0 0; padding: 0 10px 0 0; display: grid; gap: 2px; max-height: 236px; overflow-y: auto; }
+.pop li { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; padding: 7px 4px; border-bottom: 1px solid #efe9dc; }
+.pop li:last-child { border: 0; }
+.pop li b { font-weight: 600; } .pop li em { font-style: normal; color: #d0573e; font-weight: 600; white-space: nowrap; }
+.pop li em.ok { color: #6f8f0f; }
+.pop .foot { margin-top: 6px; font: 500 11.5px/1.3 var(--mono); color: #7c8495; }
+.qc { background: var(--navy-2); border-radius: 26px; padding: 20px; display: flex; flex-direction: column; color: var(--ivory); box-shadow: inset 0 0 0 1px rgb(201 184 236 / .12); }
+.qc .eb { color: var(--lime); } .qc .eb .topic { color: var(--lav); background: rgb(201 184 236 / .16); border-radius: 999px; padding: 6px 10px; letter-spacing: 0; text-transform: none; font: 500 12px/1 var(--body); }
+.qc h4 { margin: 12px 0 0; font: 700 25px/1.05 var(--display); letter-spacing: -.03em; text-transform: uppercase; }
+.qc .concept { margin: 10px 0 0; color: #cfd6e6; font-size: 14px; line-height: 1.5; }
+.rw { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+.rw span { border-radius: 999px; padding: 8px 12px; font: 600 13.5px/1 var(--display); display: inline-flex; align-items: center; gap: 6px; }
+.rw .g { background: #16243a; color: var(--lime); } .rw .f { background: var(--lav-bg); color: var(--navy); }
+.qc .foot { margin-top: auto; padding-top: 16px; display: grid; gap: 10px; }
+.qc .prov { font-size: 12.5px; color: var(--lav); } .qc .prov a { color: var(--lime); font-weight: 600; text-decoration: none; }
+
+/* 5 · reveal end */
+.rev { text-align: center; padding: 26px 16px; }
+.rev h3 { margin: 0; font: 500 24px/1.25 var(--display); letter-spacing: -.02em; }
+.rev .row { margin-top: 18px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.rev .row .btn { width: auto; padding: 0 24px; height: 52px; display: inline-flex; align-items: center; gap: 10px; }
+.rev .row .btn svg { width: 18px; height: 18px; }
+.ghost { height: 52px; border-radius: 999px; padding: 0 22px; background: transparent; color: var(--lav); border: 1.5px solid rgb(201 184 236 / .4); font: 600 16px/1 var(--display); cursor: pointer; }
+.phone .rev .row { flex-direction: column; align-items: stretch; }
+.phone .rev .row .btn { justify-content: center; }
+.phone { max-width: 360px; margin-inline: auto; }
+
+/* 6 · landing chat panel position */
+.lp { position: relative; height: 430px; border-radius: 16px; overflow: hidden; background: linear-gradient(180deg, #1b2a45 0 30%, #f3efe4 30%); }
+.lp .nav { position: absolute; top: 18px; left: 22px; right: 22px; display: flex; justify-content: space-between; color: var(--ivory); font: 600 14px/1 var(--display); }
+.lp .panel { position: absolute; right: 18px; bottom: 92px; width: min(300px, calc(100% - 36px)); background: var(--card); border-radius: 22px; overflow: hidden; box-shadow: 0 24px 50px rgb(0 0 0 / .3), 0 0 0 1.5px #b996ef; }
+.lp .ph { position: relative; background: var(--navy); color: var(--ivory); padding: 26px 16px 14px; display: flex; gap: 10px; align-items: center; }
+.lp .ph .av { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; position: relative; box-shadow: 0 0 0 2px var(--lime); flex: none; background: #2b3d5c; }
+.lp .ph .av > div { position: absolute; left: -24%; top: -10%; width: 148%; }
+.lp .ph b { display: block; font: 600 15px/1.1 var(--display); } .lp .ph small { color: var(--lav); font-size: 12px; }
+.lp .ph .x { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border-radius: 50%; background: rgb(246 243 236 / .1); display: grid; place-items: center; color: var(--ivory); }
+.lp .ph .x svg { width: 16px; height: 16px; }
+.lp .pb { padding: 14px 16px; color: var(--navy); font-size: 13px; }
+.lp .pb .msg { background: #fff; border: 1px solid #e3dccb; border-radius: 14px; padding: 10px 12px; }
+.lp .pb .in { margin-top: 14px; height: 38px; border-radius: 12px; border: 1.5px solid #b996ef; color: #8a90a0; display: flex; align-items: center; padding: 0 12px; }
+.lp .dock { position: absolute; right: 18px; bottom: 18px; width: 62px; height: 62px; border-radius: 50%; overflow: hidden; background: var(--navy-2); box-shadow: 0 0 0 2.5px var(--lime), 0 10px 20px rgb(0 0 0 / .3); }
+.lp .dock > div { position: absolute; left: -24%; top: -10%; width: 148%; }
+.lp .anchor { position: absolute; right: 90px; bottom: 30px; font: 600 11px/1.3 var(--mono); color: #6b7385; text-align: right; }
+@media (prefers-reduced-motion: reduce) { .road .who { animation: none; transform: translateX(40%); } .pop { animation: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Bloqvia fixes, round 14</h1>
+    <p>Your six bugs from the live site, each drawn as it will look once fixed. Nothing has gone to Lovable yet; say “go” or tell me what to change.</p>
+  </header>
+
+  <!-- 1 -->
+  <section aria-labelledby="h1">
+    <div class="hd"><span class="no">1</span><div><h2 id="h1">Bloq walks forward on the road</h2><p>From The Vault to The Fuel System he walked facing back. The road code kept his old direction when he stepped onto the road; now he turns to the road's direction on the first step. This one is in our own Bloq code, so you get it as a file, not through Lovable.</p></div></div>
+    <div class="pair">
+      <div class="frame"><div class="cap">Before</div><div class="road bad" id="r1"><span class="lbl">facing back</span><span class="arrow">moving →</span><div class="who" data-face="left"></div></div></div>
+      <div class="frame"><div class="cap">After</div><div class="road good" id="r2"><span class="lbl">facing the way he walks</span><span class="arrow">moving →</span><div class="who" data-face="right"></div></div></div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section aria-labelledby="h2">
+    <div class="hd"><span class="no">2</span><div><h2 id="h2">Quest window: lime scroll bar inside the card, and a × that works</h2><p>The scroll bar sits inside the rounded card, in lime, with round ends and space at the top and bottom so it never touches the corners. The × didn't work because Bloq's box stood over it; he moves a little left and the × sits on top. Scroll it, then press ×.</p></div></div>
+    <div class="frame">
+      <div class="qstage" id="qstage">
+        <div class="dim"></div>
+        <div class="qwin" id="qwin" role="dialog" aria-labelledby="qt">
+          <div class="qb" id="qbloq"></div>
+          <button class="x" type="button" id="qx" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          <div class="scroll bq-scroll">
+            <div class="chips"><span class="chip">Network gas</span><span class="chip plain">Chapter 2</span></div>
+            <h3 id="qt">The Fuel System</h3>
+            <p>Every action on a decentralized network needs computer power. Gas is the small fee paid to the computers that keep the system running. No fuel, no movement: a transaction without gas stalls.</p>
+            <p style="margin-top:12px;font-weight:600;color:#4d5769">◉ Ask Bloq about this</p>
+            <div class="q">True or false: when a network is busy, gas fees generally go down.</div>
+            <div class="opt">True <small>A</small></div>
+            <div class="opt">False <small>B</small></div>
+            <p style="margin-top:20px">On NEAR the relayer pays your gas, so your account spends 0 NEAR. The fee still exists; someone else covers it.</p>
+          </div>
+        </div>
+        <button class="reopen" type="button" id="qopen" hidden>Open the quest again</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 + 4 -->
+  <section aria-labelledby="h3">
+    <div class="hd"><span class="no">3·4</span><div><h2 id="h3">Map cards: same height, nothing empty, and “Last days” opens on its own</h2><p>“Last days” now opens as a small list floating over the page below, so neither card changes size when you open or close it. The streak card is shorter: the explorer link joins the “You hold” line. Today's quest gets its one-line idea, and Play sits at the bottom, so there's no empty space. Press “Last days”.</p></div></div>
+    <div class="frame" style="padding-bottom:290px">
+      <div class="cards">
+        <div class="sc">
+          <div class="eb">Community streak <span class="best">best 1</span></div>
+          <div class="big">0<span>days</span></div>
+          <div class="bar"><i></i></div>
+          <div class="sub">0 of 2 check-ins today<small>next day in 06:20</small></div>
+          <button class="btn" type="button">Check in</button>
+          <div class="hold"><span>You hold <b>0</b> STREAK · 1 check-in</span><a href="#h3" onclick="return false">explorer ↗</a></div>
+          <div class="ld" id="ld" data-open="false">
+            <button type="button" id="ldb" aria-expanded="false" aria-controls="ldp">Last days <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+          </div>
+          <div class="pop" id="ldp" hidden>
+            <ul class="bq-scroll">
+              <li><span><b>Day 290</b> · 1 check-in</span><em>missed · −100</em></li>
+              <li><span><b>Day 289</b> · 0 check-ins</span><em>missed · −100</em></li>
+              <li><span><b>Day 288</b> · 0 check-ins</span><em>missed · −100</em></li>
+              <li><span><b>Day 287</b> · 0 check-ins</span><em>missed · −100</em></li>
+              <li><span><b>Day 286</b> · 1 check-in</span><em>missed · −100</em></li>
+              <li><span><b>Day 285</b> · 2 check-ins</span><em class="ok">kept · +100</em></li>
+              <li><span><b>Day 284</b> · 0 check-ins</span><em>missed · −100</em></li>
+            </ul>
+            <div class="foot">Treasury 486,100 · supply 486,160</div>
+          </div>
+        </div>
+        <div class="qc">
+          <div class="eb">● Today's quest <span class="topic">Accounts on NEAR</span></div>
+          <h4>Readable accounts</h4>
+          <p class="concept">Why your NEAR account can be a name like learner-d1bd.testnet instead of a long string of characters.</p>
+          <div class="rw"><span class="g">◎ +50 BloqGold</span><span class="f">▮ +1 Fuel Cell</span></div>
+          <div class="foot">
+            <button class="btn" type="button">Play</button>
+            <div class="prov">Written by an AI agent on NEAR AI Cloud · signed in a TEE · <a href="#h3" onclick="return false">Verify ↗</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section aria-labelledby="h5">
+    <div class="hd"><span class="no">5</span><div><h2 id="h5">Reveal: “Back to the map” next to “Play again”</h2><p>The end of the Reveal gets a lime “Back to the map” button that opens your finished map. “Play again” stays next to it as the quieter choice. On phones they stack, the map button on top.</p></div></div>
+    <div class="pair">
+      <div class="frame"><div class="cap">Desktop</div><div class="rev"><h3>Thanks for playing. Everything you earned is yours.</h3><div class="row"><button class="btn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back to the map</button><button class="ghost" type="button">Play again</button></div></div></div>
+      <div class="frame"><div class="cap">Phone</div><div class="phone"><div class="rev"><h3>Thanks for playing. Everything you earned is yours.</h3><div class="row"><button class="btn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back to the map</button><button class="ghost" type="button">Play again</button></div></div></div></div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section aria-labelledby="h6">
+    <div class="hd"><span class="no">6</span><div><h2 id="h6">Website: the Ask Bloq chat opens bottom right, above the agent</h2><p>Clicking the agent made the chat jump to the bottom left and run off the screen. It stays anchored bottom right, right above the agent button, with the × in its top-right corner. On a phone it fills the width with 16px either side.</p></div></div>
+    <div class="frame">
+      <div class="lp">
+        <div class="nav"><span>Bloqvia</span><span>Start learning</span></div>
+        <div class="panel">
+          <div class="ph"><div class="av"><div class="agent-rig"></div></div><div><b>Ask Bloq</b><small>AI agent on NEAR AI Cloud</small></div><span class="x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span></div>
+          <div class="pb"><div class="msg">Hi, I'm Bloq's AI agent. Ask me anything about Bloqvia or Web3.</div><div class="in">Ask about keys, gas, prices…</div></div>
+        </div>
+        <div class="dock"><div class="agent-rig"></div></div>
+        <div class="anchor">16px from the right and the bottom<br>(plus the phone's safe area)</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="bloq-rig.js"></script>
+<script>
+(() => {
+  // 1: two walkers, one facing back (the bug), one facing forward (the fix)
+  document.querySelectorAll(".road .who").forEach((el) => {
+    const b = new Bloq(el, { hat: "cap", pose: "idle" });
+    b.walking(true); b.face(el.dataset.face);
+    const road = el.parentElement; const setW = () => road.style.setProperty("--w", road.clientWidth + "px"); setW(); addEventListener("resize", setW);
+  });
+  // 2: quest window
+  const qb = new Bloq(document.getElementById("qbloq"), { hat: "hardhat", prop: "fuel", pose: "hold" });
+  const win = document.getElementById("qwin"), again = document.getElementById("qopen"), dim = document.querySelector(".qstage .dim");
+  document.getElementById("qx").addEventListener("click", () => { win.hidden = true; dim.hidden = true; again.hidden = false; again.focus(); });
+  again.addEventListener("click", () => { win.hidden = false; dim.hidden = false; again.hidden = true; qb.jump(); });
+  document.getElementById("qbloq").addEventListener("pointerdown", () => qb.jump());
+  // 3+4: Last days popover
+  const ld = document.getElementById("ld"), ldb = document.getElementById("ldb"), pop = document.getElementById("ldp");
+  const setOpen = (o) => { ld.dataset.open = String(o); ldb.setAttribute("aria-expanded", String(o)); pop.hidden = !o; };
+  ldb.addEventListener("click", (e) => { e.stopPropagation(); setOpen(pop.hidden); });
+  document.addEventListener("click", (e) => { if (!pop.hidden && !pop.contains(e.target)) setOpen(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") setOpen(false); });
+  // 6: agent avatars
+  document.querySelectorAll(".agent-rig").forEach((el) => new Bloq(el, { hat: "agent", outfit: "agent", pose: "idle" }));
+})();
+</script>
