@@ -4,6 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useReducedMotion } from "framer-motion";
 import { KeyRound, Fuel, FileCheck2, type LucideIcon } from "lucide-react";
 import { SignInSheet } from "@/components/brand/SignInSheet";
+import { AskDock } from "@/components/brand/AskDock";
 import { useGame } from "@/game/useGame";
 import { cn } from "@/lib/utils";
 import {
@@ -49,13 +50,18 @@ export function LandingPage() {
         <Progress />
         <Ready onStart={openSheet} />
       </main>
-      <footer className="bg-navy text-ivory/80">
-        <div className={cn(WRAP, "flex flex-wrap items-center justify-between gap-3 py-[30px] text-sm")}>
+      <footer className="bg-navy pb-24 text-ivory/80 sm:pb-20">
+        <div className={cn(WRAP, "flex flex-col gap-3 py-[30px] text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between")}>
           <span>BLOQVIA · A friendlier way into Web3.</span>
+          <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ivory/60">
+            <span>Built on NEAR · NEAR testnet · NEAR Hackathon 2026</span>
+            <a href="https://github.com/1AdiTech1/bloqvia" target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center font-medium text-lime no-underline hover:underline">Source on GitHub</a>
+          </span>
           <a href="#top" className="inline-flex min-h-11 items-center font-display text-base font-medium text-lime no-underline">Back to top ↑</a>
         </div>
       </footer>
       <SignInSheet open={open} onClose={close} />
+      <AskDock />
     </div>
   );
 }
