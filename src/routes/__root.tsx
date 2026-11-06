@@ -8,7 +8,7 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -32,6 +32,31 @@ function NotFoundComponent() {
           </Link>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ErrorDetails({ error }: { error: Error }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const text = [error.message, ...(error.stack ?? "").split("\n").slice(0, 3)].join("\n");
+  return (
+    <div className="mt-4 text-left">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="mx-auto block min-h-[44px] px-3 text-sm font-medium text-muted-foreground underline underline-offset-4">
+        {open ? "Hide details" : "Show details"}
+      </button>
+      {open && (
+        <div className="mt-2 rounded-md border border-input bg-muted p-3">
+          <pre className="whitespace-pre-wrap break-all font-mono text-[12px] leading-snug text-foreground">{text}</pre>
+          <button
+            type="button"
+            onClick={() => { void navigator.clipboard?.writeText(text).then(() => setCopied(true)); }}
+            className="mt-2 min-h-[44px] rounded-md border border-input bg-background px-3 text-sm font-medium text-foreground"
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -69,6 +94,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
             Go home
           </a>
         </div>
+        <ErrorDetails error={error instanceof Error ? error : new Error(String(error))} />
       </div>
     </div>
   );

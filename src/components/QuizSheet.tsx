@@ -13,6 +13,7 @@ import { Press, labEase } from "./lab/motion";
 import { cn } from "@/lib/utils";
 import { useIsDesktop, verifyUrl } from "./lab/useDesktop";
 import { AskBloqButton, AskBloqSheet } from "./lab/AskBloqSheet";
+import { SheetGrab, useSheetDrag } from "./lab/SheetGrab";
 
 type SheetLesson = Omit<LessonContent, "answer"> & { answer?: string; explanation?: string; generated_by?: GeneratedBy };
 
@@ -56,6 +57,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
   const shakeCtl = useAnimationControls();
   const [burst, setBurst] = useState(0);
   const look = daily ? DAILY_LOOK : LOOKS[lessonId] ?? DAILY_LOOK;
+  const sheet = useSheetDrag(onClose, !desktop);
   const say = (t: string) => { sayLine(t); bloq.current?.talk(talkMs(t)); };
 
   useEffect(() => {
@@ -126,6 +128,8 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
         exit={reduce ? { opacity: 0 } : desktop ? { scale: 0.96, opacity: 0 } : { y: 80, opacity: 0 }}
         transition={desktop ? { duration: 0.22, ease: labEase } : { duration: 0.5, ease: labEase }}
         className="relative w-full max-w-[480px] dk:max-w-[560px]"
+        ref={sheet.ref}
+        {...sheet.dragProps}
       >
       <motion.div
         ref={bloqBox}
@@ -144,9 +148,9 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
         <X className="h-5 w-5" />
       </button>
       <AskBloqSheet open={asking && !done} onClose={() => setAsking(false)} lessonId={lesson.lesson_id} context="quiz" />
-      <div className="flex max-h-[80vh] w-full flex-col rounded-t-[2rem] bg-ivory py-[14px] pr-2 text-navy shadow-lift dk:max-h-[calc(100vh-136px)] dk:rounded-[28px]">
-      <div className="bq-scroll min-h-0 flex-1 overflow-y-auto pb-3 pl-[30px] pr-5 pt-4">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-navy/15 dk:hidden" />
+      <div className="flex max-h-[80vh] w-full flex-col rounded-t-[2rem] bg-ivory pb-[14px] pr-2 text-navy shadow-lift dk:max-h-[calc(100vh-136px)] dk:rounded-[28px] dk:pt-[14px]">
+      <SheetGrab controls={sheet.controls} onClose={onClose} />
+      <div className="bq-scroll min-h-0 flex-1 overflow-y-auto pb-3 pl-[30px] pr-5 dk:pt-4">
 
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-lavender-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]">{lesson.topic}</span>

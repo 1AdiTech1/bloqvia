@@ -8,6 +8,7 @@ import { LabLoader } from "@/components/LabLoader";
 import { Press, labEase } from "./motion";
 import { useIsDesktop, verifyUrl } from "./useDesktop";
 import { cn } from "@/lib/utils";
+import { SheetGrab, useSheetDrag } from "./SheetGrab";
 
 export type AskContext = "quiz" | "shop" | "map" | "missions" | "passport";
 type Context = AskContext;
@@ -50,6 +51,7 @@ function AskBloqPanel({ onClose, lessonId, context }: Props) {
     bloq.reset();
     onClose();
   };
+  const sheet = useSheetDrag(close, !desktop);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -88,15 +90,17 @@ function AskBloqPanel({ onClose, lessonId, context }: Props) {
         animate={{ y: 0, scale: 1, opacity: 1 }}
         exit={reduce ? { opacity: 0 } : desktop ? { scale: 0.96, opacity: 0 } : { y: 80, opacity: 0 }}
         transition={desktop ? { duration: 0.22, ease: labEase } : { duration: 0.5, ease: labEase }}
-        className="relative flex max-h-[85vh] w-full max-w-[480px] flex-col rounded-t-[2rem] bg-ivory py-[14px] pr-2 text-navy shadow-lift dk:max-w-[560px] dk:max-h-[calc(100vh-96px)] dk:rounded-[28px]"
+        className="relative flex max-h-[85vh] w-full max-w-[480px] flex-col rounded-t-[2rem] bg-ivory pb-[14px] pr-2 text-navy shadow-lift dk:max-w-[560px] dk:max-h-[calc(100vh-96px)] dk:rounded-[28px] dk:pt-[14px]"
+        ref={sheet.ref}
+        {...sheet.dragProps}
       >
+        <SheetGrab controls={sheet.controls} onClose={close} />
         <Press onClick={close} aria-label="Close" className="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full text-navy/60">
           <X className="h-5 w-5" />
         </Press>
-        <div className="bq-scroll min-h-0 flex-1 overflow-y-auto pb-5 pl-6 pr-4 pt-2 dk:pt-3">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-navy/15 dk:hidden" />
+        <div className="bq-scroll min-h-0 flex-1 overflow-y-auto pb-5 pl-6 pr-4 dk:pt-3">
 
-        <div className="flex items-center gap-3 pr-10 pt-[18px]">
+        <div className="flex items-center gap-3 pr-10 pt-2 dk:pt-[18px]">
           <div className="shrink-0"><AgentPod size={52} ref={pod} /></div>
           <div>
             <h2 className="font-display text-2xl font-medium leading-none tracking-[-0.02em]">Ask Bloq</h2>

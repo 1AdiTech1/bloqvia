@@ -88,9 +88,9 @@ function TxList({ limit, seeAll }: { limit: number; seeAll: boolean }) {
     }
   };
 
+  const accountId = useGame().accountId; // hooks before any early return
   const list = txLog.slice(0, limit);
   if (!list.length) return <p className="rounded-2xl bg-navy-soft p-4 text-sm text-lavender">Nothing yet. Your first quest will show up here.</p>;
-  const accountId = useGame().accountId;
   return (
     <div>
     <ul className="flex flex-col gap-2">

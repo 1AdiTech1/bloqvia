@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, X } from "lucide-react";
 import { useGame } from "@/game/useGame";
 import { BloqMark } from "@/components/Logo";
+import { TouchScrollbar } from "@/components/TouchScrollbar";
 
 /** Global busy indicator, error toast and the short "Saved" confirmation. */
 export function AppChrome() {
@@ -39,6 +40,8 @@ export function AppChrome() {
   const anim = { initial: { opacity: 0, y: -12 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -12 }, transition: { duration: 0.35 } };
 
   return (
+    <>
+    <TouchScrollbar />
     <div className="pointer-events-none fixed inset-x-0 top-3 z-50 flex flex-col items-center gap-2 px-4">
       <AnimatePresence>
         {game.busy && !onLanding && (
@@ -61,5 +64,6 @@ export function AppChrome() {
         )}
       </AnimatePresence>
     </div>
+    </>
   );
 }

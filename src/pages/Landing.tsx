@@ -5,6 +5,7 @@ import { useReducedMotion } from "framer-motion";
 import { KeyRound, BatteryCharging, FileCheck2, type LucideIcon } from "lucide-react";
 import { SignInSheet } from "@/components/brand/SignInSheet";
 import { AskDock } from "@/components/brand/AskDock";
+import { HopBloq, useMedia } from "@/components/brand/HopBloq";
 import { useGame } from "@/game/useGame";
 import { cn } from "@/lib/utils";
 import {
@@ -268,6 +269,9 @@ function Context() {
   const st = useRef({ x: -160, idx: -1, sitting: false, lastUser: 0, walkT: 0, sitT: 0 });
   const stillRef = useRef(still);
   stillRef.current = still;
+  const narrow = useMedia("(max-width: 980px)");
+  const narrowRef = useRef(narrow);
+  narrowRef.current = narrow;
 
   const place = (x: number, y: number, ms: number, ease = "linear") => {
     const el = host.current;
@@ -298,6 +302,7 @@ function Context() {
   };
 
   const goTo = (i: number) => {
+    if (narrowRef.current) return; // phones: HopBloq takes over
     const s = st.current, moving = !stillRef.current;
     s.idx = i;
     setActive(i);
@@ -357,7 +362,7 @@ function Context() {
         <p className="lv-eyebrow">A little context</p>
         <h2 className="lv-h2">The internet has changed. Let's make sense of it.</h2>
         <p className="lv-sub">You don't need to know all the jargon. Start with the big ideas, and we'll figure out the rest together.</p>
-        <div ref={track} className="relative mt-2.5 h-[clamp(230px,21vw,280px)]">
+        {!narrow && <div ref={track} className="relative mt-2.5 h-[clamp(230px,21vw,280px)]">
           <div
             ref={host}
             className="absolute -bottom-3.5 left-0 z-[2] w-[clamp(118px,11vw,150px)] cursor-pointer"
@@ -367,12 +372,15 @@ function Context() {
             <Bloq ref={bloq} hat="cap2" pose={pose} facing={facing} label="Bloq walking to the card you pick" className="w-full" />
             <SpeechBubble text={line} />
           </div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 min-[521px]:grid-cols-2 min-[981px]:grid-cols-4">
+        </div>}
+        <div className={cn("relative grid grid-cols-1 gap-4 min-[521px]:grid-cols-2 min-[981px]:grid-cols-4", narrow && "mt-2.5 pt-24")}>
+          {narrow && <HopBloq base={{ hat: "cap2" }} onActive={setActive} label="Bloq sitting on the card you're reading" />}
           {ctxCards.map((c, i) => (
             <button
               key={c.k}
               ref={(el) => { cards.current[i] = el; }}
+              data-hop=""
+              data-say={c.say}
               type="button"
               onMouseEnter={() => pick(i)}
               onFocus={() => pick(i)}
@@ -440,7 +448,7 @@ function usePerch(start: { hat: BloqHat; prop: BloqProp }, intro: string) {
     onFocus: (e: React.FocusEvent<HTMLElement>) => go(i, c, e.currentTarget),
     onClick: (e: React.MouseEvent<HTMLElement>) => go(i, c, e.currentTarget),
   });
-  return { section, host, bloq, line, hat, prop, active, tap, handlers };
+  return { section, host, bloq, line, hat, prop, active, setActive, tap, handlers };
 }
 
 /** Desktop: absolute, standing on the card row. Under 860px: his own right-aligned row, low enough that his bubble clears the subtitle. */
@@ -456,20 +464,25 @@ const chapterCards: (PerchCard & { Icon: LucideIcon; title: string; body: string
 
 function Chapters({ onExplore }: { onExplore: () => void }) {
   const p = usePerch({ hat: "beanie", prop: "bulb" }, "Three chapters, one idea each. Point at one and I'll dress for it.");
+  const narrow = useMedia("(max-width: 860px)");
   return (
     <section ref={p.section} id="chapters" className={cn(SECTION, "bg-ivory")}>
       <div className={WRAP}>
         <p className="lv-eyebrow">Your first adventure</p>
         <h2 className="lv-h2">Three chapters. A lot less confusion.</h2>
         <p className="lv-sub">Meet the essentials one small idea at a time. Your guide is ready when you are.</p>
-        <div className="relative min-[861px]:mt-10">
+        <div className={cn("relative min-[861px]:mt-10", narrow && "mt-2.5 pt-24")}>
+          {narrow ? (
+            <HopBloq base={{ hat: "beanie", prop: "bulb" }} looks={chapterCards} onActive={p.setActive} label="Bloq, changing hats for each chapter" />
+          ) : (
           <div ref={p.host} className={PERCH_HOST} onClick={p.tap}>
             <Bloq ref={p.bloq} hat={p.hat} prop={p.prop} pose="hold" label="Bloq, changing hats for each chapter" className="w-full" />
             <SpeechBubble text={p.line} side="left" />
           </div>
+          )}
           <div className="grid grid-cols-1 gap-[18px] min-[861px]:grid-cols-3">
             {chapterCards.map((c, i) => (
-              <button key={c.key} type="button" {...p.handlers(i, c)} className={cn("lv-card lv-c3", c.bg, p.active === i && "on")}>
+              <button key={c.key} type="button" data-hop="" data-say={c.say} {...(narrow ? {} : p.handlers(i, c))} className={cn("lv-card lv-c3", c.bg, p.active === i && "on")}>
                 <span className="font-display text-[13px] font-medium uppercase tracking-[.1em] text-purple-d">{c.key}</span>
                 <span className="mt-[18px] grid size-[58px] place-items-center rounded-[15px] bg-navy text-lime">
                   <c.Icon size={22} aria-hidden="true" />
@@ -503,19 +516,24 @@ const labCards: (PerchCard & { title: string; body: string })[] = [
 
 function ExperienceLab({ onStart }: { onStart: (e?: React.MouseEvent<HTMLElement>) => void }) {
   const p = usePerch({ hat: "tophat", prop: "cube" }, "Everything in the Lab is a real NEAR testnet transaction you can check.");
+  const narrow = useMedia("(max-width: 860px)");
   return (
     <section ref={p.section} id="lab" className={cn(SECTION, "lv-dark bg-navy text-ivory")}>
       <div className={WRAP}>
         <h2 className="lv-h2 !mt-0">Less memorising. More 'oh, I get it.'</h2>
         <p className="lv-sub">Try things for yourself in a space made for learning.</p>
-        <div className="relative min-[861px]:mt-[70px]">
+        <div className={cn("relative min-[861px]:mt-[70px]", narrow && "mt-2.5 pt-24")}>
+          {narrow ? (
+            <HopBloq base={{ hat: "tophat", prop: "cube" }} looks={labCards} onActive={p.setActive} tone="light" label="Bloq in the Experience Lab" />
+          ) : (
           <div ref={p.host} className={PERCH_HOST} onClick={p.tap}>
             <Bloq ref={p.bloq} hat={p.hat} prop={p.prop} pose="hold" label="Bloq in the Experience Lab" className="w-full" />
             <SpeechBubble text={p.line} side="left" tone="light" />
           </div>
+          )}
           <div className="grid grid-cols-1 gap-[18px] min-[861px]:grid-cols-3">
             {labCards.map((c, i) => (
-              <button key={c.key} type="button" {...p.handlers(i, c)} className={cn("lv-card lv-c3 lv-l", p.active === i && "on")}>
+              <button key={c.key} type="button" data-hop="" data-say={c.say} {...(narrow ? {} : p.handlers(i, c))} className={cn("lv-card lv-c3 lv-l", p.active === i && "on")}>
                 <i aria-hidden="true" />
                 <b>{c.title}</b>
                 <small>{c.body}</small>
