@@ -20,6 +20,7 @@ import { game, views } from "./contracts";
 import { explorer } from "./explorer";
 import { createSigner, type LearnerSigner } from "./signer";
 import type { BloqView, LearnerView, LessonPublic, PassportView, RelayResult } from "./types";
+import { humanError } from "./errors";
 
 /** One game transaction this browser sent, for the "On NEAR" panel. Newest first in `txLog`. */
 export interface TxEntry {
@@ -130,7 +131,7 @@ async function refresh(): Promise<void> {
   try {
     set(await load(accountId));
   } catch (e) {
-    set({ accountId, error: (e as Error).message });
+    set({ accountId, error: humanError(e) });
   }
 }
 
@@ -151,7 +152,7 @@ async function refreshUntil(expect: (l: LearnerView | null) => boolean): Promise
         return;
       }
     } catch (e) {
-      if (attempt === 7) set({ accountId, error: (e as Error).message });
+      if (attempt === 7) set({ accountId, error: humanError(e) });
     }
     await sleep(500);
   }
@@ -180,7 +181,7 @@ async function run(
     await refreshUntil(expect);
     return result;
   } catch (e) {
-    set({ error: (e as Error).message });
+    set({ error: humanError(e) });
     throw e;
   } finally {
     set({ busy: false });
@@ -196,7 +197,7 @@ const actions = {
       await refresh();
       return accountId;
     } catch (e) {
-      set({ error: (e as Error).message });
+      set({ error: humanError(e) });
       throw e;
     } finally {
       set({ busy: false });

@@ -12,7 +12,8 @@
     "test": "tsx --test *.test.ts",
     "typecheck": "tsc --noEmit",
     "streak:offline": "tsx streak-sim.ts",
-    "bounty:claim": "tsx bounty-claim.ts"
+    "bounty:claim": "tsx bounty-claim.ts",
+    "balances": "tsx check-balances.ts"
   },
   "dependencies": {
     "near-api-js": "^7.4.0"

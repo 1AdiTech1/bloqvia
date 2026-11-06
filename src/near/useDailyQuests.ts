@@ -13,6 +13,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { views } from "./contracts";
 import type { DailyQuest, LessonWithText } from "./types";
+import { humanError } from "./errors";
 
 export interface DailyQuestsState {
   quests: DailyQuest[];
@@ -59,7 +60,7 @@ async function refresh(): Promise<void> {
       .sort((a, b) => (a.lesson_id < b.lesson_id ? 1 : -1)); // newest first
     set({ quests, loading: false, error: null });
   } catch (e) {
-    set({ loading: false, error: (e as Error).message });
+    set({ loading: false, error: humanError(e) });
   }
 }
 

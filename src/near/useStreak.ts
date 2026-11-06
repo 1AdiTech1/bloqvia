@@ -15,6 +15,7 @@ import { game, views } from "./contracts";
 import { explorer } from "./explorer";
 import { createSigner, type LearnerSigner } from "./signer";
 import type { MemberView, RelayResult, StreakView } from "./types";
+import { humanError } from "./errors";
 
 export interface StreakState {
   /** false until core reports a streak contract; the card should hide. */
@@ -67,7 +68,7 @@ async function refresh(): Promise<void> {
     ]);
     set({ enabled: true, streakId, streak, member });
   } catch (e) {
-    set({ error: (e as Error).message });
+    set({ error: humanError(e) });
   }
 }
 
@@ -88,7 +89,7 @@ const actions = {
       }
       return result;
     } catch (e) {
-      set({ error: (e as Error).message });
+      set({ error: humanError(e) });
       throw e;
     } finally {
       set({ busy: false });

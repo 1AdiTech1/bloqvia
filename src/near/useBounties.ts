@@ -19,6 +19,7 @@ import { game, views } from "./contracts";
 import { explorer } from "./explorer";
 import { createSigner, type LearnerSigner } from "./signer";
 import type { BountiesConfig, Bounty, Claim, ClaimStatus, DaoProposal, LearnerView, RelayResult } from "./types";
+import { humanError } from "./errors";
 
 export interface DaoView {
   id: string;
@@ -121,7 +122,7 @@ async function refresh(): Promise<void> {
     }
     set({ enabled: true, boardId, config, bounties, recent, myClaims, learner, dao, loading: false, error: null });
   } catch (e) {
-    set({ loading: false, error: (e as Error).message });
+    set({ loading: false, error: humanError(e) });
   }
 }
 
@@ -149,7 +150,7 @@ const actions = {
       }
       return result;
     } catch (e) {
-      set({ error: (e as Error).message });
+      set({ error: humanError(e) });
       throw e;
     } finally {
       set({ busy: false });

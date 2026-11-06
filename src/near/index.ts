@@ -11,6 +11,7 @@ export { useStreak } from "./useStreak";
 export { useDailyQuests, parseDailyQuest } from "./useDailyQuests";
 export { useAskBloq } from "./useAskBloq";
 export { useFinalBlock, fetchFinalBlockHeight } from "./useFinalBlock";
+export { humanError } from "./errors";
 export { useBounties, unmet as bountyUnmet, statusLabel as claimStatusLabel } from "./useBounties";
 export type { BountiesStore, BountiesState, DaoView } from "./useBounties";
 export type { AskBloqState } from "./useAskBloq";

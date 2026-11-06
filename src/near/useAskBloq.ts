@@ -16,6 +16,7 @@ import { useCallback, useRef, useState } from "react";
 import { relayerApi } from "./relayer";
 import { useBloqvia } from "./useBloqvia";
 import type { AskResult } from "./types";
+import { humanError } from "./errors";
 
 export interface AskBloqState {
   question: string | null;
@@ -44,7 +45,7 @@ export function useAskBloq(): AskBloqState & { ask: (question: string, lessonId?
         setState({ question: q, answer: r.answer, provenance: r.generated_by, loading: false, error: null });
       } catch (e) {
         if (id !== seq.current) return;
-        setState({ question: q, answer: null, provenance: null, loading: false, error: (e as Error).message });
+        setState({ question: q, answer: null, provenance: null, loading: false, error: humanError(e) });
       }
     },
     [accountId],

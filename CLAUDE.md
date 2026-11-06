@@ -79,6 +79,7 @@ If any of these fail on a clean clone, stop and report the full output; do not
 | Tune economy | `cd scripts && npm run simulate:offline` | `docs/simulation-offline.md` |
 | Live proof | `cd scripts && npm run simulate -- --players 4 --rounds 3` | prices move in `get_bloq` |
 | Module B proof | `cd scripts && npm run bounty:claim -- --relayer http://localhost:8787 --bounty 1` | a fresh learner graduates and claims; `claim: Paid`, balance up by the reward |
+| Account balances (read-only) | `cd scripts && npm run balances` | table of balance / locked / free per account; exit 1 and a top-up hint if one is low |
 | View on chain | `near contract call-function as-read-only core.bloqvia.testnet get_bloq json-args '{}' network-config testnet now` | JSON |
 
 ## How to report
