@@ -6,7 +6,6 @@ import { useGame } from "@/game/useGame";
 import { LESSON_CONTENT } from "@/game/content";
 import { PhoneShell } from "@/components/PhoneShell";
 import { RequireAccount } from "@/components/RequireAccount";
-import { PassportCard } from "@/components/PassportCard";
 import { QuizSheet } from "@/components/QuizSheet";
 import { ItemIcon } from "@/components/GameBits";
 import { InventoryBar } from "@/components/lab/InventoryBar";
@@ -80,7 +79,6 @@ function MapInner() {
   return (
     <>
       <div className="flex flex-col gap-3">
-        <PassportCard level={level} />
         <InventoryBar gold={held?.gold} items={held?.items} />
         <StreakCard />
         <DailyQuestCard onPlay={openQuest} />

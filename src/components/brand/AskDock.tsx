@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import { Copy, Check } from "lucide-react";
-import { Bloq, talkMs, type BloqHandle } from "@/bloq";
+import { AgentPod, talkMs, type AgentPodHandle } from "@/bloq";
 import { useAskBloq } from "@/near";
 
 type Prov = { model?: string; chat_id?: string; signature_kind?: string | null } | null;
@@ -52,14 +52,14 @@ export function AskDock() {
   const dockBtn = useRef<HTMLButtonElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
-  const dockFace = useRef<BloqHandle>(null);
-  const chatFace = useRef<BloqHandle>(null);
+  const dockPod = useRef<AgentPodHandle>(null);
+  const chatPod = useRef<AgentPodHandle>(null);
   const lastSeen = useRef<string | null>(null);
 
   // Periodic jump while closed.
   useEffect(() => {
     if (open || still) return;
-    const t = setInterval(() => dockFace.current?.jump(), 14000);
+    const t = setInterval(() => dockPod.current?.peek(), 14000);
     return () => clearInterval(t);
   }, [open, still]);
 
@@ -81,7 +81,7 @@ export function AskDock() {
     lastSeen.current = key;
     if (bloq.answer) {
       setMsgs((m) => [...m, { id: seq.current++, who: "bot", text: bloq.answer!, prov: bloq.provenance as Prov }]);
-      chatFace.current?.talk(talkMs(bloq.answer));
+      chatPod.current?.talk(talkMs(bloq.answer));
     } else {
       setMsgs((m) => [...m, { id: seq.current++, who: "bot", text: `I couldn't reach my brain just now (${bloq.error}). Try again in a moment.`, typed: true }]);
     }
@@ -119,9 +119,7 @@ export function AskDock() {
           aria-controls="lv-ask-chat"
           onClick={() => setOpen(true)}
         >
-          <span className="lv-ask-face" aria-hidden="true">
-            <span><Bloq ref={dockFace} hat="agent" outfit="agent" pose="idle" /></span>
-          </span>
+          <AgentPod size={48} ref={dockPod} />
           <span className="lv-dock-txt">
             <b>Ask Bloq</b>
             <small><i className="lv-live" />AI agent · online</small>
@@ -131,9 +129,7 @@ export function AskDock() {
 
       <section id="lv-ask-chat" className="lv-chat" role="dialog" aria-label="Ask Bloq" hidden={!open}>
         <div className="lv-chat-head">
-          <span className="lv-ask-face sm" aria-hidden="true">
-            <span><Bloq ref={chatFace} hat="agent" outfit="agent" pose="idle" /></span>
-          </span>
+          <AgentPod size={40} ref={chatPod} />
           <div>
             <b>Ask Bloq</b>
             <small><i className="lv-live" />AI agent on NEAR AI Cloud</small>

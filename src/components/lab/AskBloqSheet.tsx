@@ -1,19 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowUp, MessageCircle, X } from "lucide-react";
+import { ArrowUp, X } from "lucide-react";
+import { AgentPod, talkMs, type AgentPodHandle } from "@/bloq";
 import { useAskBloq } from "@/near";
 import { IS_MOCK } from "@/game/useGame";
-import { BloqCharacter } from "@/components/Bloq";
 import { LabLoader } from "@/components/LabLoader";
 import { Press, labEase } from "./motion";
 import { cn } from "@/lib/utils";
 
-type Context = "quiz" | "shop" | "map";
+export type AskContext = "quiz" | "shop" | "map" | "missions" | "passport";
+type Context = AskContext;
 
 const CHIPS: Record<Context, string[]> = {
   quiz: ["Explain this another way", "Why does this matter on NEAR?", "What should I pay attention to?"],
   shop: ["Why did the price change?", "What is the 2.5% spread?", "Why does the shop close?"],
   map: ["What is the Passport?", "How does the streak work?", "Who pays my gas?"],
+  missions: ["How do mission rewards get paid?", "What is a DAO vote?", "Who checks that I qualified?"],
+  passport: ["What does soulbound mean?", "How does my Passport level up?", "Can I sell my Passport?"],
 };
 
 type Props = { open: boolean; onClose: () => void; lessonId?: string; context: Context };
@@ -29,7 +32,7 @@ export function AskBloqButton({ label, onClick, className }: { label: string; on
   if (IS_MOCK) return null;
   return (
     <Press onClick={onClick} className={cn("inline-flex min-h-[44px] items-center gap-2 rounded-full px-3 text-sm font-semibold underline-offset-4 hover:underline", className)}>
-      <MessageCircle className="h-4 w-4" />
+      <AgentPod size={32} />
       {label}
     </Press>
   );
@@ -70,6 +73,10 @@ function AskBloqPanel({ onClose, lessonId, context }: Props) {
   };
 
   const p = bloq.provenance;
+  const pod = useRef<AgentPodHandle>(null);
+  useEffect(() => {
+    if (bloq.answer) pod.current?.talk(talkMs(bloq.answer));
+  }, [bloq.answer]);
 
   return (
     <motion.div className="fixed inset-0 z-[55] flex items-end justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-modal="true" aria-label="Ask Bloq">
@@ -86,8 +93,8 @@ function AskBloqPanel({ onClose, lessonId, context }: Props) {
           <X className="h-5 w-5" />
         </Press>
 
-        <div className="flex items-center gap-3 pr-10">
-          <div className="shrink-0"><BloqCharacter size={48} /></div>
+        <div className="flex items-center gap-3 pr-10 pt-[18px]">
+          <div className="shrink-0"><AgentPod size={52} ref={pod} /></div>
           <div>
             <h2 className="font-display text-2xl font-medium uppercase leading-none tracking-[-0.04em]">Ask Bloq</h2>
             <p className="mt-1 text-sm text-muted-foreground">Plain-words answers from Bloq. He explains; he never hands out quest answers.</p>

@@ -1,13 +1,13 @@
 import { forwardRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Flame, KeyRound, Stamp } from "lucide-react";
+import { BatteryCharging, FileCheck2, KeyRound } from "lucide-react";
 import { ITEM_NAMES } from "@/game/content";
 import { cn } from "@/lib/utils";
 
 export const ITEM_ICONS = {
   "key-fragment": KeyRound,
-  "fuel-cell": Flame,
-  "contract-seal": Stamp,
+  "fuel-cell": BatteryCharging,
+  "contract-seal": FileCheck2,
 } as const;
 
 export function itemLabel(id: string) {
@@ -25,7 +25,7 @@ export function GoldDisc({ className }: { className?: string | undefined }) {
 
 export function ItemIcon({ id, className }: { id: string; className?: string | undefined }) {
   if (id === "gold") return <GoldDisc className={className} />;
-  const Icon = ITEM_ICONS[id as keyof typeof ITEM_ICONS] ?? Stamp;
+  const Icon = ITEM_ICONS[id as keyof typeof ITEM_ICONS] ?? FileCheck2;
   return <Icon className={cn("h-4 w-4", className)} />;
 }
 
@@ -78,7 +78,7 @@ export function LevelRing({ level, graduated, size = 72, tone = "ivory" }: { lev
         <span className={cn("font-display font-bold leading-none", onNavy ? "text-ivory" : "text-navy")} style={{ fontSize: size / 3.2 }}>
           {Math.min(level, 3)}
         </span>
-        <span className={cn("text-[10px] font-medium uppercase tracking-[0.14em]", onNavy ? "text-lavender" : "text-muted-foreground")}>of 3</span>
+        {size >= 48 && <span className={cn("text-[10px] font-medium uppercase tracking-[0.14em]", onNavy ? "text-lavender" : "text-muted-foreground")}>of 3</span>}
       </div>
     </div>
   );

@@ -15,9 +15,9 @@ export function CohortPage() {
   return (
     <RequireAccount>
       <PhoneShell nav>
-        <h1 className="font-display text-4xl font-medium uppercase leading-none tracking-[-0.04em]">Cohort</h1>
+        <h1 className="font-display text-4xl font-medium uppercase leading-none tracking-[-0.04em]">Missions</h1>
         <p className="mt-2 text-sm text-lavender">Graduates take on small tasks. The chain checks who qualified.</p>
-        <div className="mt-6">{IS_MOCK ? <Note text="The cohort board plays on chain. Switch off mock mode to see it." /> : <CohortInner />}</div>
+        <div className="mt-6">{IS_MOCK ? <Note text="The missions board plays on chain. Switch off mock mode to see it." /> : <CohortInner />}</div>
       </PhoneShell>
     </RequireAccount>
   );
@@ -86,7 +86,7 @@ function Treasury() {
   const threshold = dao ? (Array.isArray(dao.threshold) ? `${dao.threshold[0]} of ${dao.threshold[1]}` : String(dao.threshold)) : "";
   return (
     <section className="rounded-[1.6rem] border border-lavender/30 bg-navy p-5 text-ivory shadow-lift">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-lavender">Cohort DAO</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-lavender">Bloqvia DAO</p>
       {dao && (
         <>
           <a href={daoUrl(dao.id)} target="_blank" rel="noreferrer" className="mt-1 inline-flex min-h-11 items-center gap-1 break-all font-mono text-sm text-lime underline-offset-4 hover:underline">

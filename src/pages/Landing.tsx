@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useReducedMotion } from "framer-motion";
-import { KeyRound, Fuel, FileCheck2, type LucideIcon } from "lucide-react";
+import { KeyRound, BatteryCharging, FileCheck2, type LucideIcon } from "lucide-react";
 import { SignInSheet } from "@/components/brand/SignInSheet";
 import { AskDock } from "@/components/brand/AskDock";
 import { useGame } from "@/game/useGame";
@@ -407,7 +407,7 @@ const PERCH_HOST = "relative z-[2] mb-[-22px] ml-auto mr-2 mt-[88px] w-[132px] c
 
 const chapterCards: (PerchCard & { Icon: LucideIcon; title: string; body: string; bg: string })[] = [
   { key: "01 The Vault", Icon: KeyRound, title: "Keys", body: "A key is a way to prove something digital belongs to you. Find out why keeping it safe matters.", hat: "captain", prop: "key", say: "Keys. Your public key is a mailbox anyone can see. The private key is the only one that opens it.", bg: "bg-card" },
-  { key: "02 The Fuel System", Icon: Fuel, title: "Gas", body: "Some actions on a blockchain need a small fee. See what that fee helps pay for.", hat: "hardhat", prop: "fuel", say: "Gas is the small fee for the computers doing the work. In Bloqvia I pay it for you.", bg: "bg-lav-card border-[#e2d4f6]" },
+  { key: "02 The Fuel System", Icon: BatteryCharging, title: "Gas", body: "Some actions on a blockchain need a small fee. See what that fee helps pay for.", hat: "hardhat", prop: "fuel", say: "Gas is the small fee for the computers doing the work. In Bloqvia I pay it for you.", bg: "bg-lav-card border-[#e2d4f6]" },
   { key: "03 Smart Agreements", Icon: FileCheck2, title: "Smart contracts", body: "Think of rules that run when agreed conditions are met. Learn what they can, and can't, do.", hat: "beret", prop: "scroll", say: "A smart contract is a vending machine made of code, with the rules printed on it for everyone.", bg: "bg-lime-pale border-[#dfe9b8]" },
 ];
 
@@ -484,11 +484,11 @@ function ExperienceLab({ onStart }: { onStart: () => void }) {
 
 /* ---------------- Your progress ---------------- */
 
-const progItems: { name: string; body: string; prop: BloqProp; say: string; icon: React.CSSProperties }[] = [
+const progItems: { name: string; body: string; prop: BloqProp; say: string; icon: React.CSSProperties; Icon?: LucideIcon }[] = [
   { name: "BloqGold", body: "A little recognition for the effort you put in.", prop: "coin", say: "BloqGold is game gold minted by the contract. It's for playing, not money.", icon: { background: "var(--purple-soft)" } },
-  { name: "Key Fragment", body: "A reminder of what you learned about keys.", prop: "key", say: "Key Fragments come from The Vault, the chapter about keys.", icon: { background: "var(--lime)", borderRadius: "50% 50% 50% 8px" } },
-  { name: "Fuel Cell", body: "A marker from your journey through gas.", prop: "fuel", say: "Fuel Cells come from The Fuel System, the chapter about gas.", icon: { background: "var(--peach)" } },
-  { name: "Contract Seal", body: "A keepsake from the smart agreements chapter.", prop: "badge", say: "The Contract Seal comes from Smart Agreements, the smart contracts chapter.", icon: { background: "var(--lavender-soft)", borderRadius: "50%" } },
+  { name: "Key Fragment", body: "A reminder of what you learned about keys.", prop: "key", say: "Key Fragments come from The Vault, the chapter about keys.", Icon: KeyRound, icon: { background: "var(--lime)", borderRadius: "50% 50% 50% 8px" } },
+  { name: "Fuel Cell", body: "A marker from your journey through gas.", prop: "fuel", say: "Fuel Cells come from The Fuel System, the chapter about gas.", Icon: BatteryCharging, icon: { background: "var(--peach)" } },
+  { name: "Contract Seal", body: "A keepsake from the smart agreements chapter.", prop: "badge", say: "The Contract Seal comes from Smart Agreements, the smart contracts chapter.", Icon: FileCheck2, icon: { background: "var(--lavender-soft)", borderRadius: "50%" } },
 ];
 
 const GUILLOCHE = Array.from({ length: 14 }, (_, i) => {
@@ -542,7 +542,7 @@ function Progress() {
           <div className="mt-[30px] grid grid-cols-1 gap-3.5 min-[461px]:grid-cols-2">
             {progItems.map((it, i) => (
               <button key={it.name} type="button" onMouseEnter={() => pick(i)} onFocus={() => pick(i)} onClick={() => pick(i)} className={cn("lv-card lv-it", active === i && "on")}>
-                <i aria-hidden="true" style={it.icon} />
+                <i aria-hidden="true" style={it.icon} className="grid place-items-center">{it.Icon && <it.Icon size={18} strokeWidth={2.2} />}</i>
                 <b>{it.name}</b>
                 <small>{it.body}</small>
               </button>
