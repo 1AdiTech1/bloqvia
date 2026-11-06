@@ -23,7 +23,7 @@ function ago(at: number, now: number) {
 }
 
 /** "On NEAR · live": the read-only desktop panel listing what the chain saw. */
-export function ChainPanel({ limit = 8 }: { limit?: number }) {
+export function ChainPanel({ limit = 8, seeAll = false }: { limit?: number; seeAll?: boolean }) {
   const game = useGame();
   const height = useFinalBlock();
   const id = game.accountId;
@@ -51,7 +51,7 @@ export function ChainPanel({ limit = 8 }: { limit?: number }) {
         {IS_MOCK ? (
           <p className="rounded-2xl bg-navy-soft p-4 text-sm text-lavender">Mock mode: these actions aren't on chain.</p>
         ) : (
-          <TxList limit={limit} />
+          <TxList limit={limit} seeAll={seeAll} />
         )}
       </div>
       <p className="text-xs leading-relaxed text-lavender/80">Every action here is a real NEAR testnet transaction. Open any of them on the explorer.</p>
@@ -68,7 +68,7 @@ function Row({ k, children }: { k: string; children: React.ReactNode }) {
   );
 }
 
-function TxList({ limit }: { limit: number }) {
+function TxList({ limit, seeAll }: { limit: number; seeAll: boolean }) {
   const { txLog } = useBloqvia();
   const { quests } = useDailyQuests();
   const reduce = useReducedMotion();
@@ -90,7 +90,9 @@ function TxList({ limit }: { limit: number }) {
 
   const list = txLog.slice(0, limit);
   if (!list.length) return <p className="rounded-2xl bg-navy-soft p-4 text-sm text-lavender">Nothing yet. Your first quest will show up here.</p>;
+  const accountId = useGame().accountId;
   return (
+    <div>
     <ul className="flex flex-col gap-2">
       <AnimatePresence initial={false}>
         {list.map((e) => (
@@ -111,5 +113,16 @@ function TxList({ limit }: { limit: number }) {
         ))}
       </AnimatePresence>
     </ul>
+    {seeAll && accountId && txLog.length > limit && (
+      <a
+        href={explorer.account(accountId)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-3 inline-block font-display text-sm font-semibold text-lime underline-offset-4 hover:underline focus-visible:underline"
+      >
+        See all {txLog.length} on the explorer ↗
+      </a>
+    )}
+    </div>
   );
 }
