@@ -1,0 +1,323 @@
+<title>Bloqvia Mobile Fixes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="rig.css">
+<style>
+/* Layout: one section per mobile bug (Adi's numbering); each holds working phone-sized mocks to scroll, swipe and tap. Bloqvia tokens (single dark look). */
+:root {
+  --night: #131f33; --navy: #16243a; --navy-2: #22324c; --ivory: #f6f3ec; --card: #fffdf7; --lime: #d4f033; --lime-d: #a6c21a;
+  --lav: #c9b8ec; --lav-bg: #efe7fb; --purple: #8b45d9; --purple-d: #6630b3; --muted: #5a6477; --line: #ddd8c9;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--night); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+.wrap { max-width: 1160px; margin: 0 auto; display: grid; gap: 44px; }
+header h1 { margin: 0; font: 600 26px/1.15 var(--display); letter-spacing: -.02em; }
+header p { margin: 8px 0 0; color: var(--lav); max-width: 72ch; }
+.hd { display: flex; gap: 14px; align-items: baseline; }
+.no { font: 700 13px/1 var(--mono); color: var(--navy); background: var(--lime); border-radius: 8px; padding: 6px 8px; flex: none; }
+.hd h2 { margin: 0; font: 600 19px/1.25 var(--display); letter-spacing: -.01em; }
+.hd p { margin: 4px 0 0; color: var(--lav); font-size: 14.5px; max-width: 78ch; }
+section { display: grid; gap: 16px; }
+.row { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+.col { display: grid; gap: 10px; justify-items: center; width: 330px; max-width: 100%; }
+.col h3 { margin: 0; font: 600 15px/1.2 var(--display); text-align: center; }
+.col p { margin: 0; font-size: 13.5px; color: var(--lav); text-align: center; max-width: 34ch; }
+.tag { font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--lime); }
+.btn { border: 0; border-radius: 999px; background: var(--lime); color: var(--navy); font: 600 14px/1 var(--display); padding: 12px 18px; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+
+/* phone frame */
+.phone { position: relative; width: 330px; max-width: 100%; height: 640px; border-radius: 34px; background: #0b1322; padding: 10px; box-shadow: 0 0 0 1px rgb(246 243 236 / .1), 0 30px 60px rgb(0 0 0 / .4); }
+.screen { position: relative; height: 100%; border-radius: 26px; overflow: hidden; background: var(--lav-bg); }
+.scroll { height: 100%; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.scroll::-webkit-scrollbar { display: none; }
+
+/* 1 · our own scroll indicator for touch screens */
+.ind { position: absolute; right: 3px; top: 0; width: 6px; border-radius: 999px; background: var(--lime); opacity: 0; transition: opacity .35s; pointer-events: none; z-index: 30; box-shadow: 0 0 0 1.5px rgb(22 36 58 / .35); }
+.ind.on { opacity: 1; transition: opacity .12s; }
+.ind-hit { position: absolute; right: 0; top: 0; bottom: 0; width: 22px; z-index: 31; touch-action: none; }
+
+/* shared landing-ish content */
+.sec { padding: 26px 18px 30px; }
+.sec.dark { background: var(--navy); color: var(--ivory); }
+.sec.ivory { background: var(--ivory); color: var(--navy); }
+.eb { font: 600 10.5px/1 var(--display); letter-spacing: .18em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; color: var(--navy); }
+.eb::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--purple); }
+.sec h4 { margin: 12px 0 0; font: 500 23px/1.12 var(--display); letter-spacing: -.03em; color: var(--navy); text-wrap: balance; }
+.sec .sub { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+.cards { display: grid; gap: 12px; margin-top: 18px; position: relative; }
+.c { position: relative; background: var(--ivory); border: 1px solid #dccaf4; border-radius: 18px; padding: 18px 18px 20px; color: var(--navy); transition: border-color .3s, transform .35s; }
+.ivory .c { background: var(--card); border-color: var(--line); }
+.c.on { border-color: var(--purple-d); transform: translateY(-3px); }
+.c .k { font: 600 11px/1 var(--mono); letter-spacing: .08em; color: var(--purple); }
+.c b { display: block; margin-top: 10px; font: 500 18px/1.2 var(--display); }
+.c small { display: block; margin-top: 6px; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+.hero { height: 300px; background: radial-gradient(120% 80% at 70% 10%, #2b3d5c, var(--navy)); display: grid; align-content: end; padding: 22px 18px; color: var(--ivory); }
+.hero b { font: 500 28px/1.05 var(--display); letter-spacing: -.03em; }
+.spacer { height: 260px; background: var(--ivory); display: grid; place-items: center; color: #9aa1ad; font: 500 12px/1 var(--mono); }
+
+/* speech bubble */
+.say { position: absolute; z-index: 12; width: max-content; max-width: 210px; font-size: 13px; line-height: 1.42; padding: 10px 12px; border-radius: 14px; color: var(--navy);
+  background: rgb(255 255 255 / .92); box-shadow: 0 10px 24px rgb(22 36 58 / .18), 0 0 0 1px rgb(22 36 58 / .06); transition: opacity .25s, transform .3s cubic-bezier(.34,1.56,.64,1); transform-origin: 100% 100%; }
+.col .say { text-align: left; color: var(--navy); margin: 0; }
+.say.hide { opacity: 0; transform: scale(.85); pointer-events: none; }
+
+/* 4A · guide stays in the corner */
+.guide { position: absolute; left: 10px; bottom: 12px; width: 88px; z-index: 20; transition: transform .45s cubic-bezier(.34,1.56,.64,1), opacity .3s; }
+.guide.out { transform: translateY(140%); opacity: 0; }
+.guide .say { left: 80px; bottom: 60px; transform-origin: 0 100%; max-width: 196px; }
+/* 4B · hops onto the card in view */
+.hop { position: absolute; z-index: 10; width: 86px; right: 12px; top: 0; transition: transform .55s cubic-bezier(.34,1.3,.64,1); will-change: transform; }
+.hop .say { right: 74px; bottom: 58px; max-width: 168px; }
+/* 4C · swipe row, he walks along the track above it */
+.track { position: relative; height: 150px; margin-top: 6px; }
+.walker { position: absolute; bottom: -10px; left: 0; width: 88px; transition: transform .5s linear; }
+.walker .say { left: 78px; bottom: 34px; transform-origin: 0 100%; max-width: 150px; font-size: 12.5px; }
+.swipe { display: grid; grid-auto-flow: column; grid-auto-columns: 82%; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 0 6px; margin: 0 -18px; padding-inline: 18px; scrollbar-width: none; }
+.swipe::-webkit-scrollbar { display: none; }
+.swipe .c { scroll-snap-align: start; }
+.dots { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: #cbbbe8; transition: width .25s, background .25s; }
+.dots i.on { width: 20px; border-radius: 4px; background: var(--purple); }
+.askdock { position: absolute; right: 10px; bottom: 12px; z-index: 19; display: flex; align-items: center; gap: 6px; background: var(--navy); color: var(--ivory); border-radius: 999px; padding: 6px 12px 6px 6px; font: 600 12px/1 var(--display); box-shadow: 0 0 0 1.5px var(--lime); }
+.askdock i { width: 26px; height: 26px; border-radius: 50%; background: #2b3d5c; box-shadow: 0 0 0 1.5px var(--lime); }
+
+/* 3 · sheet you can drag down */
+.mapbg { position: absolute; inset: 0; background: radial-gradient(circle at 50% 20%, #2b3d5c, var(--navy)); }
+.mapbg::after { content: ""; position: absolute; inset: 0; background: rgb(10 16 30 / .5); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; height: 74%; background: var(--ivory); color: var(--navy); border-radius: 26px 26px 0 0; z-index: 5; touch-action: none; will-change: transform; }
+.sheet .grab { display: grid; place-items: center; height: 34px; cursor: grab; touch-action: none; }
+.sheet .grab i { width: 48px; height: 6px; border-radius: 3px; background: rgb(22 36 58 / .18); transition: background .2s, width .2s; }
+.sheet .grab:hover i, .sheet.drag .grab i { background: rgb(22 36 58 / .35); width: 56px; }
+.sheet .body { padding: 2px 22px 20px; }
+.sheet h5 { margin: 10px 0 0; font: 700 25px/1 var(--display); letter-spacing: -.04em; text-transform: uppercase; }
+.sheet p { margin: 10px 0 0; font-size: 13.5px; color: #4d5769; text-align: left; max-width: none; }
+.sheet .opt { margin-top: 10px; height: 46px; border-radius: 999px; border: 2px solid #e3dccb; background: var(--card); display: flex; align-items: center; padding: 0 16px; font-weight: 600; font-size: 14px; }
+.sheet .sb { position: absolute; right: 26px; top: -88px; width: 80px; }
+.reopen { position: absolute; inset: 0; margin: auto; width: max-content; height: max-content; z-index: 6; }
+.hint { position: absolute; left: 0; right: 0; top: 14px; text-align: center; color: var(--lav); font: 500 12px/1.3 var(--mono); z-index: 1; }
+
+@media (prefers-reduced-motion: reduce) { .hop, .walker, .guide, .say { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Mobile fixes</h1>
+    <p>Bugs 1, 3 and 4 from your phone test, as working mocks: scroll, swipe and drag them. Bug 2 (the page that couldn't load) needs a few answers from you first, so it's in my reply, not here. Nothing has gone to Lovable yet.</p>
+  </header>
+
+  <!-- 1 -->
+  <section aria-labelledby="h1">
+    <div class="hd"><span class="no">1</span><div><h2 id="h1">Scroll bar on phones and tablets</h2><p>iPhone and Android browsers ignore scroll-bar colours: they always draw their own grey bar, which fades in while you scroll. The only way to get the lime one is to hide theirs and draw our own. It's a thin lime bar that appears while you scroll, fades out about a second after you stop, and can be dragged. Scroll the phone below.</p></div></div>
+    <div class="row">
+      <div class="col"><span class="tag">phone · website and game</span>
+        <div class="phone"><div class="screen" style="background:var(--ivory)">
+          <div class="scroll" id="s1">
+            <div class="hero"><b>Web3, without the overwhelm.</b></div>
+            <div class="sec"><div class="eb">A little context</div><h4>The internet has changed. Let's make sense of it.</h4><div class="cards">
+              <div class="c"><span class="k">01 READ</span><b>Look around.</b><small>The early web let us visit pages and find information.</small></div>
+              <div class="c"><span class="k">02 WRITE</span><b>Join in.</b><small>People began sharing, posting, and making things together.</small></div>
+              <div class="c"><span class="k">03 OWN</span><b>Take a stake.</b><small>Web3 explores ways to hold and move digital things yourself.</small></div>
+              <div class="c"><span class="k">04 TRUST</span><b>Check the rules.</b><small>Shared records can help people see what happened and how.</small></div></div></div>
+            <div class="spacer">more of the page…</div>
+          </div>
+          <div class="ind" id="i1"></div><div class="ind-hit" id="h1hit" aria-hidden="true"></div>
+        </div></div>
+        <p>Desktop keeps the bar it has now. Only touch screens get this one.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section aria-labelledby="h3">
+    <div class="hd"><span class="no">3</span><div><h2 id="h3">Quest window: drag the grey bar down to close it</h2><p>The grey bar now works like an iPhone sheet. Drag it down more than about a third of the way, or flick it, and the window closes. Let go sooner and it springs back. Only the bar starts the drag, so scrolling the quest text still scrolls. The same goes for the Ask Bloq window.</p></div></div>
+    <div class="row">
+      <div class="col"><span class="tag">phone · quest window</span>
+        <div class="phone"><div class="screen">
+          <div class="mapbg"></div><div class="hint">the map is behind</div>
+          <div class="sheet" id="sheet" role="dialog" aria-labelledby="sh">
+            <div class="sb" id="sbloq"></div>
+            <div class="grab" id="grab" role="button" tabindex="0" aria-label="Drag down to close"><i></i></div>
+            <div class="body"><span style="font:600 10.5px/1 var(--display);letter-spacing:.16em;text-transform:uppercase;background:var(--lav-bg);border-radius:999px;padding:6px 10px">Cryptographic keys</span>
+              <h5 id="sh">The Vault</h5><p>Your public key is like your home mailbox: anyone can see it and drop a letter inside.</p>
+              <div class="opt">Your private key</div><div class="opt">Your public key</div><div class="opt">Your seed phrase</div></div>
+          </div>
+          <button class="btn reopen" type="button" id="reopen" hidden>Open the quest again</button>
+        </div></div>
+        <p>Desktop keeps the centred window with its ×, and no bar.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section aria-labelledby="h4">
+    <div class="hd"><span class="no">4</span><div><h2 id="h4">Bloq stays with you on the website's card sections</h2><p>On a phone the cards stack in one column, so Bloq stays at the top of the section and you lose him when you scroll down. Three ways to keep him with you. Each phone below holds “A little context” (4 cards) and “Your first adventure” (3 chapters, where he changes hat). Scroll each one.</p></div></div>
+    <div class="row">
+      <div class="col"><span class="tag">A · guide in the corner</span>
+        <div class="phone"><div class="screen"><div class="scroll" id="sA"></div><div class="guide out" id="gA"><div class="rig"></div><p class="say hide"></p></div></div></div>
+        <h3>He waits in the bottom-left corner</h3>
+        <p>While a card section is on screen, he sits in the corner and talks about the card in the middle of the screen, changing hats on the chapters. He leaves when the section ends.</p>
+      </div>
+      <div class="col"><span class="tag">B · hops card to card</span>
+        <div class="phone"><div class="screen"><div class="scroll" id="sB"></div></div></div>
+        <h3>He hops down onto each card</h3>
+        <p>As you scroll, he jumps to the card in view and sits on its top edge, then talks about it (and changes hat on the chapters). It's the closest to how he sits on cards on desktop.</p>
+      </div>
+      <div class="col"><span class="tag">C · swipe the cards</span>
+        <div class="phone"><div class="screen"><div class="scroll" id="sC"></div></div></div>
+        <h3>The cards swipe sideways under him</h3>
+        <p>The cards become a sideways row. When you swipe, he walks side to side along the top, as on desktop, then sits and talks. It keeps him in view, but swiping is less obvious than scrolling.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="bloq-rig.js"></script>
+<script>
+(() => {
+  const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const CTX = [
+    { k: "01 READ", b: "Look around.", s: "The early web let us visit pages and find information.", say: "Web1 was like a library. You could read pages, but only a few people could publish them." },
+    { k: "02 WRITE", b: "Join in.", s: "People began sharing, posting, and making things together.", say: "Web2 let everyone post. The catch: the platform keeps your account and the data you create." },
+    { k: "03 OWN", b: "Take a stake.", s: "Web3 explores ways to hold and move digital things yourself.", say: "Web3 gives you an account only your key controls. On NEAR it even has a name you can read." },
+    { k: "04 TRUST", b: "Check the rules.", s: "Shared records can help people see what happened and how.", say: "The rules live in open code on a shared ledger, so anyone can check what happened." },
+  ];
+  const CH = [
+    { k: "01 THE VAULT", b: "Keys", s: "A key is a way to prove something digital belongs to you.", hat: "captain", prop: "key", say: "Keys. Your public key is a mailbox anyone can see. The private key is the only one that opens it." },
+    { k: "02 THE FUEL SYSTEM", b: "Gas", s: "Some actions on a blockchain need a small fee.", hat: "hardhat", prop: "fuel", say: "Gas is the small fee for the computers doing the work. In Bloqvia I pay it for you." },
+    { k: "03 SMART AGREEMENTS", b: "Smart contracts", s: "Rules that run when agreed conditions are met.", hat: "beret", prop: "scroll", say: "A smart contract is a vending machine made of code, with the rules printed on it for everyone." },
+  ];
+  const cardsHTML = (list, cls = "") => list.map((c, i) => `<div class="c ${cls}" data-i="${i}"><span class="k">${c.k}</span><b>${c.b}</b><small>${c.s}</small></div>`).join("");
+  const page = (inner1, inner2) => `
+    <div class="hero"><b>Web3, without the overwhelm.</b></div>
+    <div class="sec" data-sec="ctx"><div class="eb">A little context</div><h4>The internet has changed. Let's make sense of it.</h4>${inner1}</div>
+    <div class="sec ivory" data-sec="ch"><div class="eb">Your first adventure</div><h4>Three chapters. A lot less confusing.</h4>${inner2}</div>
+    <div class="spacer" style="background:var(--navy);color:#6f7d98">Experience Lab…</div>`;
+  const bubble = (el, text) => { el.textContent = text; el.classList.remove("hide"); };
+  const midCard = (scroller, cards) => {
+    const r = scroller.getBoundingClientRect(), mid = r.top + r.height * 0.45; let best = null, d = 1e9;
+    cards.forEach((c) => { const cr = c.getBoundingClientRect(); const dd = Math.abs(cr.top + cr.height / 2 - mid); if (cr.bottom > r.top && cr.top < r.bottom && dd < d) { d = dd; best = c; } });
+    return best;
+  };
+
+  /* ---------- 1: lime indicator ---------- */
+  function indicator(scroller, bar, hit) {
+    let t = 0;
+    const draw = () => {
+      const h = scroller.clientHeight, H = scroller.scrollHeight; if (H <= h) return;
+      const len = Math.max(40, h * h / H), top = (scroller.scrollTop / (H - h)) * (h - len);
+      bar.style.height = len + "px"; bar.style.transform = `translateY(${top}px)`;
+    };
+    const show = () => { draw(); bar.classList.add("on"); clearTimeout(t); t = setTimeout(() => bar.classList.remove("on"), 1000); };
+    scroller.addEventListener("scroll", show, { passive: true });
+    let drag = null;
+    hit.addEventListener("pointerdown", (e) => { drag = { y: e.clientY, s: scroller.scrollTop }; hit.setPointerCapture(e.pointerId); show(); });
+    hit.addEventListener("pointermove", (e) => { if (!drag) return; const h = scroller.clientHeight, H = scroller.scrollHeight, len = Math.max(40, h * h / H);
+      scroller.scrollTop = drag.s + (e.clientY - drag.y) * (H - h) / (h - len); });
+    hit.addEventListener("pointerup", () => (drag = null));
+    draw(); show();
+  }
+  indicator(document.getElementById("s1"), document.getElementById("i1"), document.getElementById("h1hit"));
+
+  /* ---------- 3: draggable sheet ---------- */
+  (() => {
+    const sheet = document.getElementById("sheet"), grab = document.getElementById("grab"), again = document.getElementById("reopen");
+    const sb = new Bloq(document.getElementById("sbloq"), { hat: "captain", prop: "key", pose: "hold" });
+    let start = null, y = 0, lastY = 0, lastT = 0, v = 0;
+    const set = (px, ms = 0) => { sheet.style.transition = ms ? `transform ${ms}ms cubic-bezier(.2,.9,.3,1)` : "none"; sheet.style.transform = `translateY(${px}px)`; };
+    const close = () => { set(sheet.offsetHeight + 40, 260); setTimeout(() => { sheet.hidden = true; again.hidden = false; }, 260); };
+    grab.addEventListener("pointerdown", (e) => { start = e.clientY; lastY = e.clientY; lastT = performance.now(); sheet.classList.add("drag"); grab.setPointerCapture(e.pointerId); });
+    grab.addEventListener("pointermove", (e) => { if (start === null) return; y = Math.max(0, e.clientY - start); const now = performance.now(); v = (e.clientY - lastY) / Math.max(1, now - lastT); lastY = e.clientY; lastT = now; set(y); });
+    grab.addEventListener("pointerup", () => { if (start === null) return; sheet.classList.remove("drag"); start = null;
+      if (y > sheet.offsetHeight * 0.33 || v > 0.6) close(); else set(0, 320); y = 0; });
+    grab.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") { e.preventDefault(); close(); } });
+    again.addEventListener("click", () => { sheet.hidden = false; again.hidden = true; set(sheet.offsetHeight, 0); requestAnimationFrame(() => set(0, 380)); sb.jump(); });
+  })();
+
+  /* ---------- 4A: guide in the corner ---------- */
+  (() => {
+    const sc = document.getElementById("sA");
+    sc.innerHTML = page(`<div class="cards">${cardsHTML(CTX)}</div>`, `<div class="cards">${cardsHTML(CH)}</div>`) + `<div class="askdock" style="position:sticky;margin-left:auto;width:max-content;bottom:12px;margin-top:-50px;margin-right:10px"><i></i>Ask Bloq</div>`;
+    const g = document.getElementById("gA"), b = new Bloq(g.querySelector(".rig"), { hat: "cap2", pose: "idle" }), say = g.querySelector(".say");
+    const secs = [...sc.querySelectorAll("[data-sec]")];
+    let cur = null;
+    const tick = () => {
+      const r = sc.getBoundingClientRect();
+      const sec = secs.find((s) => { const sr = s.getBoundingClientRect(); return sr.top < r.top + r.height * 0.6 && sr.bottom > r.top + r.height * 0.5; });
+      g.classList.toggle("out", !sec);
+      // the website's Ask dock moves aside while the guide is out
+      sc.querySelector(".askdock").style.opacity = sec ? "0" : "1";
+      if (!sec) { say.classList.add("hide"); cur = null; return; }
+      const card = midCard(sc, [...sec.querySelectorAll(".c")]);
+      if (!card || card === cur) return;
+      cur = card; sec.querySelectorAll(".c").forEach((c) => c.classList.toggle("on", c === card));
+      const data = (sec.dataset.sec === "ch" ? CH : CTX)[+card.dataset.i];
+      if (data.hat) b.setHat(data.hat).setProp(data.prop).setPose("hold"); else b.setHat("cap2").setProp(null).setPose("idle");
+      if (!still()) b.jump();
+      say.classList.add("hide"); setTimeout(() => { bubble(say, data.say); b.talk(1800); }, 220);
+    };
+    sc.addEventListener("scroll", tick, { passive: true }); tick();
+  })();
+
+  /* ---------- 4B: hops card to card ---------- */
+  (() => {
+    const sc = document.getElementById("sB");
+    sc.innerHTML = page(`<div class="cards" data-hops>${cardsHTML(CTX)}</div>`, `<div class="cards" data-hops>${cardsHTML(CH)}</div>`);
+    sc.querySelectorAll("[data-hops]").forEach((wrap) => {
+      const sec = wrap.closest("[data-sec]"), list = sec.dataset.sec === "ch" ? CH : CTX, cards = [...wrap.querySelectorAll(".c")];
+      wrap.style.paddingTop = "96px";
+      const host = document.createElement("div"); host.className = "hop"; host.innerHTML = `<div class="rig"></div><p class="say hide"></p>`; wrap.prepend(host);
+      const b = new Bloq(host.querySelector(".rig"), { hat: list[0].hat || "cap2", prop: list[0].prop || null, pose: "sit" }), say = host.querySelector(".say");
+      let cur = null;
+      const place = (card, first) => {
+        const H = host.offsetHeight, y = card.offsetTop - H * 0.75 + 4;   // seat line (75% of him) on the card's top edge
+        host.style.transition = first || still() ? "none" : ""; host.style.transform = `translateY(${y}px)`;
+      };
+      place(cards[0], true);
+      const tick = () => {
+        const card = midCard(sc, cards); if (!card || card === cur) return;
+        const first = cur === null; cur = card;
+        cards.forEach((c) => c.classList.toggle("on", c === card));
+        const data = list[+card.dataset.i];
+        say.classList.add("hide");
+        if (!first && !still()) { b.setPose("idle"); b.jump(); }
+        setTimeout(() => { place(card, first); if (data.hat) b.setHat(data.hat).setProp(data.prop); }, first ? 0 : 120);
+        setTimeout(() => { b.setPose("sit"); bubble(say, data.say); b.talk(1800); }, first ? 300 : 640);
+      };
+      sc.addEventListener("scroll", tick, { passive: true });
+      new IntersectionObserver((es) => es[0].isIntersecting && tick(), { root: sc, threshold: .3 }).observe(wrap);
+    });
+  })();
+
+  /* ---------- 4C: swipe row, walk side to side ---------- */
+  (() => {
+    const sc = document.getElementById("sC");
+    const block = (list) => `<div class="track"><div class="walker"><div class="rig"></div><p class="say hide"></p></div></div><div class="swipe">${cardsHTML(list)}</div><div class="dots">${list.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</div>`;
+    sc.innerHTML = page(block(CTX), block(CH));
+    sc.querySelectorAll("[data-sec]").forEach((sec) => {
+      const list = sec.dataset.sec === "ch" ? CH : CTX, row = sec.querySelector(".swipe"), walker = sec.querySelector(".walker"), say = walker.querySelector(".say"), dots = [...sec.querySelectorAll(".dots i")];
+      const b = new Bloq(walker.querySelector(".rig"), { hat: list[0].hat || "cap2", prop: list[0].prop || null, pose: "sit" });
+      let idx = -1, x = 0, timer = 0;
+      const lane = () => sec.querySelector(".track").clientWidth - walker.offsetWidth;
+      const go = (i) => {
+        if (i === idx) return; const dir = i > idx ? "right" : "left"; idx = i;
+        dots.forEach((d, k) => d.classList.toggle("on", k === i));
+        const nx = list.length > 1 ? (i / (list.length - 1)) * lane() : 0, dist = Math.abs(nx - x); x = nx;
+        say.classList.add("hide");
+        const data = list[i];
+        if (still() || dist < 4) { walker.style.transition = "none"; walker.style.transform = `translateX(${nx}px)`; if (data.hat) b.setHat(data.hat).setProp(data.prop); bubble(say, data.say); return; }
+        b.setPose("idle"); b.face(dir).walking(true);
+        const ms = Math.max(500, dist * 4); walker.style.transition = `transform ${ms}ms linear`; walker.style.transform = `translateX(${nx}px)`;
+        clearTimeout(timer); timer = setTimeout(() => { b.walking(false); b.face("right").setPose("sit"); if (data.hat) b.setHat(data.hat).setProp(data.prop); bubble(say, data.say); b.talk(1800);
+          say.style.left = nx > lane() * 0.4 ? "auto" : ""; say.style.right = nx > lane() * 0.4 ? "78px" : ""; }, ms + 30);
+      };
+      row.addEventListener("scroll", () => { const w = row.firstElementChild.offsetWidth + 12; go(Math.round(row.scrollLeft / w)); }, { passive: true });
+      new IntersectionObserver((es) => { if (es[0].isIntersecting && idx < 0) go(0); }, { root: sc, threshold: .4 }).observe(sec);
+    });
+  })();
+})();
+</script>
