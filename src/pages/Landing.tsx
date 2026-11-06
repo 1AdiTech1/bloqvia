@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useReducedMotion } from "framer-motion";
-import { Coins, KeyRound, Fuel, FileCheck2, BadgeCheck } from "lucide-react";
-import { BloqMark } from "@/components/Logo";
-import { CTA, Display, Eyebrow, Illustration, Reveal, Section } from "@/components/brand/primitives";
+import { KeyRound, Fuel, FileCheck2, type LucideIcon } from "lucide-react";
 import { SignInSheet } from "@/components/brand/SignInSheet";
 import { useGame } from "@/game/useGame";
 import { cn } from "@/lib/utils";
 import {
-  Bloq, BloqviaLogo, FloatingCubes, SpeechBubble, talkMs, useSay,
+  BlockSea, Bloq, BloqviaLogo, FloatingCubes, SpeechBubble, talkMs, useSay,
   type BloqHandle, type BloqHat, type BloqPose, type BloqProp, type FloatingCubesHandle,
 } from "@/bloq";
 
@@ -47,14 +46,14 @@ export function LandingPage() {
         <Context />
         <Chapters />
         <ExperienceLab onStart={openSheet} />
-        <Rewards />
-        <FinalCTA onStart={openSheet} />
+        <Progress />
+        <Ready onStart={openSheet} />
       </main>
-      <footer className="bg-navy py-8 text-center text-sm text-ivory/70">
-        Built on NEAR · NEAR testnet · NEAR Hackathon 2026 ·{" "}
-        <a href="https://github.com/1AdiTech1/bloqvia" target="_blank" rel="noreferrer" className="font-medium text-lime underline-offset-4 hover:underline">
-          Source on GitHub
-        </a>
+      <footer className="bg-navy text-ivory/80">
+        <div className={cn(WRAP, "flex flex-wrap items-center justify-between gap-3 py-[30px] text-sm")}>
+          <span>BLOQVIA · A friendlier way into Web3.</span>
+          <a href="#top" className="inline-flex min-h-11 items-center font-display text-base font-medium text-lime no-underline">Back to top ↑</a>
+        </div>
       </footer>
       <SignInSheet open={open} onClose={close} />
     </div>
@@ -342,44 +341,42 @@ function Context() {
   );
 }
 
-/* ---------------- Your first adventure ---------------- */
+/* ---------------- Shared: speak once when a section is 45% in view ---------------- */
 
-const chapterCards: { k: string; ic: string; title: string; body: string; hat: BloqHat; prop: BloqProp; say: string; bg: string }[] = [
-  { k: "01 The Vault", ic: "⌑", title: "Keys", body: "A key is a way to prove something digital belongs to you. Find out why keeping it safe matters.", hat: "captain", prop: "key", say: "Keys. Your public key is a mailbox anyone can see. The private key is the only one that opens it.", bg: "bg-card" },
-  { k: "02 The Fuel System", ic: "↗", title: "Gas", body: "Some actions on a blockchain need a small fee. See what that fee helps pay for.", hat: "hardhat", prop: "fuel", say: "Gas is the small fee for the computers doing the work. In Bloqvia I pay it for you.", bg: "bg-lav-card border-[#e2d4f6]" },
-  { k: "03 Smart Agreements", ic: "✓", title: "Smart contracts", body: "Think of rules that run when agreed conditions are met. Learn what they can, and can't, do.", hat: "beret", prop: "scroll", say: "A smart contract is a vending machine made of code, with the rules printed on it for everyone.", bg: "bg-lime-pale border-[#dfe9b8]" },
-];
-
-function Chapters() {
-  const still = useReducedMotion();
-  const section = useRef<HTMLElement>(null);
-  const host = useRef<HTMLDivElement>(null);
-  const bloq = useRef<BloqHandle>(null);
-  const [line, say] = useSay();
-  const [hat, setHat] = useState<BloqHat>("beanie");
-  const [prop, setProp] = useState<BloqProp>("bulb");
-  const [active, setActive] = useState(-1);
-  const timers = useRef<number[]>([]);
-
-  const speak = useCallback((text: string) => { say(text); bloq.current?.talk(talkMs(text)); }, [say]);
-
+function useIntro(section: React.RefObject<HTMLElement | null>, speak: (t: string) => void, text: string) {
   useEffect(() => {
     const el = section.current;
     if (!el) return;
     let shown = false, t: number | undefined;
     const io = new IntersectionObserver((es) => es.forEach((e) => {
-      if (e.isIntersecting && !shown) { shown = true; t = window.setTimeout(() => speak("Three chapters, one idea each. Point at one and I'll dress for it."), 500); }
+      if (e.isIntersecting && !shown) { shown = true; t = window.setTimeout(() => speak(text), 500); }
       if (!e.isIntersecting) shown = false;
     }), { threshold: 0.45 });
     io.observe(el);
-    return () => { io.disconnect(); window.clearTimeout(t); timers.current.forEach((x) => window.clearTimeout(x)); };
-  }, [speak]);
+    return () => { io.disconnect(); window.clearTimeout(t); };
+  }, [section, speak, text]);
+}
 
-  const go = (i: number, card: HTMLElement) => {
-    const c = chapterCards[i]!;
-    setActive(i);
-    setHat(c.hat);
-    setProp(c.prop);
+/* ---------------- Perch: Bloq on top of a 3-card row, dressing for each card ---------------- */
+
+interface PerchCard { key: string; hat: BloqHat; prop: BloqProp; say: string }
+
+function usePerch(start: { hat: BloqHat; prop: BloqProp }, intro: string) {
+  const still = useReducedMotion();
+  const section = useRef<HTMLElement>(null);
+  const host = useRef<HTMLDivElement>(null);
+  const bloq = useRef<BloqHandle>(null);
+  const [line, say] = useSay();
+  const [hat, setHat] = useState<BloqHat>(start.hat);
+  const [prop, setProp] = useState<BloqProp>(start.prop);
+  const [active, setActive] = useState(-1);
+  const timers = useRef<number[]>([]);
+  const speak = useCallback((text: string) => { say(text); bloq.current?.talk(talkMs(text)); }, [say]);
+  useIntro(section, speak, intro);
+  useEffect(() => () => timers.current.forEach((x) => window.clearTimeout(x)), []);
+
+  const go = (i: number, c: PerchCard, card: HTMLElement) => {
+    setActive(i); setHat(c.hat); setProp(c.prop);
     const hr = host.current?.getBoundingClientRect(), cr = card.getBoundingClientRect();
     if (hr) bloq.current?.look(clamp1((cr.left + cr.width / 2 - (hr.left + hr.width / 2)) / (innerWidth / 2)), 0.8);
     timers.current.forEach((x) => window.clearTimeout(x));
@@ -388,34 +385,46 @@ function Chapters() {
       window.setTimeout(() => speak(c.say), 420),
     ];
   };
+  const tap = () => { bloq.current?.jump(); window.setTimeout(() => burst(host.current, "spark", 10, still), 330); };
+  const handlers = (i: number, c: PerchCard) => ({
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => go(i, c, e.currentTarget),
+    onFocus: (e: React.FocusEvent<HTMLElement>) => go(i, c, e.currentTarget),
+    onClick: (e: React.MouseEvent<HTMLElement>) => go(i, c, e.currentTarget),
+  });
+  return { section, host, bloq, line, hat, prop, active, tap, handlers };
+}
 
+/** Desktop: absolute, standing on the card row. Under 860px: his own right-aligned row, low enough that his bubble clears the subtitle. */
+const PERCH_HOST = "relative z-[2] mb-[-22px] ml-auto mr-2 mt-[88px] w-[132px] cursor-pointer min-[861px]:absolute min-[861px]:bottom-[calc(100%-22px)] min-[861px]:right-[clamp(8px,3vw,40px)] min-[861px]:m-0 min-[861px]:w-[clamp(120px,12vw,160px)]";
+
+/* ---------------- Your first adventure ---------------- */
+
+const chapterCards: (PerchCard & { Icon: LucideIcon; title: string; body: string; bg: string })[] = [
+  { key: "01 The Vault", Icon: KeyRound, title: "Keys", body: "A key is a way to prove something digital belongs to you. Find out why keeping it safe matters.", hat: "captain", prop: "key", say: "Keys. Your public key is a mailbox anyone can see. The private key is the only one that opens it.", bg: "bg-card" },
+  { key: "02 The Fuel System", Icon: Fuel, title: "Gas", body: "Some actions on a blockchain need a small fee. See what that fee helps pay for.", hat: "hardhat", prop: "fuel", say: "Gas is the small fee for the computers doing the work. In Bloqvia I pay it for you.", bg: "bg-lav-card border-[#e2d4f6]" },
+  { key: "03 Smart Agreements", Icon: FileCheck2, title: "Smart contracts", body: "Think of rules that run when agreed conditions are met. Learn what they can, and can't, do.", hat: "beret", prop: "scroll", say: "A smart contract is a vending machine made of code, with the rules printed on it for everyone.", bg: "bg-lime-pale border-[#dfe9b8]" },
+];
+
+function Chapters() {
+  const p = usePerch({ hat: "beanie", prop: "bulb" }, "Three chapters, one idea each. Point at one and I'll dress for it.");
   return (
-    <section ref={section} id="chapters" className={cn(SECTION, "bg-ivory")}>
+    <section ref={p.section} id="chapters" className={cn(SECTION, "bg-ivory")}>
       <div className={WRAP}>
         <p className="lv-eyebrow">Your first adventure</p>
         <h2 className="lv-h2">Three chapters. A lot less confusion.</h2>
         <p className="lv-sub">Meet the essentials one small idea at a time. Your guide is ready when you are.</p>
-        <div className="relative mt-10">
-          <div
-            ref={host}
-            className="relative z-[2] mb-[-22px] ml-auto mr-2 w-[132px] cursor-pointer min-[861px]:absolute min-[861px]:bottom-[calc(100%-22px)] min-[861px]:right-[clamp(8px,3vw,40px)] min-[861px]:m-0 min-[861px]:w-[clamp(120px,12vw,160px)]"
-            onClick={() => { bloq.current?.jump(); window.setTimeout(() => burst(host.current, "spark", 10, still), 330); }}
-          >
-            <Bloq ref={bloq} hat={hat} prop={prop} pose="hold" label="Bloq, changing hats for each chapter" className="w-full" />
-            <SpeechBubble text={line} side="left" />
+        <div className="relative min-[861px]:mt-10">
+          <div ref={p.host} className={PERCH_HOST} onClick={p.tap}>
+            <Bloq ref={p.bloq} hat={p.hat} prop={p.prop} pose="hold" label="Bloq, changing hats for each chapter" className="w-full" />
+            <SpeechBubble text={p.line} side="left" />
           </div>
           <div className="grid grid-cols-1 gap-[18px] min-[861px]:grid-cols-3">
             {chapterCards.map((c, i) => (
-              <button
-                key={c.k}
-                type="button"
-                onMouseEnter={(e) => go(i, e.currentTarget)}
-                onFocus={(e) => go(i, e.currentTarget)}
-                onClick={(e) => go(i, e.currentTarget)}
-                className={cn("lv-card lv-c3", c.bg, active === i && "on")}
-              >
-                <span className="font-display text-[13px] font-medium uppercase tracking-[.1em] text-purple-d">{c.k}</span>
-                <span aria-hidden="true" className="mt-[18px] grid size-[58px] place-items-center rounded-[15px] bg-navy font-display text-[22px] font-semibold text-lime">{c.ic}</span>
+              <button key={c.key} type="button" {...p.handlers(i, c)} className={cn("lv-card lv-c3", c.bg, p.active === i && "on")}>
+                <span className="font-display text-[13px] font-medium uppercase tracking-[.1em] text-purple-d">{c.key}</span>
+                <span className="mt-[18px] grid size-[58px] place-items-center rounded-[15px] bg-navy text-lime">
+                  <c.Icon size={22} aria-hidden="true" />
+                </span>
                 <b className="mt-1.5 font-display text-[1.4rem] font-medium leading-[1.2] tracking-[-0.02em]">{c.title}</b>
                 <small className="text-[15.5px] text-muted-foreground">{c.body}</small>
                 <span className="mt-auto self-start border-b-[2.5px] border-navy pb-[5px] font-display text-[17px] font-medium">Explore ↗</span>
@@ -429,88 +438,238 @@ function Chapters() {
   );
 }
 
+/* ---------------- Experience Lab ---------------- */
+
+const labCards: (PerchCard & { title: string; body: string })[] = [
+  { key: "quests", title: "Quests", body: "Learn by doing short challenges.", hat: "detective", prop: "magnifier", say: "Answer right and the contract mints your items. A wrong answer is refused by the chain itself." },
+  { key: "merchant", title: "The Merchant", body: "See a market move as players trade.", hat: "tophat", prop: "cube", say: "My prices follow one rule in the contract: the more I hold of something, the less I pay for it." },
+  { key: "passport", title: "The Passport", body: "Keep track of your journey.", hat: "aviator", prop: "passport", say: "Your Passport is an NFT that levels up on chain. Nobody can sell you one." },
+];
+
 function ExperienceLab({ onStart }: { onStart: () => void }) {
-  const points = [
-    ["Quests", "Short challenges that mint real items into your account."],
-    ["The Merchant", "Prices that move with what every player buys and sells."],
-    ["The Passport", "A record of what you've done — earned, never bought."],
-  ];
+  const p = usePerch({ hat: "tophat", prop: "cube" }, "Everything in the Lab is a real NEAR testnet transaction you can check.");
   return (
-    <Section tone="navy" id="lab">
-      <div className="grid gap-12 lg:grid-cols-12 lg:items-center" style={{ ["--display-accent" as string]: "var(--lime)" }}>
-        <div className="order-2 lg:order-1 lg:col-span-6">
-          <Illustration ratio="square" composition="lab" alt="The Experience Lab" />
-        </div>
-        <div className="order-1 lg:order-2 lg:col-span-6">
-          <Eyebrow className="text-lavender">The Experience Lab</Eyebrow>
-          <Display lines={["Don't just learn it.", "Experience it."]} accent={1} />
-          <dl className="mt-10 divide-y divide-ivory/10">
-            {points.map(([t, b], i) => (
-              <Reveal key={t} delay={i * 0.08}>
-                <div className="grid grid-cols-[7rem_1fr] gap-4 py-5">
-                  <dt className="font-display text-sm uppercase tracking-[0.16em] text-lime">{t}</dt>
-                  <dd className="text-ivory/75">{b}</dd>
-                </div>
-              </Reveal>
+    <section ref={p.section} id="lab" className={cn(SECTION, "lv-dark bg-navy text-ivory")}>
+      <div className={WRAP}>
+        <h2 className="lv-h2 !mt-0">Less memorising. More 'oh, I get it.'</h2>
+        <p className="lv-sub">Try things for yourself in a space made for learning.</p>
+        <div className="relative min-[861px]:mt-[70px]">
+          <div ref={p.host} className={PERCH_HOST} onClick={p.tap}>
+            <Bloq ref={p.bloq} hat={p.hat} prop={p.prop} pose="hold" label="Bloq in the Experience Lab" className="w-full" />
+            <SpeechBubble text={p.line} side="left" tone="light" />
+          </div>
+          <div className="grid grid-cols-1 gap-[18px] min-[861px]:grid-cols-3">
+            {labCards.map((c, i) => (
+              <button key={c.key} type="button" {...p.handlers(i, c)} className={cn("lv-card lv-c3 lv-l", p.active === i && "on")}>
+                <i aria-hidden="true" />
+                <b>{c.title}</b>
+                <small>{c.body}</small>
+              </button>
             ))}
-          </dl>
-          <CTA onClick={onStart} className="mt-8">Enter the Experience Lab</CTA>
+          </div>
+        </div>
+        <div className="mt-10">
+          <button type="button" onClick={onStart} className="lv-btn lv-btn-lime">Enter the Experience Lab</button>
         </div>
       </div>
-    </Section>
+    </section>
   );
 }
 
-function Rewards() {
-  const items = [
-    { Icon: Coins, name: "BloqGold", line: "The currency you earn and spend.", c: "bg-lime" },
-    { Icon: KeyRound, name: "Key Fragment", line: "Proof you understood ownership.", c: "bg-lavender" },
-    { Icon: Fuel, name: "Fuel Cell", line: "Earned by mastering the cost of action.", c: "bg-coral" },
-    { Icon: FileCheck2, name: "Contract Seal", line: "Your mark on a self-keeping promise.", c: "bg-ivory" },
-  ];
+/* ---------------- Your progress ---------------- */
+
+const progItems: { name: string; body: string; prop: BloqProp; say: string; icon: React.CSSProperties }[] = [
+  { name: "BloqGold", body: "A little recognition for the effort you put in.", prop: "coin", say: "BloqGold is game gold minted by the contract. It's for playing, not money.", icon: { background: "var(--purple-soft)" } },
+  { name: "Key Fragment", body: "A reminder of what you learned about keys.", prop: "key", say: "Key Fragments come from The Vault, the chapter about keys.", icon: { background: "var(--lime)", borderRadius: "50% 50% 50% 8px" } },
+  { name: "Fuel Cell", body: "A marker from your journey through gas.", prop: "fuel", say: "Fuel Cells come from The Fuel System, the chapter about gas.", icon: { background: "var(--peach)" } },
+  { name: "Contract Seal", body: "A keepsake from the smart agreements chapter.", prop: "badge", say: "The Contract Seal comes from Smart Agreements, the smart contracts chapter.", icon: { background: "var(--lavender-soft)", borderRadius: "50%" } },
+];
+
+const GUILLOCHE = Array.from({ length: 14 }, (_, i) => {
+  let d = "";
+  for (let x = 0; x <= 330; x += 6) {
+    const y = 110 + Math.sin(x / 26 + i * 0.45) * (30 + i * 4) + Math.sin(x / 9 + i) * 4;
+    d += (x ? " L" : "M") + x + " " + y.toFixed(1);
+  }
+  return { d, stroke: i % 3 ? "#b47ff0" : "#d4f033" };
+});
+
+function Progress() {
+  const still = useReducedMotion();
+  const section = useRef<HTMLElement>(null);
+  const host = useRef<HTMLDivElement>(null);
+  const bloq = useRef<BloqHandle>(null);
+  const [line, say] = useSay();
+  const [prop, setProp] = useState<BloqProp>("badge");
+  const [active, setActive] = useState(-1);
+  const timers = useRef<number[]>([]);
+  const speak = useCallback((text: string) => { say(text); bloq.current?.talk(talkMs(text)); }, [say]);
+  useIntro(section, speak, "Every reward here is recorded on chain. Point at one.");
+  useEffect(() => () => timers.current.forEach((x) => window.clearTimeout(x)), []);
+
+  const pick = (i: number) => { setActive(i); setProp(progItems[i]!.prop); speak(progItems[i]!.say); };
+  const celebrate = () => {
+    setProp("badge");
+    bloq.current?.jump();
+    timers.current.forEach((x) => window.clearTimeout(x));
+    timers.current = [
+      window.setTimeout(() => burst(host.current, "spark", 12, still), 320),
+      window.setTimeout(() => speak("Graduate and your Passport is sealed for good. That's the one you can't buy."), 800),
+    ];
+  };
+  const tilt = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (still) return;
+    const el = e.currentTarget, r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+    el.style.setProperty("--ry", `${(x * 18).toFixed(1)}deg`);
+    el.style.setProperty("--rx", `${(-y * 14).toFixed(1)}deg`);
+    el.style.setProperty("--mx", (x * 2).toFixed(2));
+  };
+  const untilt = (e: React.PointerEvent<HTMLButtonElement>) => { ["--rx", "--ry", "--mx"].forEach((k) => e.currentTarget.style.removeProperty(k)); };
+
   return (
-    <Section>
-      <div className="grid gap-12 lg:grid-cols-12">
-        <div className="lg:col-span-5">
-          <Eyebrow>Rewards</Eyebrow>
-          <Display lines={["What you earn", "is yours."]} />
-          <p className="mt-6 max-w-md text-lg text-muted-foreground">Achievements here aren't points in someone else's database. Finish the season and graduate with a Passport that can't be sold or faked.</p>
-        </div>
-        <div className="lg:col-span-7">
-          <ul className="grid grid-cols-2 gap-px overflow-hidden rounded-[2rem] bg-border">
-            {items.map(({ Icon, name, line, c }, i) => (
-              <Reveal key={name} delay={i * 0.06} className="bg-card">
-                <li className="flex h-full flex-col gap-4 p-6 md:p-8">
-                  <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${c} text-navy ring-1 ring-navy/10`}><Icon className="h-5 w-5" /></span>
-                  <span className="font-display text-xl font-medium">{name}</span>
-                  <span className="text-sm text-muted-foreground">{line}</span>
-                </li>
-              </Reveal>
+    <section ref={section} id="progress" className={cn(SECTION, "bg-ivory")}>
+      <div className={cn(WRAP, "grid grid-cols-1 items-center gap-9 min-[960px]:grid-cols-2 min-[960px]:gap-14")}>
+        <div>
+          <h2 className="lv-h2 !mt-0">Your progress, made visible</h2>
+          <p className="lv-sub">Every step counts. Learn something new, complete a chapter, and collect reminders of how far you've come.</p>
+          <div className="mt-[30px] grid grid-cols-1 gap-3.5 min-[461px]:grid-cols-2">
+            {progItems.map((it, i) => (
+              <button key={it.name} type="button" onMouseEnter={() => pick(i)} onFocus={() => pick(i)} onClick={() => pick(i)} className={cn("lv-card lv-it", active === i && "on")}>
+                <i aria-hidden="true" style={it.icon} />
+                <b>{it.name}</b>
+                <small>{it.body}</small>
+              </button>
             ))}
-          </ul>
-          <Reveal className="mt-4">
-            <div className="flex items-center gap-5 rounded-[2rem] bg-navy p-6 text-ivory md:p-8">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-lime text-navy"><BadgeCheck className="h-6 w-6" /></span>
-              <div>
-                <p className="font-display text-xl font-medium uppercase tracking-[-0.02em]">The Passport</p>
-                <p className="text-sm text-ivory/70">Graduation, recorded for good.</p>
-              </div>
-              <span className="ml-auto hidden sm:block"><BloqMark size={40} tone="lime" /></span>
-            </div>
-          </Reveal>
+          </div>
+          <p className="mt-[26px] border-l-4 border-lime pl-[18px] text-[1.06rem] text-muted-foreground">Finish the season and earn a Passport that records your achievement.</p>
+        </div>
+        <div className="lv-panel">
+          <span className="lv-pring" />
+          <span className="lv-porbit" aria-hidden="true">
+            <span className="lv-lights violet" style={{ ["--t" as string]: "11s" }}><i className="lv-comet" /></span>
+            <span className="lv-lights violet rev" style={{ ["--t" as string]: "16s", ["--d" as string]: "-6s" }}><i className="lv-comet" /></span>
+            <span className="lv-lights violet in" style={{ ["--t" as string]: "8s", ["--d" as string]: "-3s" }}><i className="lv-comet" /></span>
+          </span>
+          <div ref={host} className="lv-prog-bloq" onClick={celebrate}>
+            <Bloq ref={bloq} hat="grad" prop={prop} pose="hold" label="Bloq graduating" className="w-full" />
+            <SpeechBubble text={line} />
+          </div>
+          <div className="lv-pass-wrap">
+            <button
+              type="button"
+              className="lv-pass"
+              aria-label="Bloqvia Web3 Passport, example: level 3 of 3, soulbound NFT on NEAR testnet"
+              onMouseEnter={celebrate}
+              onClick={celebrate}
+              onPointerMove={tilt}
+              onPointerLeave={untilt}
+            >
+              <svg className="guil" viewBox="0 0 330 220" preserveAspectRatio="none" aria-hidden="true">
+                {GUILLOCHE.map((g, i) => <path key={i} d={g.d} fill="none" stroke={g.stroke} strokeWidth=".7" />)}
+              </svg>
+              <span className="holo" aria-hidden="true" />
+              <span className="prow brandrow" aria-hidden="true">
+                <svg viewBox="0 0 44 42"><rect x="1" y="29" width="42" height="12" rx="6" fill="#d4f033" /><rect x="1" y="15.5" width="36" height="12" rx="6" fill="#a6c21a" /><rect x="1" y="2" width="31" height="12" rx="6" fill="#d4f033" /></svg>
+                <b>Bloqvia</b>
+              </span>
+              <span className="prow kind" aria-hidden="true">WEB3 PASSPORT</span>
+              <span className="chipic" aria-hidden="true" />
+              <svg className="nfc" viewBox="0 0 14 20" aria-hidden="true"><path d="M2 4 C6 7 6 13 2 16 M6 2 C11 6 11 14 6 18 M10 1 C15 6 15 14 10 19" fill="none" stroke="#f6f3ec" strokeWidth="1.6" strokeLinecap="round" /></svg>
+              <span className="fields" aria-hidden="true">
+                <span className="wide"><small>Holder</small><i>learner-7c4f.bloqvia.testnet</i></span>
+                <span><small>Level</small><i>3 / 3</i></span>
+                <span><small>Type</small><i>Soulbound</i></span>
+                <span className="wide"><small>Chain · standard</small><i>NEAR testnet · NEP-171</i></span>
+              </span>
+              <svg className="seal" viewBox="0 0 100 100" aria-hidden="true">
+                <defs><path id="lv-sealpath" d="M50 50 m-38 0 a38 38 0 1 1 76 0 a38 38 0 1 1 -76 0" /></defs>
+                <g className="spinner"><text fontFamily="JetBrains Mono, monospace" fontSize="8.6" fontWeight="700" letterSpacing="2.6" fill="#d4f033"><textPath href="#lv-sealpath">EARNED · NOT BOUGHT · VERIFIED ON CHAIN · </textPath></text></g>
+                <circle cx="50" cy="50" r="27" fill="none" stroke="#d4f033" strokeWidth="1.5" strokeDasharray="3 3" />
+                <g transform="translate(36 37)"><rect x="0" y="18" width="28" height="8" rx="4" fill="#d4f033" /><rect x="0" y="9" width="24" height="8" rx="4" fill="#a6c21a" /><rect x="0" y="0" width="20" height="8" rx="4" fill="#d4f033" /></g>
+              </svg>
+              <span className="mrz" aria-hidden="true">P&lt;BLQ&lt;LEARNER&lt;7C4F&lt;&lt;BLOQVIA&lt;TESTNET&lt;&lt;&lt;&lt;&lt;<br />NEP171&lt;SOULBOUND&lt;&lt;LVL3&lt;&lt;KEYS&lt;GAS&lt;CONTRACTS&lt;&lt;</span>
+              <span className="scan" aria-hidden="true" />
+            </button>
+          </div>
         </div>
       </div>
-    </Section>
+    </section>
   );
 }
 
-function FinalCTA({ onStart }: { onStart: () => void }) {
+/* ---------------- Ready when you are ---------------- */
+
+const SPLASH_COLORS = ["var(--lime)", "#b47ff0", "#ffffff"];
+
+function Ready({ onStart }: { onStart: () => void }) {
+  const still = useReducedMotion();
+  const section = useRef<HTMLElement>(null);
+  const rider = useRef<HTMLDivElement>(null);
+  const bloq = useRef<BloqHandle>(null);
+  const [line, say] = useSay();
+  const speak = useCallback((text: string) => { say(text); bloq.current?.talk(talkMs(text)); }, [say]);
+  useIntro(section, speak, "Starting is free: I make your account and pay the gas. Hop on!");
+  const stillRef = useRef(still);
+  stillRef.current = still;
+
+  useEffect(() => {
+    const el = bloq.current?.element();
+    const box = rider.current;
+    if (!el || !box) return;
+    const onSplash = (e: Event) => {
+      if (stillRef.current) return;
+      const dir = (e as CustomEvent<{ dir: number }>).detail?.dir ?? 1;
+      const w = box.offsetWidth, h = box.offsetHeight;
+      const x0 = w * (dir > 0 ? 0.12 : 0.88), y0 = h * 0.9;
+      for (let i = 0; i < 12; i++) {
+        const s = document.createElement("span");
+        s.className = "lv-splash";
+        s.style.background = SPLASH_COLORS[i % 3]!;
+        s.style.left = `${x0}px`; s.style.top = `${y0}px`;
+        box.appendChild(s);
+        const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.2, d = 40 + Math.random() * 60;
+        const dx = Math.cos(a) * d, dy = Math.sin(a) * d, spin = (Math.random() < 0.5 ? -1 : 1) * (240 + Math.random() * 300);
+        s.animate(
+          [
+            { transform: "translate(-50%,-50%) rotate(0deg) scale(.6)", opacity: 1 },
+            { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(${spin / 2}deg) scale(1)`, opacity: 1, offset: 0.55 },
+            { transform: `translate(calc(-50% + ${dx * 1.3}px), calc(-50% + ${dy + 50}px)) rotate(${spin}deg) scale(.8)`, opacity: 0 },
+          ],
+          { duration: 900 + Math.random() * 300, easing: "cubic-bezier(.22,1,.36,1)" },
+        ).onfinish = () => s.remove();
+      }
+    };
+    el.addEventListener("bloq:splash", onSplash);
+    return () => el.removeEventListener("bloq:splash", onSplash);
+  }, []);
+
   return (
-    <Section tone="navy" inner="text-center md:py-40">
-      <div style={{ ["--display-accent" as string]: "var(--lime)" }}>
-        <Display size="lg" accent={1} lines={["Your journey into Web3", "starts here."]} className="mx-auto max-w-5xl" />
-        <CTA onClick={onStart} className="mt-12">Start learning</CTA>
+    <section ref={section} id="ready" className={cn(SECTION, "bg-lavender-soft")}>
+      <div className={cn(WRAP, "grid grid-cols-1 items-center gap-[30px] min-[860px]:grid-cols-[.9fr_1.1fr]")}>
+        <div className="relative pt-5">
+          <BlockSea riderRef={rider} />
+          <div ref={rider} className="relative z-[2] mx-auto mb-[52px] mt-[110px] w-[clamp(210px,25vw,300px)] cursor-pointer" onClick={() => bloq.current?.wobble()}>
+            <Bloq ref={bloq} hat="surf" outfit="surf" pose="ride" label="Bloq surfing a wave, keeping his balance" className="w-full" />
+            <SpeechBubble text={line} />
+          </div>
+        </div>
+        <div>
+          <h2 className="lv-h2 !mt-0">Ready when you are.</h2>
+          <p className="lv-sub">You don't have to understand everything to take the first step.</p>
+          <div className="mt-[26px]">
+            <button
+              type="button"
+              className="lv-btn lv-btn-navy"
+              onClick={() => { bloq.current?.wobble(); onStart(); }}
+              onMouseEnter={() => { bloq.current?.rideWave(true); bloq.current?.setMood("laugh", 900); }}
+              onMouseLeave={() => bloq.current?.rideWave(false)}
+            >
+              Start learning
+            </button>
+          </div>
+        </div>
       </div>
-    </Section>
+    </section>
   );
 }
