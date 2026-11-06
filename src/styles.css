@@ -3,6 +3,7 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant dk (@media (min-width: 1100px));
 
 @theme inline {
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;

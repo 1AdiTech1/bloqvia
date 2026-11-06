@@ -14,7 +14,7 @@ import { CubeBurst } from "@/components/lab/CubeBurst";
 export function RevealPage() {
   return (
     <RequireAccount>
-      <PhoneShell>
+      <PhoneShell chain>
         <RevealInner />
       </PhoneShell>
     </RequireAccount>

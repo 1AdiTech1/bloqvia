@@ -79,14 +79,14 @@ function AskBloqPanel({ onClose, lessonId, context }: Props) {
   }, [bloq.answer]);
 
   return (
-    <motion.div className="fixed inset-0 z-[55] flex items-end justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-modal="true" aria-label="Ask Bloq">
+    <motion.div className="fixed inset-0 z-[55] flex items-end justify-center dk:pl-[calc(max(0px,(100vw-1440px)/2)+220px)] dk:pr-[calc(max(0px,(100vw-1440px)/2)+330px)]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-modal="true" aria-label="Ask Bloq">
       <button aria-label="Close" onClick={close} className="absolute inset-0 bg-navy/50" />
       <motion.div
         initial={reduce ? false : { y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={reduce ? { opacity: 0 } : { y: 80, opacity: 0 }}
         transition={{ duration: 0.5, ease: labEase }}
-        className="relative max-h-[85vh] w-full max-w-[480px] overflow-y-auto rounded-t-[2rem] bg-ivory px-6 pb-8 pt-4 text-navy shadow-lift"
+        className="relative max-h-[85vh] w-full max-w-[480px] dk:max-w-[560px] overflow-y-auto rounded-t-[2rem] bg-ivory px-6 pb-8 pt-4 text-navy shadow-lift"
       >
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-navy/15" />
         <Press onClick={close} aria-label="Close" className="absolute right-3 top-3 flex items-center justify-center rounded-full text-navy/60">

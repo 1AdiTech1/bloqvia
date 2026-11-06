@@ -54,11 +54,13 @@ function PassportInner() {
   return (
     <div className="flex flex-col">
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-lime">Your credential</p>
-      <motion.div className="mt-4" initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+      <div className="dk:mt-4 dk:grid dk:grid-cols-2 dk:items-start dk:gap-8">
+      <motion.div className="mt-4 dk:mt-0" initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
         <Web3Passport holder={p.owner_id} level={p.level} graduated={p.graduated} onClick={tapCard} />
       </motion.div>
 
-      <div className="mt-8 grid grid-cols-3 gap-2.5">
+      <div className="flex flex-col">
+      <div className="mt-8 grid grid-cols-3 gap-2.5 dk:mt-0">
         {LESSON_CONTENT.map((l, i) => {
           const done = completed.includes(l.lesson_id);
           return (
@@ -97,6 +99,8 @@ function PassportInner() {
       <a href={game.explorer.passport(game.accountId!)} target="_blank" rel="noreferrer" className="tap mt-4 inline-flex items-center gap-1.5 self-center font-semibold text-lime underline-offset-4 hover:underline">
         View on the explorer <ExternalLink className="h-4 w-4" />
       </a>
+      </div>
+      </div>
     </div>
   );
 }

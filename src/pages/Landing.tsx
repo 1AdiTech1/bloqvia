@@ -75,7 +75,7 @@ export function LandingPage() {
       </footer>
       {anchor && <StartedPopover anchor={anchor} onClose={() => setAnchor(null)} />}
       <SignInSheet open={open} onClose={close} />
-      <AskDock />
+      {!open && <AskDock />}
     </div>
   );
 }

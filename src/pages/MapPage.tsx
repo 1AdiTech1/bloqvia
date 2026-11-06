@@ -5,7 +5,7 @@ import { ChainTrail, type ChainTrailHandle, type TrailStop } from "@/bloq";
 import { useFinalBlock } from "@/near";
 import { useGame } from "@/game/useGame";
 import { LESSON_CONTENT } from "@/game/content";
-import { PhoneShell } from "@/components/PhoneShell";
+import { GameHeader, PhoneShell } from "@/components/PhoneShell";
 import { RequireAccount } from "@/components/RequireAccount";
 import { QuizSheet } from "@/components/QuizSheet";
 import { ItemIcon } from "@/components/GameBits";
@@ -77,19 +77,27 @@ function MapInner() {
   const shopOpen = trailLevel >= 3;
 
   return (
-    <PhoneShell nav headerLevel={level}>
-      <div className="flex flex-col gap-3">
+    <PhoneShell nav inlineHeader>
+      {/* Phones: header, inventory, cards, heading, trail. Desktop: heading, inventory + pill, trail, cards (2 cols). */}
+      <div className="flex flex-col dk:grid dk:grid-cols-[minmax(0,1fr)_auto] dk:items-center dk:gap-x-4">
+      <GameHeader level={level} className="order-1 dk:order-2 dk:col-start-2 dk:mb-0" />
+      <div className="order-2 dk:order-2 dk:col-start-1 dk:row-start-2">
         <InventoryBar gold={held?.gold} items={held?.items} />
+      </div>
+      <div className="order-3 mt-3 flex flex-col gap-3 dk:order-4 dk:col-span-2 dk:mt-6 dk:grid dk:grid-cols-2 dk:items-start dk:gap-4">
         <StreakCard />
         <DailyQuestCard onPlay={openQuest} />
       </div>
 
-      <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-lime">Your journey</p>
-      <h2 className="mt-2 font-display text-2xl font-medium leading-tight tracking-[-0.03em]">Three quests. One merchant. A Passport that's yours.</h2>
+      <div className="order-4 dk:order-1 dk:col-span-2 dk:mb-5">
+        <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-lime dk:mt-0">Your journey</p>
+        <h2 className="mt-2 font-display text-2xl font-medium leading-tight tracking-[-0.03em] dk:text-[2rem]">Three quests. One merchant. A Passport that's yours.</h2>
+      </div>
 
+      <div className="order-5 dk:order-3 dk:col-span-2">
       <ChainTrail
         ref={trail}
-        className="mt-4"
+        className="mt-4 dk:mt-6"
         level={trailLevel}
         blockHeight={height}
         onPlay={(i) => { const l = LESSON_CONTENT[i]; if (l) openQuest(l.lesson_id); }}
@@ -107,6 +115,8 @@ function MapInner() {
           </>
         }
       />
+      </div>
+      </div>
 
       <AnimatePresence>
         {open && <QuizSheet key={open} lessonId={open} onClose={close} onLanded={landed} saved={saved} />}

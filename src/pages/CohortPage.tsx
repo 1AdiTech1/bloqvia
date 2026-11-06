@@ -78,7 +78,7 @@ function CohortInner() {
         {b.bounties.length === 0 ? (
           <p className="text-sm text-lavender">No bounties yet.</p>
         ) : (
-          <div className="space-y-4">{b.bounties.map((x, i) => <BountyCard key={x.id} bounty={x} index={i} />)}</div>
+          <div className="space-y-4 dk:grid dk:grid-cols-2 dk:gap-4 dk:space-y-0">{b.bounties.map((x, i) => <BountyCard key={x.id} bounty={x} index={i} />)}</div>
         )}
       </section>
       <section>

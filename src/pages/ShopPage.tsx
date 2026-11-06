@@ -133,7 +133,7 @@ function ShopInner() {
         </div>
       )}
 
-      <div className="mt-5 flex flex-col gap-3">
+      <div className="mt-5 flex flex-col gap-3 dk:grid dk:grid-cols-2">
         {bloq.prices.map((p) => (
           <TradeCard key={p.token_id} price={p} have={itemAmount(learner.items, p.token_id)} gold={Number(learner.gold)} shopOpen={bloq.shop_open} onTraded={onTraded} />
         ))}
