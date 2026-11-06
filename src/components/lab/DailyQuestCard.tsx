@@ -31,7 +31,7 @@ function DailyQuestInner({ onPlay }: { onPlay: (lessonId: string) => void }) {
   const tee = q.generated_by.signature?.signature_kind === "provider_tee";
 
   return (
-    <section className="h-full rounded-[1.6rem] border border-ivory/10 bg-navy-soft p-5 text-ivory shadow-lift">
+    <section className="flex h-full flex-col rounded-[1.6rem] border border-ivory/10 bg-navy-soft p-5 text-ivory shadow-lift">
       <div className="flex items-center justify-between gap-2">
         <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-lavender">
           <span aria-hidden="true" className="h-2 w-2 rounded-full bg-lime" />
@@ -40,11 +40,12 @@ function DailyQuestInner({ onPlay }: { onPlay: (lessonId: string) => void }) {
         <span className="truncate rounded-full bg-lavender/20 px-2.5 py-1 text-[11px] font-medium text-lavender">{q.topic}</span>
       </div>
       <h3 className="mt-2 font-display text-2xl font-medium uppercase leading-none tracking-[-0.03em]">{q.title}</h3>
+      {q.concept && <p className="mt-2 line-clamp-2 text-[14px] leading-snug text-ivory/80">{q.concept}</p>}
       <div className="mt-3 flex flex-wrap gap-2">
         <RewardChip id="gold" amount={q.reward_gold} />
         <RewardChip id={q.reward_item} amount={q.reward_item_amount} />
       </div>
-      <div className="mt-4">
+      <div className="mt-auto pt-4">
         {done ? (
           <p className="flex min-h-[44px] items-center gap-2 text-sm font-semibold text-lime">
             <Check className="h-5 w-5" strokeWidth={2.5} /> Done — a new one arrives tomorrow

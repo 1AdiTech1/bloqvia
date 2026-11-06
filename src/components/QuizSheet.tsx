@@ -131,7 +131,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
         ref={bloqBox}
         animate={shakeCtl}
         className="absolute z-10 w-[104px] cursor-pointer"
-        style={{ right: 22, top: 0, y: "-74%" }}
+        style={{ right: 68, top: 0, y: "-74%" }}
         onClick={() => { bloq.current?.jump(); bloq.current?.setMood("laugh", 800); }}
       >
         <div className="relative">
@@ -140,12 +140,13 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
           {burst > 0 && <CubeBurst key={burst} />}
         </div>
       </motion.div>
-      <div className="max-h-[80vh] w-full overflow-y-auto rounded-t-[2rem] bg-ivory px-6 pb-8 pt-4 dk:max-h-[calc(100vh-136px)] dk:rounded-[28px] dk:pt-6 text-navy shadow-lift">
+      <button type="button" onClick={onClose} aria-label="Close" className="absolute right-3 top-3 z-20 flex h-11 w-11 items-center justify-center rounded-full text-navy/60 hover:bg-navy/5 focus-visible:outline-2 focus-visible:outline-navy">
+        <X className="h-5 w-5" />
+      </button>
+      <AskBloqSheet open={asking && !done} onClose={() => setAsking(false)} lessonId={lesson.lesson_id} context="quiz" />
+      <div className="flex max-h-[80vh] w-full flex-col rounded-t-[2rem] bg-ivory py-[14px] pr-2 text-navy shadow-lift dk:max-h-[calc(100vh-136px)] dk:rounded-[28px]">
+      <div className="bq-scroll min-h-0 flex-1 overflow-y-auto pb-3 pl-[30px] pr-5 pt-4">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-navy/15 dk:hidden" />
-        <AskBloqSheet open={asking && !done} onClose={() => setAsking(false)} lessonId={lesson.lesson_id} context="quiz" />
-        <Press onClick={onClose} aria-label="Close" className="absolute right-3 top-3 flex items-center justify-center rounded-full text-navy/60">
-          <X className="h-5 w-5" />
-        </Press>
 
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-lavender-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]">{lesson.topic}</span>
@@ -246,6 +247,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
             </Press>
           </motion.div>
         )}
+      </div>
       </div>
       </motion.div>
 

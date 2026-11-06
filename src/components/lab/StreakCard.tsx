@@ -22,6 +22,20 @@ function StreakInner() {
   const [left, setLeft] = useState<number | null>(null);
   const [info, setInfo] = useState(false);
   const [log, setLog] = useState(false);
+  const logBtn = useRef<HTMLButtonElement>(null);
+  const logPanel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!log) return;
+    const down = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (logPanel.current?.contains(t) || logBtn.current?.contains(t)) return;
+      setLog(false);
+    };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { setLog(false); logBtn.current?.focus(); } };
+    document.addEventListener("pointerdown", down);
+    document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("pointerdown", down); document.removeEventListener("keydown", key); };
+  }, [log]);
   const refreshed = useRef(false);
   const { streak, member } = s;
 
@@ -63,7 +77,7 @@ function StreakInner() {
   };
 
   return (
-    <section className="h-full rounded-[1.6rem] bg-ivory p-5 text-navy shadow-lift">
+    <section className="relative h-full rounded-[1.6rem] bg-ivory p-5 text-navy shadow-lift">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-navy/60">Community streak</p>
@@ -137,11 +151,6 @@ function StreakInner() {
             Check in
           </Press>
         )}
-        {s.lastTx && !s.busy && (
-          <a href={s.lastTx.url} target="_blank" rel="noreferrer" className="mt-2 block text-center text-xs text-navy/60 underline underline-offset-4">
-            See it on the explorer
-          </a>
-        )}
         {s.error && (
           <div className="mt-2 flex items-start gap-2 text-sm text-coral">
             <p className="min-w-0 flex-1 break-words font-medium">{s.error}</p>
@@ -152,43 +161,55 @@ function StreakInner() {
         )}
       </div>
 
-      {member && (
-        <p className="mt-4 text-sm">
-          You hold <span className="font-semibold">{member.balance}</span> STREAK · {member.total_checkins} check-ins
+      {(member || (s.lastTx && !s.busy)) && (
+        <p className="mt-4 flex items-baseline justify-between gap-3 text-sm">
+          {member ? (
+            <span className="min-w-0">
+              You hold <span className="font-semibold">{member.balance}</span> STREAK · {member.total_checkins} {member.total_checkins === 1 ? "check-in" : "check-ins"}
+            </span>
+          ) : <span />}
+          {s.lastTx && !s.busy && (
+            <a href={s.lastTx.url} target="_blank" rel="noopener noreferrer" className="shrink-0 text-xs font-semibold text-navy no-underline outline-none hover:text-[#6f8f0f] focus-visible:text-[#6f8f0f]">
+              explorer ↗
+            </a>
+          )}
         </p>
       )}
 
       <div className="mt-3 border-t border-navy/10 pt-1">
         <button
+          ref={logBtn}
           type="button"
           onClick={() => setLog((v) => !v)}
           aria-expanded={log}
+          aria-controls="streak-last-days"
           className="flex min-h-11 w-full items-center justify-between text-sm font-medium"
         >
           Last days
           <ChevronDown className={cn("h-4 w-4 transition-transform", log && "rotate-180")} />
         </button>
-        {log && (
-          <div className="pb-1">
-            {history.length === 0 ? (
-              <p className="text-sm text-navy/60">No days recorded yet.</p>
-            ) : (
-              <ul className="space-y-1.5 text-sm">
-                {history.map((d) => (
-                  <li key={d.day} className="flex items-center gap-2">
-                    <span className={cn("h-2 w-2 shrink-0 rounded-full", d.met ? "bg-lime" : "bg-coral")} />
-                    <span>
-                      Day {d.day} · {d.checkins} check-ins ·{" "}
-                      {d.met ? <span className="font-semibold">met · +{d.minted} minted</span> : <span className="font-semibold text-coral">missed · −{d.burned} burned</span>}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="mt-2 text-xs text-navy/50">Treasury {streak.treasury} · supply {streak.total_supply}</p>
-          </div>
-        )}
       </div>
+      {log && (
+        <div
+          ref={logPanel}
+          id="streak-last-days"
+          className="bq-pop absolute left-[10px] right-[10px] top-[calc(100%-12px)] z-30 rounded-[18px] bg-card py-3 pr-2 text-navy shadow-[0_22px_50px_rgb(0_0_0/.35),0_0_0_1px_#e3dccb]"
+        >
+          {history.length === 0 ? (
+            <p className="px-4 text-sm text-navy/60">No days recorded yet.</p>
+          ) : (
+            <ul className="bq-scroll max-h-[236px] space-y-1.5 overflow-y-auto pl-4 pr-2 text-sm">
+              {history.map((d) => (
+                <li key={d.day} className="flex items-center justify-between gap-3 whitespace-nowrap">
+                  <span className="min-w-0 truncate"><span className="font-semibold">Day {d.day}</span> · {d.checkins} {d.checkins === 1 ? "check-in" : "check-ins"}</span>
+                  {d.met ? <span className="shrink-0 font-semibold text-[#6f8f0f]">kept · +{d.minted}</span> : <span className="shrink-0 font-semibold text-coral">missed · −{d.burned}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-2 px-4 font-mono text-[11px] text-navy/55">Treasury {streak.treasury} · supply {streak.total_supply}</p>
+        </div>
+      )}
     </section>
   );
 }

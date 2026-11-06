@@ -128,7 +128,7 @@ export function AskDock() {
         </button>
       </div>
 
-      <section id="lv-ask-chat" className="lv-chat relative" role="dialog" aria-label="Ask Bloq" hidden={!open}>
+      <section id="lv-ask-chat" className="lv-chat" role="dialog" aria-label="Ask Bloq" hidden={!open}>
         <div className="lv-chat-head" style={{ paddingTop: 40 }}>
           <AgentPod size={44} ref={chatPod} />
           <div>
@@ -138,7 +138,7 @@ export function AskDock() {
           <button type="button" className="lv-chat-x" aria-label="Close the chat" onClick={close}>×</button>
         </div>
 
-        <div ref={log} className="lv-chat-log" aria-live="polite">
+        <div ref={log} className="lv-chat-log bq-scroll" aria-live="polite">
           {msgs.map((m) => (
             <div key={m.id} className={`lv-msg ${m.who}`}>
               {m.who === "bot" && !m.typed ? (

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "framer-motion";
-import { Copy, ExternalLink, KeyRound, ShieldCheck, TriangleAlert, User } from "lucide-react";
+import { ArrowLeft, Copy, ExternalLink, KeyRound, ShieldCheck, TriangleAlert, User } from "lucide-react";
 import { useGame } from "@/game/useGame";
 import { LESSON_CONTENT } from "@/game/content";
 import { PhoneShell } from "@/components/PhoneShell";
@@ -159,9 +159,14 @@ function RevealInner() {
 
       <Beat delay={3.6} className="mt-8 flex flex-col items-center text-center">
         <p className="font-display text-2xl font-medium leading-tight text-ivory">Thanks for playing. Everything you earned is yours.</p>
-        <Press onClick={playAgain} className="mt-6 rounded-full px-5 text-sm font-semibold text-lavender underline-offset-4 hover:underline">
-          Play again
-        </Press>
+        <div className="mt-6 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-center">
+          <Press onClick={() => navigate({ to: "/map" })} className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-lime px-6 font-display font-semibold text-navy shadow-lift">
+            <ArrowLeft className="h-5 w-5" /> Back to the map
+          </Press>
+          <Press onClick={playAgain} className="min-h-[52px] rounded-full border-[1.5px] border-lavender/40 bg-transparent px-6 font-semibold text-lavender">
+            Play again
+          </Press>
+        </div>
       </Beat>
     </>
   );

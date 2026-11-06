@@ -38,7 +38,7 @@ export function PhoneShell({
         </div>
         {showPanel && (
           <div className="hidden dk:block">
-            <div className="sticky top-0 max-h-screen overflow-y-auto px-6 py-7">
+            <div className="bq-scroll sticky top-[14px] my-[14px] mr-2 max-h-[calc(100vh-28px)] overflow-y-auto py-3 pl-6 pr-4">
               <ChainPanel limit={chain ? 40 : 8} />
             </div>
           </div>
