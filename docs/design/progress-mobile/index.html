@@ -1,0 +1,195 @@
+<title>Progress Section on Phones</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="rig.css">
+<style>
+/* Layout: a phone running the landing's "Your progress, made visible" section. Bloq (grad hat) hops down the reward cards holding each reward, then lands by the Passport and seals it. Bloqvia tokens (single dark look). */
+:root {
+  --night: #131f33; --navy: #16243a; --ivory: #f6f3ec; --card: #fffdf7; --lime: #d4f033; --lime-d: #a6c21a; --lav: #c9b8ec; --lav-bg: #efe7fb;
+  --purple: #8b45d9; --purple-soft: #c9a6f3; --peach: #f4b27c; --muted: #5a6477; --line: #ddd8c9;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--night); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+.wrap { max-width: 1000px; margin: 0 auto; display: grid; gap: 22px; }
+header h1 { margin: 0; font: 600 26px/1.15 var(--display); letter-spacing: -.02em; }
+header p { margin: 8px 0 0; color: var(--lav); max-width: 70ch; }
+.layout { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.steps { flex: 1 1 320px; min-width: 0; display: grid; gap: 12px; align-content: start; }
+.steps ol { margin: 0; padding-left: 20px; display: grid; gap: 10px; color: #dfe3ee; }
+.steps li::marker { color: var(--lime); font-weight: 700; }
+.steps p { margin: 0; color: var(--lav); font-size: 14px; }
+.steps b { color: var(--ivory); }
+.btn { border: 0; border-radius: 999px; background: var(--lime); color: var(--navy); font: 600 14px/1 var(--display); padding: 12px 18px; cursor: pointer; justify-self: start; }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+
+.phone { position: relative; width: 340px; max-width: 100%; height: 700px; border-radius: 34px; background: #0b1322; padding: 10px; box-shadow: 0 0 0 1px rgb(246 243 236 / .1), 0 30px 60px rgb(0 0 0 / .4); flex: none; }
+.screen { position: relative; height: 100%; border-radius: 26px; overflow: hidden; background: var(--ivory); }
+.scroll { height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.scroll::-webkit-scrollbar { display: none; }
+.lead { height: 220px; background: var(--navy); display: grid; align-content: end; padding: 18px; color: #8e9bb3; font: 500 12px/1 var(--mono); }
+
+.sec { position: relative; padding: 30px 18px 40px; color: var(--navy); }
+.sec h2 { margin: 0; font: 500 25px/1.12 var(--display); letter-spacing: -.035em; }
+.sec .sub { margin: 10px 0 0; color: var(--muted); font-size: 14.5px; }
+.items { position: relative; margin-top: 22px; padding-top: 100px; display: grid; gap: 12px; }
+.it { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px; display: grid; gap: 6px; transition: transform .3s, border-color .3s; }
+.it.on { transform: translateY(-3px); border-color: var(--navy); }
+.it i { width: 32px; height: 32px; border-radius: 10px; border: 2px solid var(--navy); display: block; margin-bottom: 4px; }
+.it b { font: 600 16px/1.2 var(--display); }
+.it small { font-size: 13.5px; color: var(--muted); }
+.quote { margin: 22px 0 0; padding-left: 14px; border-left: 4px solid var(--lime); color: var(--muted); font-size: 14.5px; }
+.panel { position: relative; margin-top: 26px; height: 380px; background: var(--lav-bg); border-radius: 26px; display: grid; place-items: center; overflow: visible; }
+.panel .ring { position: absolute; width: 86%; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid #cfb2f2; }
+
+/* the Passport card (simplified) */
+.pass { position: absolute; right: 6%; top: 9%; width: 62%; aspect-ratio: 1.5; border-radius: 16px; overflow: hidden; color: var(--ivory);
+  background: radial-gradient(120% 90% at 0% 0%, #2b3d63 0%, transparent 55%), radial-gradient(90% 80% at 100% 100%, #3a2170 0%, transparent 60%), #111c30;
+  border: 1.5px solid rgb(212 240 51 / .55); box-shadow: 0 0 0 3px rgb(255 255 255 / .9), 5px 6px 0 3px rgb(201 166 243 / .45);
+  transform: rotate(6deg); transition: transform .5s cubic-bezier(.34,1.56,.64,1); z-index: 3; }
+.pass.on { transform: rotate(0) translateY(-6px) scale(1.04); }
+.pass .brand { position: absolute; left: 8%; top: 9%; font: 600 11px/1 var(--display); display: flex; gap: 5px; align-items: center; }
+.pass .brand i { width: 12px; height: 11px; background: linear-gradient(var(--lime) 0 30%, transparent 30% 38%, #b9d42a 38% 66%, transparent 66% 72%, var(--lime) 72%); border-radius: 2px; }
+.pass .kind { position: absolute; right: 7%; top: 10%; font: 700 6.5px/1 var(--mono); letter-spacing: .2em; color: var(--lime); }
+.pass .chip { position: absolute; left: 8%; top: 30%; width: 14%; aspect-ratio: 1.25; border-radius: 4px; background: linear-gradient(135deg, #f1fb9a, #c9e12e 45%, #93ab12); }
+.pass .f { position: absolute; left: 8%; top: 56%; font: 500 6px/1.6 var(--mono); color: rgb(247 244 235 / .6); letter-spacing: .12em; }
+.pass .f em { display: block; font: 600 9px/1.2 var(--display); font-style: normal; color: var(--ivory); letter-spacing: 0; }
+.pass .seal { position: absolute; right: 7%; top: 30%; width: 32%; aspect-ratio: 1; border-radius: 50%; border: 1.5px dashed rgb(212 240 51 / .35); display: grid; place-items: center; }
+.pass .seal b { width: 56%; aspect-ratio: 1; border-radius: 50%; background: var(--lime); color: var(--navy); display: grid; place-items: center; font: 800 9px/1 var(--display); transform: scale(0) rotate(-30deg); opacity: 0; transition: transform .45s cubic-bezier(.34,1.8,.5,1), opacity .2s; }
+.pass.sealed .seal b { transform: scale(1) rotate(0); opacity: 1; }
+.pass .mrz { position: absolute; left: 0; right: 0; bottom: 0; padding: 4px 8%; background: rgb(0 0 0 / .28); font: 500 5.6px/1.4 var(--mono); letter-spacing: .1em; color: rgb(247 244 235 / .75); white-space: nowrap; overflow: hidden; }
+
+/* Bloq: one element for the whole section; it hops card to card, then down into the panel */
+.bloq { position: absolute; z-index: 6; left: 0; top: 0; width: 86px; will-change: transform; transition: transform .6s cubic-bezier(.34,1.3,.64,1); }
+.bloq.big { width: 112px; }
+.bloq .say { position: absolute; right: 74px; bottom: 60px; width: max-content; max-width: 178px; margin: 0; font-size: 13px; line-height: 1.42; padding: 10px 12px; border-radius: 14px; color: var(--navy);
+  background: rgb(255 255 255 / .95); box-shadow: 0 10px 24px rgb(22 36 58 / .18), 0 0 0 1px rgb(22 36 58 / .06); transition: opacity .25s, transform .3s cubic-bezier(.34,1.56,.64,1); transform-origin: 100% 100%; }
+.bloq .say.hide { opacity: 0; transform: scale(.85); }
+.bloq.big .say { right: auto; left: 8px; bottom: 150px; transform-origin: 0 100%; max-width: 230px; }
+.spark { position: absolute; width: 5px; height: 15px; border-radius: 4px; background: var(--lime); pointer-events: none; z-index: 7; }
+.tail { height: 200px; background: var(--lav-bg); display: grid; place-items: center; color: #9b8fbe; font: 500 12px/1 var(--mono); }
+@media (prefers-reduced-motion: reduce) { .bloq, .pass, .pass .seal b, .say { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>“Your progress, made visible” on a phone</h1>
+    <p>Your idea, as a working mock. Bloq, in the graduation hat, hops down the four reward cards, holding each reward and explaining it. At the end he jumps into the Passport panel, lands next to the card and seals it. Scroll the phone; scroll back up and he goes back the same way.</p>
+  </header>
+  <div class="layout">
+    <div class="phone"><div class="screen"><div class="scroll" id="sc">
+      <div class="lead">…the Experience Lab above</div>
+      <section class="sec" id="prog">
+        <h2>Your progress, made visible</h2>
+        <p class="sub">Every step counts. Learn something new, complete a chapter, and collect reminders of how far you've come.</p>
+        <div class="items" id="items">
+          <div class="it" data-prop="coin" data-say="BloqGold is game gold minted by the contract. It's for playing, not money."><i style="background:var(--purple-soft)"></i><b>BloqGold</b><small>A little recognition for the effort you put in.</small></div>
+          <div class="it" data-prop="key" data-say="Key Fragments come from The Vault, the chapter about keys."><i style="background:var(--lime);border-radius:50% 50% 50% 8px"></i><b>Key Fragment</b><small>A reminder of what you learned about keys.</small></div>
+          <div class="it" data-prop="fuel" data-say="Fuel Cells come from The Fuel System, the chapter about gas."><i style="background:var(--peach)"></i><b>Fuel Cell</b><small>A marker from your journey through gas.</small></div>
+          <div class="it" data-prop="badge" data-say="The Contract Seal comes from Smart Agreements, the smart contracts chapter."><i style="background:var(--lav-bg);border-radius:50%"></i><b>Contract Seal</b><small>A keepsake from the smart agreements chapter.</small></div>
+        </div>
+        <p class="quote">Finish the season and earn a Passport that records your achievement.</p>
+        <div class="panel" id="panel">
+          <span class="ring"></span>
+          <div class="pass" id="pass" role="img" aria-label="Web3 Passport, example">
+            <span class="brand"><i></i>Bloqvia</span><span class="kind">WEB3 PASSPORT</span><span class="chip"></span>
+            <span class="f">HOLDER<em>learner-7c4f.testnet</em>LEVEL · STATUS<em>3 / 3 · Graduate</em></span>
+            <span class="seal"><b>✓</b></span>
+            <span class="mrz">P&lt;BLQ&lt;LEARNER&lt;7C4F&lt;&lt;TESTNET&lt;&lt;SEALED</span>
+          </div>
+        </div>
+        <div class="bloq" id="bloq"><div id="rig"></div><p class="say hide" id="say" aria-live="polite"></p></div>
+      </section>
+      <div class="tail">Ready when you are…</div>
+    </div></div></div>
+
+    <div class="steps">
+      <ol>
+        <li><b>On the cards:</b> he sits on the top edge of the reward card in the middle of the screen, holds that reward (coin, key, fuel cell, seal) and says its line. Moving to the next card is a hop, as in the other sections.</li>
+        <li><b>At the Passport:</b> when the panel reaches the middle of the screen, he takes a bigger jump down into it and lands next to the card, a little bigger and standing. He cheers, sparks fly, the card straightens up, and the lime seal stamps onto it. Then he says “Graduate and your Passport is sealed for good. That's the one you can't buy.”</li>
+        <li><b>Scrolling back up:</b> he hops back onto the cards and the seal lifts off again, so it replays.</li>
+        <li><b>Tap him:</b> he jumps. Tap the Passport: he celebrates again.</li>
+      </ol>
+      <p>Phones and tablets only, wherever this section stacks into one column (below 960px). On desktop the cards and the Passport sit side by side, so Bloq stays in the panel as he does now. Reduced motion: no hops; he's placed directly.</p>
+      <button class="btn" type="button" id="top">Scroll the phone back to the top</button>
+    </div>
+  </div>
+</div>
+
+<script src="bloq-rig.js"></script>
+<script>
+(() => {
+  const sc = document.getElementById("sc"), sec = document.getElementById("prog"), items = [...document.querySelectorAll("#items .it")];
+  const panel = document.getElementById("panel"), pass = document.getElementById("pass"), host = document.getElementById("bloq"), say = document.getElementById("say");
+  const b = new Bloq(document.getElementById("rig"), { hat: "grad", prop: "coin", pose: "sit" });
+  const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const PASS_LINE = "Graduate and your Passport is sealed for good. That's the one you can't buy.";
+  let cur = null, timers = [];
+  const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+  const offsetIn = (el) => { let y = 0, x = 0, n = el; while (n && n !== sec) { y += n.offsetTop; x += n.offsetLeft; n = n.offsetParent; } return { x, y }; };
+  const speak = (t) => { say.textContent = t; say.classList.remove("hide"); b.talk(Math.min(3600, 800 + t.length * 24)); };
+  function spot(target) {
+    if (target === "pass") {
+      const o = offsetIn(panel), w = 112, h = w * 4 / 3;
+      return { x: o.x + 14, y: o.y + panel.offsetHeight - h - 14, big: true };
+    }
+    const o = offsetIn(target), w = 86, h = w * 4 / 3;
+    return { x: o.x + target.offsetWidth - w - 12, y: o.y - h * 0.75 + 4, big: false };
+  }
+  function place(s, animate) {
+    host.classList.toggle("big", s.big);
+    host.style.transition = animate && !still() ? "" : "none";
+    host.style.transform = `translate(${s.x}px, ${s.y}px)`;
+  }
+  function seal(on) { pass.classList.toggle("on", on); pass.classList.toggle("sealed", on); }
+  function burst() {
+    if (still()) return;
+    const r = host.getBoundingClientRect(), cx = r.width / 2, cy = r.height * 0.3;
+    for (let i = 0; i < 12; i++) {
+      const s = document.createElement("span"); s.className = "spark"; s.style.left = cx + "px"; s.style.top = cy + "px"; host.appendChild(s);
+      const a = (Math.PI * 2 * i) / 12, d = r.width * 0.62, rot = (a * 180) / Math.PI + 90;
+      s.animate([{ transform: `translate(-50%,-50%) rotate(${rot}deg) scale(.3)`, opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d}px)) rotate(${rot}deg) scale(1)`, opacity: 0 }], { duration: 700, easing: "cubic-bezier(.2,.8,.3,1)" }).onfinish = () => s.remove();
+    }
+  }
+  function go(target, first) {
+    if (target === cur) return;
+    const prev = cur; cur = target;
+    timers.forEach(clearTimeout); timers = [];
+    items.forEach((c) => c.classList.toggle("on", c === target));
+    say.classList.add("hide");
+    if (target !== "pass") seal(false);
+    if (first || still()) {
+      place(spot(target), false);
+      if (target === "pass") { b.setProp("badge").setPose("cheer"); seal(true); speak(PASS_LINE); }
+      else { b.setProp(target.dataset.prop).setPose("sit"); speak(target.dataset.say); }
+      return;
+    }
+    b.setPose("idle"); b.jump();
+    later(() => { place(spot(target), true); if (target !== "pass") b.setProp(target.dataset.prop); }, 120);
+    if (target === "pass") {
+      later(() => { b.setProp("badge").setPose("cheer"); b.setMood("laugh", 1600); b.jump(); burst(); seal(true); }, 760);
+      later(() => { b.setPose("hold"); speak(PASS_LINE); }, 1400);
+    } else {
+      later(() => { b.setPose("sit"); speak(target.dataset.say); }, 700);
+    }
+  }
+  function pick() {
+    const r = sc.getBoundingClientRect(), mid = r.top + r.height * 0.45;
+    const pr = panel.getBoundingClientRect();
+    if (pr.top < r.top + r.height * 0.62) return "pass";          // the Passport panel has reached the middle
+    let best = items[0], d = 1e9;
+    items.forEach((c) => { const cr = c.getBoundingClientRect(), dd = Math.abs(cr.top + cr.height / 2 - mid); if (dd < d) { d = dd; best = c; } });
+    return best;
+  }
+  let raf = 0, started = false;
+  sc.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { if (!started) return; go(pick(), false); }); }, { passive: true });
+  new IntersectionObserver((es) => { if (es[0].isIntersecting && !started) { started = true; go(pick(), true); } }, { root: sc, threshold: 0.15 }).observe(sec);
+  host.addEventListener("pointerdown", () => { b.jump(); b.setMood("laugh", 900); });
+  pass.addEventListener("pointerdown", () => { if (cur === "pass") { b.setPose("cheer"); b.jump(); burst(); later(() => b.setPose("hold"), 900); } });
+  document.getElementById("top").addEventListener("click", () => sc.scrollTo({ top: 0, behavior: still() ? "auto" : "smooth" }));
+  addEventListener("resize", () => cur && place(spot(cur), false));
+})();
+</script>
