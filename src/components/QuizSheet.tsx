@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check, ExternalLink, RotateCcw, X } from "lucide-react";
 import { useGame } from "@/game/useGame";
+import { Bloq, SpeechBubble, useSay, talkMs, type BloqHandle, type BloqHat, type BloqProp, type BloqPose } from "@/bloq";
 import { useDailyQuests, type GeneratedBy } from "@/near";
 import { formatQuestDate } from "./lab/DailyQuestCard";
 import { LESSON_CONTENT, type LessonContent } from "@/game/content";
@@ -15,6 +16,14 @@ import { AskBloqButton, AskBloqSheet } from "./lab/AskBloqSheet";
 type SheetLesson = Omit<LessonContent, "answer"> & { answer?: string; explanation?: string; generated_by?: GeneratedBy };
 
 type Flight = { id: string; from: DOMRect; to: DOMRect };
+
+const LOOKS: Record<string, { hat: BloqHat; prop: BloqProp; hello: string }> = {
+  "the-vault": { hat: "captain", prop: "key", hello: "Chapter one: keys. Read the idea, then pick one." },
+  "the-fuel-system": { hat: "hardhat", prop: "fuel", hello: "Hard hat on. This one's about gas, the fuel of the network." },
+  "smart-agreements": { hat: "beret", prop: "scroll", hello: "Last one: smart contracts. The rules are printed on the machine." },
+};
+const DAILY_LOOK = { hat: "bucket" as BloqHat, prop: "bulb" as BloqProp, hello: "Today's quest was written by an AI agent. The chain still checks your answer." };
+const CUBE_COLORS = ["#C7F36B", "#b47ff0", "#ffffff"];
 
 /**
  * Quiz bottom sheet. On success the reward chips fly to the inventory bar,
@@ -38,6 +47,25 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
   const [flights, setFlights] = useState<Flight[]>([]);
   const firstOption = useRef<HTMLButtonElement>(null);
   const [asking, setAsking] = useState(false);
+  const bloq = useRef<BloqHandle>(null);
+  const bloqBox = useRef<HTMLDivElement>(null);
+  const [line, sayLine] = useSay();
+  const [pose, setPose] = useState<BloqPose>("hold");
+  const [oops, setOops] = useState(0);
+  const [burst, setBurst] = useState(0);
+  const look = daily ? DAILY_LOOK : LOOKS[lessonId] ?? DAILY_LOOK;
+  const say = (t: string) => { sayLine(t); bloq.current?.talk(talkMs(t)); };
+
+  useEffect(() => {
+    const t = setTimeout(() => { bloq.current?.jump(); say(look.hello); }, 520);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const checking = game.busy && !!picked;
+  useEffect(() => {
+    if (checking) { bloq.current?.setMood("o"); bloq.current?.look(0, -0.8); }
+  }, [checking]);
 
   const choose = async (opt: string) => {
     if (game.busy || !lesson) return;
@@ -45,9 +73,18 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
     try {
       await game.completeLesson(lesson.lesson_id, opt);
       setDone(true);
+      setPose("cheer");
+      bloq.current?.jump();
+      bloq.current?.setMood("laugh", 2200);
+      if (!reduce) setBurst((b) => b + 1);
+      say("Yes! The contract checked it. Here come your rewards!");
     } catch {
       setWrong((w) => (w.includes(opt) ? w : [...w, opt]));
       setShake((s) => s + 1);
+      bloq.current?.look(0, 0);
+      bloq.current?.setMood("o", 1400);
+      setOops((o) => o + 1);
+      say("Oops, the contract said no. Read the hint below.");
     } finally {
       setPicked(null);
     }
@@ -61,14 +98,15 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
     const t1 = setTimeout(() => {
       const fl = ids
         .map((id) => {
-          const from = document.querySelector(`[data-chip="${id}"]`)?.getBoundingClientRect();
+          const r = bloqBox.current?.getBoundingClientRect();
+          const from = r ? new DOMRect(r.left + r.width * 0.45 - 18, r.top + r.height * 0.35 - 18, 36, 36) : document.querySelector(`[data-chip="${id}"]`)?.getBoundingClientRect();
           const to = document.querySelector(`[data-inv="${id}"]`)?.getBoundingClientRect();
           return from && to ? { id, from, to } : null;
         })
         .filter((f): f is Flight => !!f);
       if (!reduce) setFlights(fl);
     }, reduce ? 0 : 350);
-    const t2 = setTimeout(() => { setFlights([]); onLanded(); }, reduce ? 50 : 1100);
+    const t2 = setTimeout(() => { setFlights([]); onLanded(); setPose("thumbs"); }, reduce ? 50 : 1100);
     return () => { clearTimeout(t1); clearTimeout(t2); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done]);
@@ -85,8 +123,24 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
         animate={{ y: 0, opacity: 1 }}
         exit={reduce ? { opacity: 0 } : { y: 80, opacity: 0 }}
         transition={{ duration: 0.5, ease: labEase }}
-        className="relative max-h-[80vh] w-full max-w-[480px] overflow-y-auto rounded-t-[2rem] bg-ivory px-6 pb-8 pt-4 text-navy shadow-lift"
+        className="relative w-full max-w-[480px]"
       >
+      <motion.div
+        ref={bloqBox}
+        key={`bloq-${oops}`}
+        animate={oops && !reduce ? { x: [0, -7, 6, -4, 2, 0] } : { x: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="absolute z-10 w-[104px] cursor-pointer"
+        style={{ right: 22, top: 0, y: "-74%" }}
+        onClick={() => { bloq.current?.jump(); bloq.current?.setMood("laugh", 800); }}
+      >
+        <div className="relative">
+          <Bloq ref={bloq} hat={look.hat} prop={look.prop} pose={pose} label="Bloq, your guide" />
+          <SpeechBubble text={line} side="left" tone="light" />
+          {burst > 0 && <CubeBurst key={burst} />}
+        </div>
+      </motion.div>
+      <div className="max-h-[80vh] w-full overflow-y-auto rounded-t-[2rem] bg-ivory px-6 pb-8 pt-4 text-navy shadow-lift">
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-navy/15" />
         <AskBloqSheet open={asking && !done} onClose={() => setAsking(false)} lessonId={lesson.lesson_id} context="quiz" />
         <Press onClick={onClose} aria-label="Close" className="absolute right-3 top-3 flex items-center justify-center rounded-full text-navy/60">
@@ -127,7 +181,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
                 </Press>
               ))}
             </motion.div>
-            {game.busy && picked && <div className="mt-4"><LabLoader tone="navy" label="Checking your answer…" /></div>}
+            {game.busy && picked && <div className="mt-4"><LabLoader tone="navy" label="Checking your answer on NEAR…" /></div>}
             <AnimatePresence>
               {lastWrong && lesson.explanation && !game.busy && (
                 <motion.div
@@ -192,6 +246,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
             </Press>
           </motion.div>
         )}
+      </div>
       </motion.div>
 
       {typeof document !== "undefined" &&
@@ -212,5 +267,27 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
           document.body,
         )}
     </motion.div>
+  );
+}
+
+/** Twelve small spinning cubes thrown from Bloq's hands. */
+function CubeBurst() {
+  return (
+    <div className="pointer-events-none absolute left-1/2 top-[55%]" aria-hidden="true">
+      {Array.from({ length: 12 }).map((_, i) => {
+        const a = (i / 12) * Math.PI * 2;
+        const d = 46 + (i % 3) * 14;
+        return (
+          <motion.span
+            key={i}
+            className="absolute block h-[10px] w-[10px] rounded-[2px]"
+            style={{ background: CUBE_COLORS[i % 3], border: "1.5px solid #16243A" }}
+            initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+            animate={{ x: Math.cos(a) * d, y: Math.sin(a) * d - 20, rotate: 360, opacity: 0 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          />
+        );
+      })}
+    </div>
   );
 }

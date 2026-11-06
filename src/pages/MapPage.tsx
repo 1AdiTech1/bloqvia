@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Check, Lock } from "lucide-react";
+import { AnimatePresence, useReducedMotion } from "framer-motion";
+import { ChainTrail, type ChainTrailHandle, type TrailStop } from "@/bloq";
+import { useFinalBlock } from "@/near";
 import { useGame } from "@/game/useGame";
 import { LESSON_CONTENT } from "@/game/content";
 import { PhoneShell } from "@/components/PhoneShell";
@@ -11,25 +12,20 @@ import { ItemIcon } from "@/components/GameBits";
 import { InventoryBar } from "@/components/lab/InventoryBar";
 import { StreakCard } from "@/components/lab/StreakCard";
 import { DailyQuestCard } from "@/components/lab/DailyQuestCard";
-import { Press, buzz, labEase } from "@/components/lab/motion";
-import { cn } from "@/lib/utils";
+import { buzz } from "@/components/lab/motion";
 import { AskBloqButton, AskBloqSheet } from "@/components/lab/AskBloqSheet";
 
-// Positions along the winding path (percent of width, px from top). Index 3 = shop door.
-const STOPS: { x: number; y: number }[] = [
-  { x: 28, y: 70 },
-  { x: 72, y: 230 },
-  { x: 30, y: 390 },
-  { x: 50, y: 560 },
-];
-const PATH = "M28 70 C 28 150, 72 150, 72 230 S 30 310, 30 390 S 50 470, 50 560";
+const KINDS = ["vault", "battery", "contract"] as const;
+const POSTS = ["keys · ed25519", "gas · the relayer pays", "core.bloqvia.testnet"] as const;
+const TRAIL_STOPS = [0, 1, 2].map((i) => {
+  const l = LESSON_CONTENT[i];
+  return { id: l?.lesson_id ?? String(i), title: l?.title ?? "", kind: KINDS[i]!, post: POSTS[i]!, reward: l ? <ItemIcon id={l.reward_item} /> : undefined };
+}) as unknown as readonly [TrailStop, TrailStop, TrailStop];
 
 export function MapPage() {
   return (
     <RequireAccount>
-      <PhoneShell nav>
-        <MapInner />
-      </PhoneShell>
+      <MapInner />
     </RequireAccount>
   );
 }
@@ -45,11 +41,16 @@ function MapInner() {
   const [saved, setSaved] = useState(false);
   const [asking, setAsking] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const trail = useRef<ChainTrailHandle>(null);
+  const height = useFinalBlock();
 
   const learner = game.learner!;
   const completed = learner.completed;
   const foundingDone = completed.filter((id) => !id.startsWith("daily-"));
   const level = heldLevel ?? learner.level;
+  const [trailLevel, setTrailLevel] = useState(foundingDone.length); // what the trail shows
+  const doneCount = useRef(foundingDone.length);
+  doneCount.current = foundingDone.length;
 
   const openQuest = (id: string) => {
     setHeld({ gold: Number(learner.gold), items: learner.items });
@@ -70,128 +71,47 @@ function MapInner() {
     setHeld(null);
     setHeldLevel(null);
     setOpen(null);
+    timers.current.push(setTimeout(() => setTrailLevel(doneCount.current), reduce ? 0 : 450));
   };
 
-  const shopOpen = learner.level === 3 && heldLevel === null;
-  const marker = STOPS[Math.min(level, 3)] ?? { x: 50, y: 0 };
-  const door = STOPS[3] ?? { x: 50, y: 560 };
+  const shopOpen = trailLevel >= 3;
 
   return (
-    <>
+    <PhoneShell nav headerLevel={level}>
       <div className="flex flex-col gap-3">
         <InventoryBar gold={held?.gold} items={held?.items} />
         <StreakCard />
         <DailyQuestCard onPlay={openQuest} />
       </div>
 
-      {foundingDone.length === 0 && (
-        <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-lime">Three quests. One merchant. A Passport that's yours.</p>
-      )}
+      <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-lime">Your journey</p>
+      <h2 className="mt-2 font-display text-2xl font-medium leading-tight tracking-[-0.03em]">Three quests. One merchant. A Passport that's yours.</h2>
 
-      <div className="relative mt-6 h-[700px]">
-        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 640" preserveAspectRatio="none" aria-hidden="true">
-          <path d={PATH} fill="none" vectorEffect="non-scaling-stroke" strokeLinecap="round" className="stroke-lavender/30" style={{ strokeWidth: 10 }} />
-          <path d={PATH} fill="none" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeDasharray="2 10" className="stroke-lavender/60" style={{ strokeWidth: 3 }} />
-          <motion.path
-            d={PATH}
-            fill="none"
-            vectorEffect="non-scaling-stroke"
-            strokeLinecap="round"
-            className="stroke-lime"
-            style={{ strokeWidth: 4 }}
-            initial={false}
-            animate={{ pathLength: Math.max(0.001, level / 3) }}
-            transition={reduce ? { duration: 0 } : { duration: 1, ease: labEase }}
-          />
-        </svg>
-
-        {LESSON_CONTENT.map((l, i) => {
-          const done = completed.includes(l.lesson_id);
-          const available = !completed.includes(l.lesson_id) && i === foundingDone.length;
-          const pos = STOPS[i] ?? { x: 50, y: 0 };
-          return (
-            <div key={l.lesson_id} className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2" style={{ left: `${pos.x}%`, top: pos.y }}>
-              <Press
-                disabled={!available}
-                onClick={() => openQuest(l.lesson_id)}
-                aria-label={`${l.title} — ${done ? "done" : available ? "available" : "locked"}`}
-                className={cn(
-                  "relative flex h-20 w-20 items-center justify-center rounded-[1.6rem] font-display text-2xl font-semibold transition-colors duration-500",
-                  done && "bg-lime text-navy shadow-lift",
-                  available && "bg-ivory text-navy shadow-lift",
-                  !done && !available && "border-2 border-lavender/70 text-lavender",
-                )}
-              >
-                {available && !reduce && (
-                  <motion.span
-                    className="absolute inset-0 rounded-[1.6rem] border-2 border-ivory"
-                    animate={{ scale: [1, 1.22], opacity: [0.6, 0] }}
-                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
-                  />
-                )}
-                {done ? <Check className="h-8 w-8" strokeWidth={2.5} /> : available ? `0${i + 1}` : <Lock className="h-6 w-6" />}
-                {done && (
-                  <span className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-navy text-lime ring-2 ring-lime">
-                    <ItemIcon id={l.reward_item} />
-                  </span>
-                )}
-              </Press>
-              <span className={cn("whitespace-nowrap text-xs font-semibold uppercase tracking-[0.14em]", done || available ? "text-ivory" : "text-lavender/80")}>{l.title}</span>
-            </div>
-          );
-        })}
-
-        {/* You are here */}
-        <motion.div
-          className="pointer-events-none absolute z-10 -translate-x-1/2"
-          initial={false}
-          animate={{ left: `${marker.x}%`, top: marker.y - 66 }}
-          transition={reduce ? { duration: 0 } : { duration: 0.9, ease: labEase }}
-          aria-label="You are here"
-        >
-          <motion.span
-            className="block h-4 w-6 rounded-md bg-lime shadow-lift"
-            animate={reduce ? { y: 0 } : { y: [0, -3, 0] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </motion.div>
-
-        {/* Bloq's shop door */}
-        <div className="absolute flex w-56 -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 text-center" style={{ left: `${door.x}%`, top: door.y + 20 }}>
-          <ShopDoor open={shopOpen} />
-          {shopOpen ? (
-            <Link to="/shop" className="tap inline-flex items-center rounded-full bg-lime px-6 font-semibold text-navy shadow-lift active:scale-[0.98]">
-              Enter Bloq's shop
-            </Link>
-          ) : (
-            <p className="text-sm text-lavender">Finish the three quests to meet Bloq</p>
-          )}
-          <AskBloqButton label="Ask Bloq a question" onClick={() => setAsking(true)} className="text-lavender" />
-        </div>
-      </div>
+      <ChainTrail
+        ref={trail}
+        className="mt-4"
+        level={trailLevel}
+        blockHeight={height}
+        onPlay={(i) => { const l = LESSON_CONTENT[i]; if (l) openQuest(l.lesson_id); }}
+        doorAccount="bloq.bloqvia.testnet"
+        stops={TRAIL_STOPS}
+        door={
+          <>
+            <p className="text-sm text-lavender">{shopOpen ? "Bloq's shop is open to you." : "Finish the three quests to meet Bloq the merchant"}</p>
+            {shopOpen && (
+              <Link to="/shop" className="tap inline-flex items-center rounded-full bg-lime px-6 font-semibold text-navy shadow-lift active:scale-[0.98]">
+                Enter Bloq's shop
+              </Link>
+            )}
+            <AskBloqButton label="Ask Bloq a question" onClick={() => setAsking(true)} className="text-lavender" />
+          </>
+        }
+      />
 
       <AnimatePresence>
         {open && <QuizSheet key={open} lessonId={open} onClose={close} onLanded={landed} saved={saved} />}
       </AnimatePresence>
       <AskBloqSheet open={asking} onClose={() => setAsking(false)} context="map" />
-    </>
-  );
-}
-
-function ShopDoor({ open }: { open: boolean }) {
-  const reduce = useReducedMotion();
-  return (
-    <div className="relative h-24 w-20 overflow-hidden rounded-t-[2.5rem] border-2 border-lavender/60 bg-navy" style={{ perspective: 400 }} aria-hidden="true">
-      <div className="absolute inset-2 rounded-t-[2rem] bg-lime/90" />
-      <motion.div
-        className={cn("absolute inset-0 origin-left rounded-t-[2.5rem]", open ? "bg-navy-soft" : "bg-navy-soft")}
-        initial={false}
-        animate={{ rotateY: open ? -78 : 0 }}
-        transition={reduce ? { duration: 0 } : { duration: 1.1, ease: labEase, delay: 0.3 }}
-      >
-        <span className="absolute right-3 top-1/2 h-2 w-2 rounded-full bg-lavender" />
-        {!open && <Lock className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 text-lavender" />}
-      </motion.div>
-    </div>
+    </PhoneShell>
   );
 }

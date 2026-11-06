@@ -19,7 +19,7 @@ function DailyQuestInner({ onPlay }: { onPlay: (lessonId: string) => void }) {
   const game = useGame();
   if (error) return null;
   if (loading) {
-    return <div className="h-14 animate-pulse rounded-[1.6rem] border border-lavender/30 bg-navy motion-reduce:animate-none" aria-label="Loading today's quest" />;
+    return <div className="h-14 animate-pulse rounded-[1.6rem] border border-ivory/10 bg-navy-soft motion-reduce:animate-none" aria-label="Loading today's quest" />;
   }
   const q = quests[0];
   if (!q) return null;
@@ -30,9 +30,10 @@ function DailyQuestInner({ onPlay }: { onPlay: (lessonId: string) => void }) {
   const tee = q.generated_by.signature?.signature_kind === "provider_tee";
 
   return (
-    <section className="rounded-[1.6rem] border border-lavender/30 bg-navy p-5 text-ivory shadow-lift">
+    <section className="rounded-[1.6rem] border border-ivory/10 bg-navy-soft p-5 text-ivory shadow-lift">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-lavender">
+        <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-lavender">
+          <span aria-hidden="true" className="h-2 w-2 rounded-full bg-lime" />
           {isToday ? "Today's quest" : `Latest quest · ${formatQuestDate(date)}`}
         </p>
         <span className="truncate rounded-full bg-lavender/20 px-2.5 py-1 text-[11px] font-medium text-lavender">{q.topic}</span>

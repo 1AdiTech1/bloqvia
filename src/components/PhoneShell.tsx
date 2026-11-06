@@ -8,11 +8,11 @@ import { AskBloqSheet, type AskContext } from "@/components/lab/AskBloqSheet";
 import { cn } from "@/lib/utils";
 
 /** Centered 480px column on the navy night background. */
-export function PhoneShell({ children, nav = false }: { children: ReactNode; nav?: boolean }) {
+export function PhoneShell({ children, nav = false, headerLevel }: { children: ReactNode; nav?: boolean; headerLevel?: number | undefined }) {
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-night text-ivory">
       <div className={cn("mx-auto min-h-screen w-full max-w-[480px] px-5 pt-4", nav ? "pb-32" : "pb-12")}>
-        {nav && <GameHeader />}
+        {nav && <GameHeader level={headerLevel} />}
         {children}
       </div>
       {nav && <BottomNav />}
@@ -20,9 +20,9 @@ export function PhoneShell({ children, nav = false }: { children: ReactNode; nav
   );
 }
 
-function GameHeader() {
+function GameHeader({ level: override }: { level?: number | undefined }) {
   const { passport } = useGame();
-  const level = Math.min(passport?.level ?? 0, 3);
+  const level = Math.min(override ?? passport?.level ?? 0, 3);
   const graduated = !!passport?.graduated;
   const text = graduated ? "Graduate" : level >= 3 ? "Ready to graduate" : `Level ${level}`;
   return (
