@@ -1,0 +1,992 @@
+<title>Bloq in Motion</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="rig.css">
+<style>
+/* Layout: Maria's landing (navy hero, lavender context, ivory chapters, navy lab, ivory progress, lavender close),
+   with Bloq built from moving parts placed in each section. Single deliberate look, colors set explicitly. */
+:root {
+  --navy: #16243a; --navy-2: #22324c; --navy-line: rgb(247 244 235 / .16);
+  --ivory: #f6f3ec; --card: #fffdf7; --line: #ddd8c9;
+  /* one palette with Bloq (Bloq.colors in bloq-rig.js): purple #8b45d9 and its tints, lime #d4f033 */
+  --purple: #8b45d9; --purple-d: #6630b3; --purple-soft: #c9a6f3;
+  --lav-bg: #efe7fb; --lav-card: #f2ebfc; --lime-pale: #f1f8d2;
+  --lime: #d4f033; --lime-d: #a6c21a; --dot: var(--purple); --eyebrow: var(--purple-d); --peach: #f4b27c;
+  --muted: #566174; --ink: #121a28;
+  --display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --spring: cubic-bezier(.34,1.56,.64,1); --ease: cubic-bezier(.22,1,.36,1);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { overflow-x: clip; }
+body { background: var(--ivory); color: var(--navy); font: 16px/1.55 var(--body); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+h1, h2, h3 { font-family: var(--display); font-weight: 500; letter-spacing: -0.035em; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); }
+.s { position: relative; padding-block: clamp(72px, 9vw, 116px); }
+.dark { background: var(--navy); color: var(--ivory); }
+.lav { background: var(--lav-bg); }
+.eyebrow { display: flex; align-items: center; gap: 10px; font: 600 12px/1 var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--navy); }
+.eyebrow::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--dot); }
+.dark .eyebrow { color: rgb(247 244 235 / .9); }
+.dark .eyebrow::before { background: var(--lime); }
+.h2 { margin-top: 18px; font-size: clamp(1.6rem, 2.6vw, 2.05rem); line-height: 1.15; }
+.sub { margin-top: 14px; max-width: 44rem; color: var(--muted); font-size: 1.06rem; }
+.dark .sub { color: rgb(247 244 235 / .78); }
+
+.btn { appearance: none; border: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font: 500 16px/1 var(--display); border-radius: 12px; padding: 17px 24px; transition: transform .2s var(--ease), box-shadow .2s var(--ease); }
+.btn.lime { background: var(--lime); color: var(--ink); box-shadow: 4px 4px 0 #0b1322; }
+.btn.navy { background: var(--navy); color: var(--ivory); box-shadow: 4px 4px 0 rgb(22 36 58 / .25); }
+.btn.lime:hover, .btn.navy:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #0b1322; }
+.btn.ghost { background: transparent; color: var(--ivory); box-shadow: inset 0 0 0 1.5px rgb(247 244 235 / .7); }
+.btn.ghost:hover { box-shadow: inset 0 0 0 1.5px var(--ivory); background: rgb(247 244 235 / .06); }
+.btn:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--dot); outline-offset: 3px; }
+
+/* ---------- header + hero ---------- */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 22px; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ivory); }
+.logo { width: 44px; height: 42px; overflow: visible; }
+.logo rect { transform-box: fill-box; transform-origin: 50% 100%; }
+.logo .b1, .logo .b3 { fill: var(--lime); }
+.logo .b2 { fill: var(--lime-d); }
+.word { font: 600 24px/1 var(--display); letter-spacing: -0.03em; display: inline-flex; }
+.word span { display: inline-block; }
+.brand.stack .b3 { animation: lb3 1.25s cubic-bezier(.3,.6,.4,1) both; }
+.brand.stack .b2 { animation: lb2 1.25s cubic-bezier(.3,.6,.4,1) both; }
+.brand.stack .b1 { animation: lb1 1.25s cubic-bezier(.3,.6,.4,1) both; }
+.word { min-width: 5.2ch; }
+.caret { width: 2.5px; height: 1.05em; margin-left: 3px; background: var(--lime); border-radius: 2px; align-self: center; opacity: 0; }
+.caret.on { opacity: 1; animation: caret .9s steps(1) infinite; }
+.caret.out { opacity: 0; transition: opacity .4s; }
+@keyframes caret { 50% { opacity: 0; } }
+.brand.wiggle .b1 { animation: lwig .7s ease-in-out; }
+.brand.wiggle .b2 { animation: lwig .7s ease-in-out .08s; }
+@keyframes lb3 { 0% { transform: translateY(-48px); opacity: 0; } 6% { opacity: 1; } 21% { transform: translateY(0) scale(1,1); } 26% { transform: scale(1.12,.7); } 33% { transform: scale(.96,1.07); } 37% { transform: scale(1,1); } 41% { transform: scale(1.05,.86); } 47% { transform: scale(1,1); } 55% { transform: scale(1.03,.9); } 62%, 100% { transform: scale(1,1); } }
+@keyframes lb2 { 0%, 15% { transform: translateY(-48px); opacity: 0; } 19% { opacity: 1; } 37% { transform: translateY(0) scale(1,1); } 42% { transform: scale(1.12,.7); } 48% { transform: scale(.96,1.07); } 52% { transform: scale(1,1); } 56% { transform: scale(1.05,.87); } 63%, 100% { transform: scale(1,1); } }
+@keyframes lb1 { 0%, 30% { transform: translateY(-48px); opacity: 0; } 34% { opacity: 1; } 52% { transform: translateY(0) scale(1,1); } 57% { transform: scale(1.15,.68); } 64% { transform: scale(.95,1.09); } 70% { transform: scale(1.02,.98); } 75%, 100% { transform: scale(1,1); } }
+@keyframes lw { 0% { opacity: 0; transform: translateY(12px) rotate(6deg); } 100% { opacity: 1; transform: none; } }
+@keyframes lwig { 0%, 100% { transform: translateX(0); } 30% { transform: translateX(3px) rotate(-3deg); } 65% { transform: translateX(-2px) rotate(2deg); } }
+nav { display: flex; align-items: center; gap: clamp(14px, 2.4vw, 34px); font: 500 16px/1 var(--display); }
+nav a { text-decoration: none; opacity: .92; }
+nav a { background: linear-gradient(100deg, var(--ivory) 0 45%, #ebfb7a 50%, var(--lime) 62%, #a6c21a 80%, var(--lime)) 0 0 / 240% 100% no-repeat; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; transition: background-position .55s cubic-bezier(.22,1,.36,1), opacity .2s; }
+nav a:hover, nav a:focus-visible { opacity: 1; background-position: 100% 0; }
+nav .btn { padding: 13px 20px; font-size: 15px; box-shadow: none; }
+@media (max-width: 760px) { nav a { display: none; } }
+.hero-grid { display: grid; gap: 28px; align-items: center; grid-template-columns: 1fr; padding-block: clamp(36px, 7vw, 90px) clamp(56px, 8vw, 110px); }
+@media (min-width: 900px) { .hero-grid { grid-template-columns: 1.1fr .9fr; } }
+.hero h1 { margin-top: 26px; font-size: clamp(2.1rem, 3.6vw, 2.75rem); line-height: 1.08; }
+.hero .sub { max-width: 34rem; }
+.btns { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 34px; }
+.orbit { position: relative; width: min(100%, 470px); aspect-ratio: 1; margin-inline: auto; display: grid; place-items: center; }
+.orbit .ring { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid rgb(247 244 235 / .07); }
+.orbit .ring.in { inset: 9%; border-color: rgb(247 244 235 / .07); }
+.orbit .spin { position: absolute; inset: 0; opacity: .32; animation: spin 26s linear infinite; }
+.orbit .spin.rev { animation-duration: 40s; animation-direction: reverse; }
+.orbit .chip { position: absolute; width: 22px; height: 22px; border-radius: 6px; background: var(--lime); top: 7%; right: 15%; transform: rotate(18deg); }
+.orbit .pip { position: absolute; width: 11px; height: 11px; border-radius: 50%; background: var(--lime); bottom: 19%; left: 0; }
+.orbit .chip.lav { background: var(--purple-soft); width: 14px; height: 14px; top: auto; bottom: 6%; right: 32%; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.cubes { position: absolute; inset: 0; pointer-events: none; z-index: 1; opacity: .34; filter: saturate(.7); }
+/* lights that run along the rings: a bright head with a short fading tail */
+.lights { position: absolute; inset: 0; z-index: 1; opacity: .38; border-radius: 50%; animation: spin var(--t) linear infinite; animation-delay: var(--d, 0s); pointer-events: none; }
+.lights.in { inset: 9%; }
+.lights.rev { animation-direction: reverse; }
+.comet { position: absolute; top: -2px; left: 50%; width: 46px; height: 3px; margin-left: -46px; border-radius: 3px; background: linear-gradient(90deg, transparent, rgb(212 240 51 / .85)); }
+.comet::after { content: ""; position: absolute; right: -3px; top: -2.5px; width: 8px; height: 8px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 8px 2px rgb(212 240 51 / .6); }
+.lights.rev .comet { margin-left: 0; transform: scaleX(-1); transform-origin: 0 50%; }
+body.still .lights { animation: none; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .lights { animation: none; opacity: 0; } }
+.cube { position: absolute; width: var(--w); transition: transform .6s cubic-bezier(.22,1,.36,1); }
+.cube svg { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 6px 6px rgb(0 0 0 / .18)); transform-origin: 50% 50%; }
+.hero-bloq { position: relative; z-index: 2; width: 66%; cursor: pointer; filter: drop-shadow(0 18px 30px rgb(0 0 0 / .35)); }
+@media (max-width: 640px) { .hero-bloq { filter: none; } }
+/* speech bubbles: frosted glass, a soft inner light, a tail that keeps pointing at Bloq when the bubble is nudged to fit */
+.tag, .say { position: absolute; z-index: 6; width: max-content; max-width: min(16.5rem, calc(100vw - 32px)); font-size: 14.5px; line-height: 1.45; padding: 12px 15px 12px 15px; border-radius: 18px;
+  color: var(--ivory); background: linear-gradient(160deg, rgb(43 58 90 / .72), rgb(22 36 58 / .64)); -webkit-backdrop-filter: blur(14px) saturate(1.5); backdrop-filter: blur(14px) saturate(1.5);
+  border: 1px solid rgb(255 255 255 / .16); box-shadow: inset 0 1px 0 rgb(255 255 255 / .14), 0 20px 40px -18px rgb(22 36 58 / .55);
+  transform: translateX(var(--dx, 0px)) scale(1); transform-origin: var(--ox, 18px) 100%; transition: transform .45s var(--spring), opacity .25s; pointer-events: none; }
+.tag::after, .say::after { content: ""; position: absolute; width: 14px; height: 14px; background: inherit; border: inherit; border-top: 0; border-left: 0; transform: rotate(45deg);
+  bottom: -7px; left: clamp(14px, calc(22px - var(--dx, 0px)), calc(100% - 28px)); -webkit-backdrop-filter: none; backdrop-filter: none; background: rgb(24 38 62 / .66); }
+.tag.hide, .say.hide { opacity: 0; transform: translateX(var(--dx, 0px)) scale(.5); }
+.tag { left: 46%; bottom: 96%; color: var(--navy); background: linear-gradient(160deg, rgb(255 255 255 / .7), rgb(247 244 235 / .6)); border-color: rgb(255 255 255 / .6); }
+.tag::after { background: rgb(250 248 242 / .64); }
+@media (max-width: 520px) { .tag { left: auto; right: 2%; border-radius: 16px 16px 4px 16px; transform-origin: 100% 100%; } }
+
+/* ---------- context ---------- */
+.ctx-track { position: relative; height: clamp(230px, 21vw, 280px); margin-top: 10px; }
+.say { bottom: 100%; left: 46%; }
+/* beside Bloq, on his left, tail pointing right at him (used where he stands at the right edge) */
+.say.left { left: auto; right: 86%; bottom: 52%; --ox: 100%; }
+.say.left::after { bottom: 18px; left: auto; right: -7px; transform: rotate(-45deg); }
+.dark .say { color: var(--navy); background: linear-gradient(160deg, rgb(255 255 255 / .7), rgb(247 244 235 / .6)); border-color: rgb(255 255 255 / .6); }
+.dark .say::after { background: rgb(250 248 242 / .64); }
+.ctx-bloq { position: absolute; bottom: -14px; left: 0; width: clamp(118px, 11vw, 150px); transform: translateX(-160px); cursor: pointer; z-index: 2; }
+.cards4 { display: grid; gap: 16px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 980px) { .cards4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .cards4 { grid-template-columns: 1fr; } }
+.c4 { all: unset; cursor: pointer; box-sizing: border-box; min-height: 210px; background: var(--ivory); border: 1px solid #dccaf4; border-radius: 22px; padding: 26px 24px; display: flex; flex-direction: column; gap: 10px; transition: transform .35s var(--ease), box-shadow .35s var(--ease), border-color .3s; }
+.c4.on { transform: translateY(-6px); border-color: var(--eyebrow); box-shadow: 0 18px 32px -22px rgb(22 36 58 / .55); }
+.c4 .k { font: 500 14px/1 var(--display); letter-spacing: .06em; color: var(--eyebrow); }
+.c4 b { margin-top: 26px; font: 500 1.35rem/1.2 var(--display); letter-spacing: -0.02em; }
+.c4 small { font-size: 15px; color: var(--muted); }
+
+/* ---------- chapters + lab: Bloq stands on top of the card row ---------- */
+.perch { position: relative; margin-top: 40px; }
+.perch-bloq { position: absolute; right: clamp(8px, 3vw, 40px); bottom: calc(100% - 22px); width: clamp(120px, 12vw, 160px); z-index: 2; cursor: pointer; }
+.cards3 { display: grid; gap: 18px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 860px) { .cards3 { grid-template-columns: 1fr; } .perch-bloq { position: relative; right: auto; bottom: auto; margin: 0 8px -22px auto; width: 132px; } .lab .perch { margin-top: 30px; } }
+.c3 { all: unset; cursor: pointer; box-sizing: border-box; min-height: 340px; border-radius: 26px; border: 1px solid var(--line); padding: 34px 30px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 7px 0 #e6e0cf; transition: transform .35s var(--ease), box-shadow .35s var(--ease); }
+.c3:nth-child(1) { background: var(--card); }
+.c3:nth-child(2) { background: var(--lav-card); border-color: #e2d4f6; }
+.c3:nth-child(3) { background: var(--lime-pale); border-color: #dfe9b8; }
+.c3.on { transform: translateY(-6px); box-shadow: 0 13px 0 #e1dac6; }
+.c3 .k { font: 500 13px/1 var(--display); letter-spacing: .1em; color: var(--eyebrow); text-transform: uppercase; }
+.c3 .ic { margin-top: 18px; width: 58px; height: 58px; border-radius: 15px; background: var(--navy); display: grid; place-items: center; color: var(--lime); font: 600 22px/1 var(--display); }
+.c3 b { margin-top: 6px; font: 500 1.4rem/1.2 var(--display); letter-spacing: -0.02em; }
+.c3 small { font-size: 15.5px; color: var(--muted); }
+.c3 .go { margin-top: auto; align-self: flex-start; font: 500 17px/1 var(--display); border-bottom: 2.5px solid var(--navy); padding-bottom: 5px; }
+.next { margin-top: 34px; color: var(--muted); font-size: 17px; }
+.next b { color: var(--navy); font: 600 17px var(--display); }
+
+.lab .perch { margin-top: 70px; }
+.c3.l { min-height: 210px; background: var(--navy-2) !important; border-color: rgb(247 244 235 / .2) !important; box-shadow: none; padding: 32px 30px; }
+.c3.l.on { box-shadow: 0 0 0 1.5px var(--lime); transform: translateY(-6px); }
+.c3.l i { display: block; width: 36px; height: 7px; border-radius: 4px; background: var(--lime); }
+.c3.l b { margin-top: 30px; font: 500 1.25rem/1.2 var(--display); text-transform: uppercase; letter-spacing: .04em; color: var(--ivory); }
+.c3.l small { color: rgb(247 244 235 / .78); }
+.lab .btns { margin-top: 40px; }
+
+/* ---------- progress ---------- */
+.prog { display: grid; gap: 36px; grid-template-columns: 1fr; align-items: center; }
+@media (min-width: 960px) { .prog { grid-template-columns: 1fr 1fr; gap: 56px; } }
+.items { margin-top: 30px; display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 460px) { .items { grid-template-columns: 1fr; } }
+.it { all: unset; cursor: pointer; box-sizing: border-box; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 22px; display: grid; gap: 8px; align-content: start; transition: transform .3s var(--ease), border-color .3s; }
+.it.on { transform: translateY(-4px); border-color: var(--navy); }
+.it i { width: 36px; height: 36px; border-radius: 11px; border: 2px solid var(--navy); display: block; margin-bottom: 8px; }
+.it b { font: 600 1.05rem/1.2 var(--display); letter-spacing: .01em; }
+.it small { font-size: 14px; color: var(--muted); }
+.quote { margin-top: 26px; padding-left: 18px; border-left: 4px solid var(--lime); color: var(--muted); font-size: 1.06rem; }
+.panel { position: relative; background: var(--lav-bg); border-radius: 30px; min-height: clamp(380px, 38vw, 540px); overflow: visible; display: grid; place-items: center; }
+.panel .ring { position: absolute; width: 78%; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid #cfb2f2; }
+.porbit { position: absolute; width: 78%; aspect-ratio: 1; pointer-events: none; z-index: 1; }
+.porbit::after { content: ""; position: absolute; inset: 16%; border-radius: 50%; border: 1px dashed rgb(139 69 217 / .18); }
+.lights.violet { opacity: .8; }
+.lights.violet.in { inset: 16%; }
+.lights.violet .comet { background: linear-gradient(90deg, transparent, rgb(139 69 217 / .75)); }
+.lights.violet .comet::after { background: #a86df0; box-shadow: 0 0 10px 3px rgb(168 109 240 / .55); }
+.panel .prog-bloq { position: absolute; left: 5%; bottom: 10%; width: clamp(150px, 15vw, 210px); cursor: pointer; z-index: 2; }
+/* Web3 passport: a navy ID card with a holographic layer, guilloche lines, chip, fields and a machine-readable strip.
+   It tilts in 3D toward the pointer; the hologram slides with it. */
+.pass-wrap { position: absolute; right: 4%; bottom: 8%; width: clamp(240px, 23vw, 310px); z-index: 3; perspective: 900px; }
+.pass { all: unset; cursor: pointer; display: block; position: relative; width: 100%; aspect-ratio: 1.5; box-sizing: border-box; border-radius: 20px; overflow: hidden;
+  background: radial-gradient(120% 90% at 0% 0%, #2b3d63 0%, transparent 55%), radial-gradient(90% 80% at 100% 100%, #3a2170 0%, transparent 60%), #111c30;
+  border: 1.5px solid rgb(212 240 51 / .55); box-shadow: 0 0 0 4px rgb(255 255 255 / .9), 6px 8px 0 4px rgb(201 166 243 / .45), 0 22px 36px -22px rgb(22 36 58 / .5);
+  transform: rotate(6deg) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .5s var(--spring); color: var(--ivory); font-family: var(--body); }
+.pass:hover, .pass:focus-visible, .pass.on { transform: rotate(0deg) translateY(-8px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(1.03); transition: transform .18s ease-out; }
+.pass .guil { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .22; }
+.pass .holo { position: absolute; inset: -40%; background: linear-gradient(115deg, transparent 30%, rgb(212 240 51 / .28) 40%, rgb(180 127 240 / .38) 47%, rgb(120 220 255 / .28) 54%, rgb(255 255 255 / .18) 58%, transparent 68%);
+  transform: translateX(calc(var(--mx, 0) * 30%)) ; mix-blend-mode: screen; animation: holo 6s ease-in-out infinite; pointer-events: none; }
+@keyframes holo { 0%,100% { translate: -18% 0; } 50% { translate: 18% 0; } }
+.pass .row { position: absolute; display: flex; align-items: center; gap: 8px; }
+.pass .brandrow { left: 7%; top: 9%; }
+.pass .brandrow svg { width: 22px; height: 21px; }
+.pass .brandrow b { font: 600 15px/1 var(--display); letter-spacing: -0.02em; }
+.pass .kind { right: 7%; top: 10%; font: 700 9px/1 "JetBrains Mono", ui-monospace, monospace; letter-spacing: .22em; color: var(--lime); }
+.pass .chipic { position: absolute; left: 7%; top: 25%; width: 13%; aspect-ratio: 1.25; border-radius: 6px; background: linear-gradient(135deg, #f1fb9a, #c9e12e 45%, #93ab12); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .25); }
+.pass .chipic::before, .pass .chipic::after { content: ""; position: absolute; inset: 28% 0; border-block: 1px solid rgb(0 0 0 / .3); }
+.pass .chipic::after { inset: 0 38%; border-block: 0; border-inline: 1px solid rgb(0 0 0 / .3); }
+.pass .nfc { position: absolute; left: 23%; top: 26%; width: 6%; aspect-ratio: .7; opacity: .7; }
+.pass .fields { position: absolute; left: 7%; right: 33%; top: 43%; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.pass .fields .wide { grid-column: 1 / -1; }
+.pass .fields span { display: grid; gap: 2px; min-width: 0; }
+.pass .fields small { font: 500 7.5px/1 "JetBrains Mono", ui-monospace, monospace; letter-spacing: .16em; text-transform: uppercase; color: rgb(247 244 235 / .55); }
+.pass .fields i { font: 600 11px/1.15 var(--display); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pass .seal { position: absolute; right: 6%; top: 28%; width: 30%; aspect-ratio: 1; }
+.pass .seal .spinner { transform-origin: 50% 50%; animation: spin 14s linear infinite; }
+.pass .mrz { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 7% 7px; background: rgb(0 0 0 / .28); font: 500 8.4px/1.35 "JetBrains Mono", ui-monospace, monospace; letter-spacing: .12em; color: rgb(247 244 235 / .78); white-space: nowrap; overflow: hidden; }
+.pass .scan { position: absolute; left: 0; right: 0; height: 30%; top: -30%; background: linear-gradient(180deg, transparent, rgb(212 240 51 / .14), transparent); animation: scan 4.5s ease-in-out infinite; pointer-events: none; }
+@keyframes scan { 0%, 55% { top: -30%; } 85%, 100% { top: 100%; } }
+body.still .pass .holo, body.still .pass .scan, body.still .pass .spinner { animation: none; }
+@media (prefers-reduced-motion: reduce) { .pass .holo, .pass .scan, .pass .spinner { animation: none; } }
+
+/* ---------- ready ---------- */
+.ready { display: grid; gap: 30px; grid-template-columns: 1fr; align-items: center; }
+@media (min-width: 860px) { .ready { grid-template-columns: .9fr 1.1fr; } }
+.ready-bloq { width: clamp(210px, 25vw, 300px); margin-inline: auto; cursor: pointer; position: relative; z-index: 2; margin-bottom: 52px; margin-top: 110px; }
+/* the wave: two rolling layers, the front one passes over the board's rail so he rides in the water */
+.surf { position: relative; padding-top: 20px; }
+/* the sea is made of blocks: columns rise and fall as the wave passes, crests light up lime */
+.sea { position: absolute; left: 0; bottom: 0; width: 100%; pointer-events: none; display: block; }
+.sea.back { height: 200px; z-index: 1; }
+.sea.front { height: 64px; z-index: 3; }
+.drop { position: absolute; width: 9px; height: 9px; border-radius: 2px; border: 1.5px solid #1b1622; pointer-events: none; z-index: 4; }
+.ready .h2 { margin-top: 0; }
+.ready .btns { margin-top: 26px; }
+
+footer { background: var(--navy); color: rgb(247 244 235 / .8); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; padding-block: 30px; font-size: 14px; }
+footer a { color: var(--lime); text-decoration: none; font: 500 16px var(--display); }
+
+/* ---------- Ask Bloq: a docked button that opens a chat with the AI agent ---------- */
+.dock { position: fixed; z-index: 40; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transition: transform .45s var(--spring), opacity .3s; }
+.dock.hidden { transform: translateY(140%); opacity: 0; pointer-events: none; }
+.dock-btn { all: unset; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 6px 16px 6px 6px; border-radius: 999px; background: var(--navy); color: var(--ivory); box-shadow: 0 0 0 1.5px rgb(212 240 51 / .5), 0 14px 30px -12px rgb(22 36 58 / .6); transition: transform .25s var(--ease), box-shadow .25s; }
+.dock-btn:hover, .dock-btn:focus-visible { transform: translateY(-2px); box-shadow: 0 0 0 2px var(--lime), 0 18px 34px -12px rgb(22 36 58 / .7); }
+.dock-face, .chat-face { position: relative; flex: none; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 50% 35%, #3a2b63, #1a1430); }
+.dock-face > span, .chat-face > span { position: absolute; width: 76px; left: -14px; top: -6px; }
+.dock-txt { display: grid; gap: 3px; }
+.dock-txt b { font: 600 15px/1 var(--display); }
+.dock-txt small { display: flex; align-items: center; gap: 6px; font: 500 11px/1 var(--body); color: rgb(247 244 235 / .7); }
+.live { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 0 rgb(212 240 51 / .6); animation: live 2s ease-out infinite; }
+@keyframes live { 0% { box-shadow: 0 0 0 0 rgb(212 240 51 / .6); } 100% { box-shadow: 0 0 0 8px rgb(212 240 51 / 0); } }
+@media (max-width: 520px) { .dock-txt small { display: none; } .dock-btn { padding-right: 14px; } }
+
+.chat { position: fixed; z-index: 45; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); width: min(390px, calc(100vw - 32px)); height: min(580px, calc(100dvh - 40px)); display: flex; flex-direction: column; background: var(--ivory); color: var(--navy); border-radius: 24px; overflow: hidden; box-shadow: 0 0 0 1.5px rgb(139 69 217 / .35), 0 30px 60px -20px rgb(22 36 58 / .55); transform-origin: 100% 100%; transition: transform .4s var(--spring), opacity .25s; }
+.chat[hidden] { display: flex !important; transform: scale(.6) translateY(30px); opacity: 0; pointer-events: none; visibility: hidden; transition: transform .3s ease-in, opacity .2s, visibility 0s .3s; }
+.chat-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--navy); color: var(--ivory); }
+.chat-head b { display: block; font: 600 16px/1.1 var(--display); }
+.chat-head small { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; color: rgb(247 244 235 / .7); }
+.chat-head .x { all: unset; cursor: pointer; margin-left: auto; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 22px; line-height: 1; color: var(--ivory); background: rgb(247 244 235 / .08); }
+.chat-head .x:hover, .chat-head .x:focus-visible { background: rgb(247 244 235 / .18); }
+.chat-log { flex: 1; overflow-y: auto; padding: 16px 14px 8px; display: flex; flex-direction: column; gap: 10px; }
+.msg { max-width: 86%; padding: 10px 13px; border-radius: 16px; font-size: 14.5px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg.bot { align-self: flex-start; background: var(--card); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+.msg.me { align-self: flex-end; background: var(--lime); color: var(--ink); border-bottom-right-radius: 4px; }
+.msg .meta { display: block; margin-top: 6px; font: 500 10.5px/1.3 "JetBrains Mono", ui-monospace, monospace; letter-spacing: .04em; color: var(--muted); }
+.dots { display: inline-flex; gap: 4px; padding: 4px 2px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--purple); animation: dot 1s ease-in-out infinite; }
+.dots i:nth-child(2) { animation-delay: .15s; } .dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes dot { 0%, 100% { transform: translateY(0); opacity: .5; } 50% { transform: translateY(-4px); opacity: 1; } }
+.chat-sugg[hidden] { display: none; }
+.chat-sugg { display: flex; gap: 6px; flex-wrap: wrap; padding: 4px 14px 10px; }
+.chat-sugg button { all: unset; cursor: pointer; font: 500 13px/1 var(--display); padding: 9px 12px; border-radius: 999px; background: var(--lav-card); color: var(--purple-d); box-shadow: inset 0 0 0 1px #dccaf4; }
+.chat-sugg button:hover, .chat-sugg button:focus-visible { background: #e6d8fb; }
+.chat-form { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); background: var(--card); }
+.chat-form input { flex: 1; min-width: 0; font: 15px var(--body); color: var(--navy); background: var(--ivory); border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; outline: none; }
+.chat-form input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgb(139 69 217 / .15); }
+.chat-form button { all: unset; cursor: pointer; font: 600 14px/1 var(--display); padding: 0 16px; border-radius: 12px; background: var(--navy); color: var(--ivory); }
+.chat-form button:disabled { opacity: .5; cursor: default; }
+.chat-note { padding: 0 14px 10px; background: var(--card); font-size: 11.5px; line-height: 1.4; color: var(--muted); }
+@media (max-width: 520px) { .chat { right: 0; left: 0; bottom: 0; width: 100%; height: min(78dvh, 620px); border-radius: 22px 22px 0 0; } }
+
+
+/* ---------- playground ---------- */
+.play { display: grid; gap: 28px; grid-template-columns: 1fr; align-items: center; margin-top: 28px; }
+@media (min-width: 860px) { .play { grid-template-columns: 340px 1fr; } }
+.play-stage { background: var(--lav-bg); border-radius: 26px; padding: 34px 40px 20px; display: grid; place-items: center; }
+.play-bloq { width: 230px; max-width: 100%; }
+.ctrl { display: grid; gap: 18px; min-width: 0; }
+.ctrl p { font: 600 12px/1 var(--display); text-transform: uppercase; letter-spacing: .14em; color: var(--muted); margin-bottom: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips button { all: unset; cursor: pointer; font: 500 14px/1 var(--display); padding: 10px 14px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--line); background: var(--card); }
+.chips button.on { background: var(--navy); color: var(--ivory); box-shadow: none; }
+
+/* preview switches */
+.switch { position: fixed; z-index: 41; left: calc(12px + env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 6px; background: rgb(255 253 247 / .94); padding: 6px; border-radius: 999px; box-shadow: 0 8px 24px -12px rgb(22 36 58 / .5); }
+.switch button { all: unset; cursor: pointer; font: 600 11px/1 var(--display); text-transform: uppercase; letter-spacing: .1em; padding: 9px 12px; border-radius: 999px; color: var(--navy); }
+.switch button[aria-pressed="true"] { background: var(--navy); color: var(--ivory); }
+
+.spark { position: absolute; width: 5px; height: 17px; border-radius: 4px; background: var(--lime); pointer-events: none; z-index: 8; }
+.puff { position: absolute; width: 13px; height: 13px; border-radius: 50%; background: var(--purple-soft); pointer-events: none; z-index: 8; }
+.pop { transition: transform .9s var(--spring), opacity .5s; }
+.pop.pre { opacity: 0; transform: translateY(60px) scale(.85); }
+body.still .orbit .spin, body.still .pass svg, body.still .brand * { animation: none !important; opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .orbit .spin, .pass svg, .brand * { animation: none !important; } .pop { transition: none; } }
+</style>
+
+<!-- HERO -->
+<section class="dark hero" id="top">
+  <div class="wrap">
+    <div class="top">
+      <a href="#top" class="brand stack" id="brand" aria-label="Bloqvia home">
+        <svg class="logo" viewBox="0 0 44 42" aria-hidden="true">
+          <rect class="b3" x="1" y="29" width="42" height="12" rx="6"/>
+          <rect class="b2" x="1" y="15.5" width="36" height="12" rx="6"/>
+          <rect class="b1" x="1" y="2" width="31" height="12" rx="6"/>
+        </svg>
+        <span class="word" aria-hidden="true"><span class="typed" id="typed">Bloqvia</span><span class="caret" id="caret"></span></span>
+      </a>
+      <nav>
+        <a href="#context">The big picture</a>
+        <a href="#chapters">Chapters</a>
+        <a href="#lab">Experience Lab</a>
+        <button class="btn lime" data-start>Start learning</button>
+      </nav>
+    </div>
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">A friendlier way into Web3</p>
+        <h1>Web3, without the overwhelm.</h1>
+        <p class="sub">Learn how the next generation of the internet works, one simple experience at a time.</p>
+        <div class="btns">
+          <button class="btn lime" id="heroStart" data-start>Start exploring</button>
+          <button class="btn ghost" onclick="document.getElementById('context').scrollIntoView({behavior:'smooth'})">Discover Bloqvia</button>
+        </div>
+      </div>
+      <div class="orbit">
+        <span class="ring"></span><span class="ring in"></span>
+        <span class="spin"><i class="chip"></i><i class="pip"></i></span>
+        <span class="lights" style="--t:9s"><i class="comet"></i></span>
+        <span class="lights in" style="--t:13s;--d:-5s"><i class="comet"></i></span>
+        <span class="lights rev" style="--t:17s;--d:-11s"><i class="comet"></i></span>
+        <span class="spin rev"><i class="chip lav"></i></span>
+        <div class="cubes" id="cubes" aria-hidden="true"></div>
+        <div class="hero-bloq" id="heroBloq" role="img" aria-label="Bloq in a space helmet, floating in orbit"></div>
+        <p class="tag hide" id="heroTag"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- A LITTLE CONTEXT -->
+<section class="s lav" id="context">
+  <div class="wrap">
+    <p class="eyebrow">A little context</p>
+    <h2 class="h2">The internet has changed. Let's make sense of it.</h2>
+    <p class="sub">You don't need to know all the jargon. Start with the big ideas, and we'll figure out the rest together.</p>
+    <div class="ctx-track" id="ctxTrack"><div class="ctx-bloq" id="ctxBloq" role="img" aria-label="Bloq walking to the card you pick"></div></div>
+    <div class="cards4" id="ctxCards">
+      <button class="c4" data-say="Web1 was like a library. You could read pages, but only a few people could publish them."><span class="k">01 READ</span><b>Look around.</b><small>The early web let us visit pages and find information.</small></button>
+      <button class="c4" data-say="Web2 let everyone post. The catch: the platform keeps your account and the data you create."><span class="k">02 WRITE</span><b>Join in.</b><small>People began sharing, posting, and making things together.</small></button>
+      <button class="c4" data-say="Web3 gives you an account only your key controls. On NEAR it even has a name you can read."><span class="k">03 OWN</span><b>Take a stake.</b><small>Web3 explores ways to hold and move digital things yourself.</small></button>
+      <button class="c4" data-say="The rules live in open code on a shared ledger, so anyone can check what happened."><span class="k">04 TRUST</span><b>Check the rules.</b><small>Shared records can help people see what happened and how.</small></button>
+    </div>
+  </div>
+</section>
+
+<!-- CHAPTERS -->
+<section class="s" id="chapters">
+  <div class="wrap">
+    <p class="eyebrow">Your first adventure</p>
+    <h2 class="h2">Three chapters. A lot less confusion.</h2>
+    <p class="sub">Meet the essentials one small idea at a time. Your guide is ready when you are.</p>
+    <div class="perch">
+      <div class="perch-bloq pop" id="chapBloq" role="img" aria-label="Bloq, changing hats for each chapter"></div>
+      <div class="cards3" id="chapCards">
+        <button class="c3" data-hat="captain" data-prop="key" data-say="Keys. Your public key is a mailbox anyone can see. The private key is the only one that opens it."><span class="k">01 The Vault</span><span class="ic" aria-hidden="true">⌑</span><b>Keys</b><small>A key is a way to prove something digital belongs to you. Find out why keeping it safe matters.</small><span class="go">Explore ↗</span></button>
+        <button class="c3" data-hat="hardhat" data-prop="fuel" data-say="Gas is the small fee for the computers doing the work. In Bloqvia I pay it for you."><span class="k">02 The Fuel System</span><span class="ic" aria-hidden="true">↗</span><b>Gas</b><small>Some actions on a blockchain need a small fee. See what that fee helps pay for.</small><span class="go">Explore ↗</span></button>
+        <button class="c3" data-hat="beret" data-prop="scroll" data-say="A smart contract is a vending machine made of code, with the rules printed on it for everyone."><span class="k">03 Smart Agreements</span><span class="ic" aria-hidden="true">✓</span><b>Smart contracts</b><small>Think of rules that run when agreed conditions are met. Learn what they can, and can't, do.</small><span class="go">Explore ↗</span></button>
+      </div>
+    </div>
+    <p class="next"><b>Coming next</b> · Digital ownership · Transactions · Decentralised finance</p>
+  </div>
+</section>
+
+<!-- EXPERIENCE LAB -->
+<section class="s dark lab" id="lab">
+  <div class="wrap">
+    <h2 class="h2" style="margin-top:0">Less memorising. More 'oh, I get it.'</h2>
+    <p class="sub">Try things for yourself in a space made for learning.</p>
+    <div class="perch">
+      <div class="perch-bloq pop" id="labBloq" role="img" aria-label="Bloq in the Experience Lab"></div>
+      <div class="cards3" id="labCards">
+        <button class="c3 l" data-hat="detective" data-prop="magnifier" data-say="Answer right and the contract mints your items. A wrong answer is refused by the chain itself."><i></i><b>Quests</b><small>Learn by doing short challenges.</small></button>
+        <button class="c3 l" data-hat="tophat" data-prop="cube" data-say="My prices follow one rule in the contract: the more I hold of something, the less I pay for it."><i></i><b>The Merchant</b><small>See a market move as players trade.</small></button>
+        <button class="c3 l" data-hat="aviator" data-prop="passport" data-say="Your Passport is an NFT that levels up on chain. Nobody can sell you one."><i></i><b>The Passport</b><small>Keep track of your journey.</small></button>
+      </div>
+    </div>
+    <div class="btns"><button class="btn lime" data-start>Enter the Experience Lab</button></div>
+  </div>
+</section>
+
+<!-- PROGRESS -->
+<section class="s" id="progress">
+  <div class="wrap prog">
+    <div>
+      <h2 class="h2" style="margin-top:0">Your progress, made visible</h2>
+      <p class="sub">Every step counts. Learn something new, complete a chapter, and collect reminders of how far you've come.</p>
+      <div class="items" id="items">
+        <button class="it" data-prop="coin" data-say="BloqGold is game gold minted by the contract. It's for playing, not money."><i style="background:var(--purple-soft)"></i><b>BloqGold</b><small>A little recognition for the effort you put in.</small></button>
+        <button class="it" data-prop="key" data-say="Key Fragments come from The Vault, the chapter about keys."><i style="background:var(--lime);border-radius:50% 50% 50% 8px"></i><b>Key Fragment</b><small>A reminder of what you learned about keys.</small></button>
+        <button class="it" data-prop="fuel" data-say="Fuel Cells come from The Fuel System, the chapter about gas."><i style="background:var(--peach)"></i><b>Fuel Cell</b><small>A marker from your journey through gas.</small></button>
+        <button class="it" data-prop="badge" data-say="The Contract Seal comes from Smart Agreements, the smart contracts chapter."><i style="background:var(--lav-bg);border-radius:50%"></i><b>Contract Seal</b><small>A keepsake from the smart agreements chapter.</small></button>
+      </div>
+      <p class="quote">Finish the season and earn a Passport that records your achievement.</p>
+    </div>
+    <div class="panel">
+      <span class="ring"></span>
+      <span class="porbit" aria-hidden="true">
+        <span class="lights violet" style="--t:11s"><i class="comet"></i></span>
+        <span class="lights violet rev" style="--t:16s;--d:-6s"><i class="comet"></i></span>
+        <span class="lights violet in" style="--t:8s;--d:-3s"><i class="comet"></i></span>
+      </span>
+      <div class="prog-bloq pop" id="progBloq" role="img" aria-label="Bloq graduating"></div>
+      <div class="pass-wrap"><button class="pass" id="pass" aria-label="Bloqvia Web3 Passport, example: level 3 of 3, soulbound NFT on NEAR testnet">
+        <svg class="guil" viewBox="0 0 330 220" preserveAspectRatio="none" aria-hidden="true" id="guil"></svg>
+        <span class="holo" aria-hidden="true"></span>
+        <span class="row brandrow" aria-hidden="true">
+          <svg viewBox="0 0 44 42"><rect x="1" y="29" width="42" height="12" rx="6" fill="#d4f033"/><rect x="1" y="15.5" width="36" height="12" rx="6" fill="#a6c21a"/><rect x="1" y="2" width="31" height="12" rx="6" fill="#d4f033"/></svg>
+          <b>Bloqvia</b>
+        </span>
+        <span class="row kind" aria-hidden="true">WEB3 PASSPORT</span>
+        <span class="chipic" aria-hidden="true"></span>
+        <svg class="nfc" viewBox="0 0 14 20" aria-hidden="true"><path d="M2 4 C6 7 6 13 2 16 M6 2 C11 6 11 14 6 18 M10 1 C15 6 15 14 10 19" fill="none" stroke="#f6f3ec" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span class="fields" aria-hidden="true">
+          <span class="wide"><small>Holder</small><i>learner-7c4f.bloqvia.testnet</i></span>
+          <span><small>Level</small><i>3 / 3</i></span>
+          <span><small>Type</small><i>Soulbound</i></span>
+          <span class="wide"><small>Chain · standard</small><i>NEAR testnet · NEP-171</i></span>
+        </span>
+        <svg class="seal" viewBox="0 0 100 100" aria-hidden="true">
+          <defs><path id="sealpath" d="M50 50 m-38 0 a38 38 0 1 1 76 0 a38 38 0 1 1 -76 0"/></defs>
+          <g class="spinner"><text font-family="JetBrains Mono, monospace" font-size="8.6" font-weight="700" letter-spacing="2.6" fill="#d4f033"><textPath href="#sealpath">EARNED · NOT BOUGHT · VERIFIED ON CHAIN · </textPath></text></g>
+          <circle cx="50" cy="50" r="27" fill="none" stroke="#d4f033" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <g transform="translate(36 37)"><rect x="0" y="18" width="28" height="8" rx="4" fill="#d4f033"/><rect x="0" y="9" width="24" height="8" rx="4" fill="#a6c21a"/><rect x="0" y="0" width="20" height="8" rx="4" fill="#d4f033"/></g>
+        </svg>
+        <span class="mrz" aria-hidden="true">P&lt;BLQ&lt;LEARNER&lt;7C4F&lt;&lt;BLOQVIA&lt;TESTNET&lt;&lt;&lt;&lt;&lt;<br>NEP171&lt;SOULBOUND&lt;&lt;LVL3&lt;&lt;KEYS&lt;GAS&lt;CONTRACTS&lt;&lt;</span>
+        <span class="scan" aria-hidden="true"></span>
+      </button></div>
+    </div>
+  </div>
+</section>
+
+<!-- READY -->
+<section class="s lav" id="ready">
+  <div class="wrap ready">
+    <div class="surf" id="surf">
+      <canvas class="sea back" id="seaBack" aria-hidden="true"></canvas>
+      <div class="ready-bloq" id="readyBloq" role="img" aria-label="Bloq surfing a wave, keeping his balance"></div>
+      <canvas class="sea front" id="seaFront" aria-hidden="true"></canvas>
+    </div>
+    <div>
+      <h2 class="h2">Ready when you are.</h2>
+      <p class="sub">You don't have to understand everything to take the first step.</p>
+      <div class="btns"><button class="btn navy" id="readyStart" data-start>Start learning</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- PLAYGROUND (preview only) -->
+<section class="s" id="wardrobe">
+  <div class="wrap">
+    <p class="eyebrow">For Adi and Maria · not part of the site</p>
+    <h2 class="h2">Bloq's wardrobe</h2>
+    <p class="sub">Every hat, prop and pose the puppet knows. Mix them to decide what each section should use.</p>
+    <div class="play">
+      <div class="play-stage"><div class="play-bloq" id="playBloq" role="img" aria-label="Bloq, dressed from the controls"></div></div>
+      <div class="ctrl">
+        <div><p>Ready-made</p><div class="chips" id="cPre"></div></div>
+        <div><p>Hat</p><div class="chips" id="cHat"></div></div>
+        <div><p>In his hand</p><div class="chips" id="cProp"></div></div>
+        <div><p>Pose</p><div class="chips" id="cPose"></div></div>
+        <div><p>Face</p><div class="chips" id="cMood"></div></div>
+        <div><p>Outfit</p><div class="chips" id="cOut"></div></div>
+        <div><p>Head shape · changes every Bloq on the page</p><div class="chips" id="cHead"></div></div>
+        <div class="chips"><button id="cJump">Jump</button><button id="cTurn">Turn around</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap"><span>BLOQVIA · A friendlier way into Web3.</span><a href="#top">Back to top ↑</a></div></footer>
+
+<div class="dock" id="dock">
+  <button class="dock-btn" id="dockBtn" aria-expanded="false" aria-controls="askChat">
+    <span class="dock-face" aria-hidden="true"><span id="dockBloq"></span></span>
+    <span class="dock-txt"><b>Ask Bloq</b><small><i class="live"></i>AI agent · online</small></span>
+  </button>
+</div>
+<section class="chat" id="askChat" role="dialog" aria-label="Ask Bloq, AI agent chat" hidden>
+  <div class="chat-head">
+    <span class="chat-face" aria-hidden="true"><span id="chatBloq"></span></span>
+    <div><b>Ask Bloq</b><small><i class="live"></i>AI agent on NEAR AI Cloud</small></div>
+    <button class="x" id="chatX" aria-label="Close the chat">×</button>
+  </div>
+  <div class="chat-log" id="chatLog" aria-live="polite"></div>
+  <div class="chat-sugg" id="chatSugg"></div>
+  <form class="chat-form" id="chatForm">
+    <label for="chatIn" class="sr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Your question</label>
+    <input id="chatIn" maxlength="300" placeholder="Ask about keys, gas, prices…" autocomplete="off">
+    <button id="chatSend">Send</button>
+  </form>
+  <p class="chat-note">Preview: sample answers written from Ask Bloq's knowledge. In the app each answer comes from the agent on NEAR AI Cloud and carries a signed chat id you can check.</p>
+</section>
+<div class="switch" role="group" aria-label="Preview controls">
+  <button id="tMotion" aria-pressed="true">Motion</button>
+</div>
+
+<script src="bloq-rig.js"></script>
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)];
+  let still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (still) { document.body.classList.add("still"); $("#tMotion").setAttribute("aria-pressed", "false"); }
+  const moving = () => !still;
+
+  function burst(host, kind = "spark", n = 10) {
+    if (!moving()) return;
+    const r = host.getBoundingClientRect(), cx = r.width / 2, cy = r.height * 0.3;
+    for (let i = 0; i < n; i++) {
+      const s = document.createElement("span"); s.className = kind;
+      const a = (Math.PI * 2 * i) / n + Math.random() * 0.5, d = r.width * (kind === "spark" ? 0.62 : 0.45);
+      s.style.left = cx + "px"; s.style.top = cy + "px"; host.appendChild(s);
+      const rot = (a * 180) / Math.PI + 90;
+      s.animate([{ transform: `translate(-50%,-50%) rotate(${rot}deg) scale(.3)`, opacity: 1 },
+        { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d}px)) rotate(${rot}deg) scale(1)`, opacity: 0 }],
+        { duration: 700 + Math.random() * 200, easing: "cubic-bezier(.22,1,.36,1)" }).onfinish = () => s.remove();
+    }
+  }
+  const timers = new Map();
+  /* keep a bubble inside the screen: measure it in place and nudge it sideways; on narrow screens a
+     side bubble moves above Bloq instead. The tail keeps pointing at him (CSS uses --dx). */
+  function fit(el) {
+    el.style.setProperty("--dx", "0px");
+    const vw = document.documentElement.clientWidth, m = 12;
+    if (el.classList.contains("left") || el.dataset.side === "left") {
+      el.dataset.side = "left";
+      el.classList.toggle("left", vw >= 700);
+    }
+    const host = el.offsetParent; if (!host) return;
+    const hr = host.getBoundingClientRect(), left = hr.left + el.offsetLeft, right = left + el.offsetWidth;
+    let dx = 0;
+    if (right > vw - m) dx = vw - m - right;
+    if (left + dx < m) dx = m - left;
+    el.style.setProperty("--dx", dx.toFixed(0) + "px");
+  }
+  addEventListener("resize", () => $$(".say:not(.hide), .tag:not(.hide)").forEach(fit));
+  // a Bloq can move while he talks (walking, hopping, floating): keep his bubble on screen the whole time
+  setInterval(() => $$(".say:not(.hide), .tag:not(.hide)").forEach(fit), 350);
+  function say(el, text, ms = 3800) {
+    el.textContent = text; fit(el); el.classList.remove("hide");
+    clearTimeout(timers.get(el)); timers.set(el, setTimeout(() => el.classList.add("hide"), ms));
+  }
+  /* Every Bloq: tap to jump, hover to giggle. */
+  function lively(b, host) {
+    host.addEventListener("click", () => { b.jump(); setTimeout(() => burst(host, "spark"), 330); });
+    host.addEventListener("mouseenter", () => { if (moving()) b.setMood("laugh", 700); });
+    return b;
+  }
+  /* Point the eyes at the pointer when it is near. */
+  function eyesFollow(b, host) {
+    addEventListener("pointermove", (e) => {
+      const r = host.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > innerHeight) return;
+      const dx = (e.clientX - (r.left + r.width / 2)) / (innerWidth / 2), dy = (e.clientY - (r.top + r.height * 0.3)) / (innerHeight / 2);
+      b.look(Math.max(-1, Math.min(1, dx)), Math.max(-1, Math.min(1, dy)));
+    }, { passive: true });
+  }
+
+  /* Pop-in for Bloqs below the fold; the first screen never waits on script. */
+  const pops = $$(".pop");
+  if (moving()) pops.forEach((p) => { if (p.getBoundingClientRect().top > innerHeight * 0.92) p.classList.add("pre"); });
+  const popIO = new IntersectionObserver((es) => es.forEach((e) => {
+    if (!e.isIntersecting) return; e.target.classList.remove("pre"); popIO.unobserve(e.target);
+    setTimeout(() => burst(e.target, "puff", 8), 600);
+  }), { threshold: 0.01, rootMargin: "0px 0px -12% 0px" });
+  pops.forEach((p) => popIO.observe(p));
+
+  /* HERO BLOCKS: cubes float around Bloq, drift with the pointer (nearer = bigger = moves more), hop when he jumps. */
+  const CUBE = { p: ["#b47ff0", "#8b45d9", "#6630b3"], l: ["#ebfb7a", "#d4f033", "#a6c21a"], w: ["#ffffff", "#e6dcf7", "#c9b8ea"] };
+  // [left %, top %, size px, color]: spread around the ring, the big ones in front, small ones far
+  const cubeSpots = [
+    [-2, 18, 56, "l"], [84, 6, 66, "p"], [96, 44, 36, "w"], [-6, 60, 44, "p"], [80, 76, 58, "l"], [16, 90, 32, "w"],
+  ];
+  const cubesBox = $("#cubes");
+  cubesBox.innerHTML = cubeSpots.map(([x, y, w, k], i) => {
+    const [t, l, r] = CUBE[k];
+    return `<span class="cube" style="left:${x}%;top:${y}%;--w:${w}px;--d:${(3.2 + (i % 4) * 0.7).toFixed(1)}s;--dl:${(-i * 0.45).toFixed(2)}s;--r0:${(i % 2 ? -8 : 6)}deg;--r1:${(i % 2 ? 6 : -9)}deg" data-z="${w / 46}">
+      <svg viewBox="0 0 40 44"><g stroke="#1b1622" stroke-width="2.6" stroke-linejoin="round">
+        <path d="M20 2 L38 12 L20 22 L2 12 Z" fill="${t}"/><path d="M2 12 L20 22 L20 42 L2 32 Z" fill="${l}"/><path d="M38 12 L20 22 L20 42 L38 32 Z" fill="${r}"/></g>
+        <path d="M8 12 L20 5.5" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/></svg></span>`;
+  }).join("");
+  const cubes = $$("#cubes .cube");
+  $("#top").addEventListener("pointermove", (e) => {
+    if (!moving()) return;
+    const dx = e.clientX / innerWidth - 0.5, dy = e.clientY / innerHeight - 0.5;
+    cubes.forEach((c) => { const z = +c.dataset.z; c.style.transform = `translate(${(-dx * 34 * z).toFixed(1)}px, ${(-dy * 26 * z).toFixed(1)}px)`; });
+  }, { passive: true });
+  /* Each cube gets its own kind of motion, with random speed, size and timing on every visit. */
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const kinds = ["drift", "spin", "tumble", "orbit", "sway", "hop"].sort(() => Math.random() - 0.5);
+  const cubeLife = cubes.map((c, i) => ({
+    el: c.firstElementChild, kind: kinds[i], ph: rnd(0, 6.28), sp: rnd(0.7, 1.3), amp: rnd(0.7, 1.3),
+    next: rnd(1, 4), evT: -1, rot: rnd(-12, 12), dirn: Math.random() < 0.5 ? -1 : 1,
+  }));
+  let cubeLast = performance.now(), cubesOn = true;
+  new IntersectionObserver((es) => (cubesOn = es[0].isIntersecting)).observe($("#top"));
+  function cubeFrame(now) {
+    const dt = Math.min(0.05, (now - cubeLast) / 1000); cubeLast = now;
+    if (cubesOn && moving() && !document.hidden) cubeLife.forEach((q) => {
+      const t = now / 1000 * q.sp + q.ph, A = q.amp;
+      let x = 0, y = 0, r = q.rot, sc = 1;
+      if (q.kind === "drift") { x = 12 * A * Math.sin(t * 0.9); y = 9 * A * Math.sin(t * 1.7); r += 6 * Math.sin(t * 0.6); }
+      if (q.kind === "spin") { r += (now / 1000) * 40 * q.dirn * q.sp; y = 5 * Math.sin(t * 1.2); }
+      if (q.kind === "orbit") { x = 14 * A * Math.cos(t * 1.1 * q.dirn); y = 10 * A * Math.sin(t * 1.1 * q.dirn); r += 10 * Math.sin(t * 1.1); }
+      if (q.kind === "sway") { r += 18 * A * Math.sin(t * 1.4); x = 5 * Math.sin(t * 1.4); }
+      if (q.kind === "tumble" || q.kind === "hop") {
+        y = 3 * Math.sin(t * 1.3);
+        q.next -= dt;
+        if (q.next <= 0 && q.evT < 0) q.evT = 0;
+        if (q.evT >= 0) {
+          q.evT += dt / (q.kind === "tumble" ? 0.75 : 0.5);
+          const e = Math.min(1, q.evT), up = Math.sin(Math.PI * e);
+          y -= (q.kind === "tumble" ? 30 : 22) * A * up;
+          if (q.kind === "tumble") r += 90 * q.dirn * (e * e * (3 - 2 * e));
+          else sc = e < 0.15 ? 1 - e : e > 0.85 ? 1 - (1 - e) * 0.8 : 1;
+          if (q.evT >= 1) { q.evT = -1; q.next = rnd(1.8, 5); if (q.kind === "tumble") q.rot += 90 * q.dirn; q.dirn = Math.random() < 0.5 ? -1 : 1; }
+        }
+      }
+      q.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${r.toFixed(1)}deg) scale(${sc.toFixed(3)}, ${(2 - sc).toFixed(3)})`;
+    });
+    requestAnimationFrame(cubeFrame);
+  }
+  requestAnimationFrame(cubeFrame);
+  const cubesHop = () => { if (!moving()) return; cubes.forEach((c, i) => c.firstElementChild.animate([{ translate: "0 0" }, { translate: "0 -26px" }, { translate: "0 0" }], { duration: 520, delay: i * 40, easing: "cubic-bezier(.3,.7,.4,1)" })); };
+
+  /* HERO: floats with a thumbs up; points at Start when you hover it. */
+  const heroHost = $("#heroBloq"), heroTag = $("#heroTag");
+  const hero = lively(new Bloq(heroHost, { hat: "astro", outfit: "astro", prop: null, pose: "space" }), heroHost);
+  eyesFollow(hero, heroHost);
+  const heroStart = $("#heroStart");
+  // He aims at the button itself, so the arm follows it on any layout (beside him on desktop, above him on a phone).
+  let hintT, hovering = false;
+  const toStart = (on, quiet) => {
+    if (on) { hero.setProp(null).aimAt(heroStart); if (!quiet) say(heroTag, "Press Start and I'll make your NEAR account. No seed phrase."); }
+    else { hero.aimAt(null).face("right").setPose("space"); }
+  };
+  const hint = () => {
+    const r = heroStart.getBoundingClientRect();
+    if (hovering || !moving() || r.bottom < 0 || r.top > innerHeight) return;
+    toStart(true, true); clearTimeout(hintT); hintT = setTimeout(() => { if (!hovering) toStart(false); }, 2600);
+  };
+  setTimeout(hint, 3400); setInterval(hint, 9000);
+  ["mouseenter", "focus"].forEach((ev) => heroStart.addEventListener(ev, () => { hovering = true; clearTimeout(hintT); toStart(true); }));
+  ["mouseleave", "blur"].forEach((ev) => heroStart.addEventListener(ev, () => { hovering = false; toStart(false); }));
+  $$("[data-start]").forEach((b) => b.addEventListener("click", () => { hero.jump(); cubesHop(); }));
+  heroHost.addEventListener("click", cubesHop);
+  setTimeout(() => say(heroTag, "Hi, I'm Bloq. Tap me, or hover Start."), 1200);
+
+  /* CONTEXT: Bloq walks along the cards and presents the one you pick. */
+  const ctxHost = $("#ctxBloq"), track = $("#ctxTrack"), c4 = $$("#ctxCards .c4");
+  const ctx = lively(new Bloq(ctxHost, { hat: "cap2", pose: "idle" }), ctxHost);
+  const sayEl = document.createElement("p"); sayEl.className = "say hide"; sayEl.setAttribute("aria-live", "polite"); ctxHost.appendChild(sayEl);
+  // he may still be walking or hopping when he starts talking: re-fit the bubble once he arrives
+  ctxHost.addEventListener("transitionend", () => { if (!sayEl.classList.contains("hide")) fit(sayEl); });
+  let ctxX = -160, ctxIdx = -1, walkT, sitT, tourT, lastUser = 0;
+  const oneRow = () => c4[0].offsetTop === c4[c4.length - 1].offsetTop;
+  const place = (x, y, ms, ease = "linear") => { ctxHost.style.transition = ms ? `transform ${ms}ms ${ease}` : "none"; ctxHost.style.transform = `translate(${x}px, ${y}px)`; ctxX = x; };
+  function speak(i) {
+    const text = c4[i].dataset.say;
+    sayEl.textContent = text;
+    fit(sayEl); setTimeout(() => fit(sayEl), 520);
+    sayEl.classList.remove("hide");
+    ctx.talk(Math.min(4200, 900 + text.length * 26));
+  }
+  /* Arrive at a card and sit on its top edge, legs over the front, then explain it. */
+  function sitDown(i) {
+    ctx.walking(false);
+    if (!oneRow()) { ctx.face("left").setPose("present"); speak(i); return; }
+    ctx.face("right").setPose("sit");
+    place(ctxX, ctxHost.offsetHeight * 0.255 - 20, moving() ? 420 : 0, "cubic-bezier(.3,.7,.4,1)");
+    sitT = setTimeout(() => speak(i), moving() ? 320 : 0);
+  }
+  function goTo(i) {
+    ctxIdx = i;
+    c4.forEach((c, k) => c.classList.toggle("on", k === i));
+    sayEl.classList.add("hide");
+    clearTimeout(walkT); clearTimeout(sitT);
+    const tr = track.getBoundingClientRect(), w = ctxHost.offsetWidth;
+    let target;
+    if (oneRow()) { const cr = c4[i].getBoundingClientRect(); target = cr.left - tr.left + cr.width * 0.64 - w / 2; }
+    else target = tr.width - w;
+    const walk = () => {
+      const dx = target - ctxX;
+      if (!moving() || Math.abs(dx) < 6) { place(target, 0, 0); sitDown(i); return; }
+      const dur = Math.min(2600, Math.max(500, Math.abs(dx) * 3.2));
+      ctx.face(dx < 0 ? "left" : "right").walking(true);
+      place(target, 0, dur);
+      walkT = setTimeout(() => sitDown(i), dur);
+    };
+    // stand up first if he is sitting: a little hop back onto the cards' top edge
+    if (ctx.pose === "sit" && moving()) { ctx.setPose("idle"); place(ctxX, 0, 300, "cubic-bezier(.3,.7,.4,1)"); sitT = setTimeout(walk, 300); }
+    else walk();
+  }
+  c4.forEach((c, i) => {
+    const pick = () => { lastUser = Date.now(); if (i !== ctxIdx) goTo(i); };
+    c.addEventListener("mouseenter", pick); c.addEventListener("focus", pick); c.addEventListener("click", pick);
+  });
+  new IntersectionObserver((es) => es.forEach((e) => {
+    clearInterval(tourT);
+    if (!e.isIntersecting) return;
+    if (ctxIdx < 0) setTimeout(() => goTo(0), 250);
+    tourT = setInterval(() => { if (Date.now() - lastUser > 7000) goTo((ctxIdx + 1) % c4.length); }, 6500);
+  }), { threshold: 0.35 }).observe($("#context"));
+  addEventListener("resize", () => { if (ctxIdx >= 0) { ctxX = -9999; goTo(ctxIdx); } });
+
+  /* Every section Bloq explains his own section: a line when you arrive, one more for whatever you point at. */
+  function talker(b, host, { side = "right", intro = "", section = null } = {}) {
+    const el = document.createElement("p"); el.className = "say hide" + (side === "left" ? " left" : ""); el.setAttribute("aria-live", "polite");
+    host.appendChild(el);
+    let hideT;
+    const speak = (text, ms) => {
+      if (!text) return;
+      el.textContent = text; fit(el); el.classList.remove("hide");
+      b.talk(Math.min(4200, 900 + text.length * 26));
+      clearTimeout(hideT); hideT = setTimeout(() => el.classList.add("hide"), ms || Math.max(4200, text.length * 60));
+    };
+    if (section && intro) {
+      let shown = false;
+      new IntersectionObserver((es) => es.forEach((e) => {
+        if (e.isIntersecting && !shown) { shown = true; setTimeout(() => speak(intro), 500); }
+        if (!e.isIntersecting) shown = false;
+      }), { threshold: 0.45 }).observe(section);
+    }
+    return speak;
+  }
+
+  /* CHAPTERS + LAB: hovering a card changes Bloq's hat and what he holds, and he explains it. */
+  function perch(hostSel, cardsSel, start, intro, section) {
+    const host = $(hostSel), cards = $$(cardsSel);
+    const b = lively(new Bloq(host, { ...start, pose: "hold" }), host);
+    const speak = talker(b, host, { side: "left", intro, section });
+    cards.forEach((c) => {
+      const go = () => {
+        cards.forEach((x) => x.classList.toggle("on", x === c));
+        b.setHat(c.dataset.hat).setProp(c.dataset.prop).setPose("hold");
+        const hr = host.getBoundingClientRect(), cr = c.getBoundingClientRect();
+        const dx = (cr.left + cr.width / 2 - (hr.left + hr.width / 2)) / (innerWidth / 2);
+        b.look(Math.max(-1, Math.min(1, dx)), 0.8);
+        setTimeout(() => burst(host, "puff", 7), 260);
+        setTimeout(() => speak(c.dataset.say), 420);
+      };
+      c.addEventListener("mouseenter", go); c.addEventListener("focus", go); c.addEventListener("click", go);
+    });
+    return b;
+  }
+  perch("#chapBloq", "#chapCards .c3", { hat: "beanie", prop: "bulb" }, "Three chapters, one idea each. Point at one and I'll dress for it.", $("#chapters"));
+  perch("#labBloq", "#labCards .c3", { hat: "tophat", prop: "cube" }, "Everything in the Lab is a real NEAR testnet transaction you can check.", $("#lab"));
+
+  /* PROGRESS: items change what he holds; the Passport makes him celebrate. */
+  const progHost = $("#progBloq");
+  const prog = lively(new Bloq(progHost, { hat: "grad", prop: "badge", pose: "hold" }), progHost);
+  const its = $$("#items .it");
+  const progSay = talker(prog, progHost, { intro: "Every reward here is recorded on chain. Point at one.", section: $("#progress") });
+  its.forEach((it) => {
+    const go = () => { its.forEach((x) => x.classList.toggle("on", x === it)); prog.setProp(it.dataset.prop).setPose("hold"); progSay(it.dataset.say); };
+    it.addEventListener("mouseenter", go); it.addEventListener("focus", go); it.addEventListener("click", go);
+  });
+  const pass = $("#pass");
+  const celebrate = () => { prog.setProp("badge"); prog.jump(); setTimeout(() => burst(progHost, "spark", 12), 320); setTimeout(() => progSay("Graduate and your Passport is sealed for good. That's the one you can't buy."), 800); };
+  pass.addEventListener("mouseenter", celebrate); pass.addEventListener("click", celebrate);
+  // guilloche: fine interlaced waves, like the security print on a real passport
+  $("#guil").innerHTML = Array.from({ length: 14 }, (_, i) => {
+    let d = ""; for (let x = 0; x <= 330; x += 6) { const y = 110 + Math.sin(x / 26 + i * 0.45) * (30 + i * 4) + Math.sin(x / 9 + i) * 4; d += (x ? " L" : "M") + x + " " + y.toFixed(1); }
+    return `<path d="${d}" fill="none" stroke="${i % 3 ? "#b47ff0" : "#d4f033"}" stroke-width=".7"/>`;
+  }).join("");
+  // tilt toward the pointer; the hologram follows
+  pass.addEventListener("pointermove", (e) => {
+    if (!moving()) return;
+    const r = pass.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+    pass.style.setProperty("--ry", (x * 18).toFixed(1) + "deg"); pass.style.setProperty("--rx", (-y * 14).toFixed(1) + "deg"); pass.style.setProperty("--mx", (x * 2).toFixed(2));
+  });
+  pass.addEventListener("pointerleave", () => { ["--rx", "--ry", "--mx"].forEach((k) => pass.style.removeProperty(k)); });
+
+  /* READY: Bloq surfs. He keeps his balance, sometimes nearly falls, hops back to the middle with a splash. */
+  const readyHost = $("#readyBloq"), surf = $("#surf");
+  const ready = new Bloq(readyHost, { hat: "surf", outfit: "surf", pose: "ride" });
+  eyesFollow(ready, readyHost);
+  readyHost.addEventListener("click", () => ready.wobble());
+  talker(ready, readyHost, { intro: "Starting is free: I make your account and pay the gas. Hop on!", section: $("#ready") });
+
+  /* BLOCK SEA. Columns of blocks scroll left; each column's height follows two travelling waves, rounded
+     to whole blocks. The top block of a tall column turns lime, and now and then a block flashes: a new
+     block joining the chain. Bloq's board follows the smooth crest under him, so he rides the blocks. */
+  const seaBack = $("#seaBack"), seaFront = $("#seaFront");
+  const SZ = 20, GAP = 3, STEP = SZ + GAP;
+  const flashes = new Map();
+  function sizeCanvas(c) {
+    const r = c.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
+    if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) { c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr); }
+    const g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); return [g, r.width, r.height];
+  }
+  const waveH = (x, t, base, amp, k, w, ph) => base + amp * Math.sin(x * k - t * w + ph) + amp * 0.45 * Math.sin(x * k * 2.3 - t * w * 1.7 + ph * 2);
+  function block(g, x, y, fill, top, edge) {
+    g.fillStyle = fill; g.beginPath(); g.roundRect(x, y, SZ, SZ, 4); g.fill();
+    g.fillStyle = top; g.beginPath(); g.roundRect(x + 2, y + 2, SZ - 4, 4, 2); g.fill();
+    g.strokeStyle = edge; g.lineWidth = 1.5; g.beginPath(); g.roundRect(x + .75, y + .75, SZ - 1.5, SZ - 1.5, 4); g.stroke();
+  }
+  function drawSea(c, t, opt) {
+    const [g, W, H] = sizeCanvas(c);
+    g.clearRect(0, 0, W, H);
+    const shift = (t * opt.speed) % STEP;
+    for (let i = -1; i * STEP - shift < W + STEP; i++) {
+      const x = i * STEP - shift, col = i + Math.floor((t * opt.speed) / STEP);
+      const h = waveH(x, t, opt.base, opt.amp, 0.012, opt.w, opt.ph);
+      const n = Math.max(1, Math.round(h / STEP));
+      for (let j = 0; j < n; j++) {
+        const y = H - (j + 1) * STEP + GAP;
+        const crest = j === n - 1 && n >= opt.lime, key = opt.id + ":" + col + ":" + j;
+        let fill = j < 2 ? opt.c[0] : j < 4 ? opt.c[1] : opt.c[2], top = "rgba(255,255,255,.35)";
+        if (crest) { fill = "#d4f033"; top = "rgba(255,255,255,.6)"; }
+        const fl = flashes.get(key);
+        if (fl) { const k = (t - fl) / 0.9; if (k > 1) flashes.delete(key); else { fill = "#d4f033"; g.globalAlpha = 1; } }
+        g.globalAlpha = opt.alpha;
+        block(g, x, y, fill, top, "rgba(27,22,34,.55)");
+      }
+      if (opt.flash && Math.random() < 0.0016) flashes.set(opt.id + ":" + col + ":" + Math.floor(Math.random() * n), t);
+    }
+    g.globalAlpha = 1;
+  }
+  const BACK = { id: "b", base: 92, amp: 34, w: 1.2, ph: 0, speed: 46, c: ["#5a2aa3", "#7a3fc9", "#9d5ee6"], lime: 6, alpha: 1, flash: true };
+  const FRONT = { id: "f", base: 26, amp: 16, w: 1.8, ph: 2.1, speed: 72, c: ["#8b45d9", "#b47ff0", "#c9a6f3"], lime: 3, alpha: .85, flash: false };
+  let seaOn = false, seaT0 = performance.now(), rideY = 92;
+  new IntersectionObserver((es) => (seaOn = es[0].isIntersecting), { rootMargin: "100px" }).observe(surf);
+  function seaFrame(now) {
+    if (seaOn) {
+      const t = moving() ? (now - seaT0) / 1000 : 0;
+      drawSea(seaBack, t, BACK); drawSea(seaFront, t, FRONT);
+      // ride the crest: the board's underside sits on the smooth wave height under Bloq's middle
+      const sr = surf.getBoundingClientRect(), hr = readyHost.getBoundingClientRect();
+      const cx = hr.left - sr.left + hr.width / 2;
+      // top of the block column under him (whole blocks), approached smoothly so he glides up and down the steps
+      const shift = (t * BACK.speed) % STEP, i = Math.round((cx + shift) / STEP), x = i * STEP - shift;
+      const n = Math.max(1, Math.round(waveH(x, t, BACK.base, BACK.amp, 0.012, BACK.w, BACK.ph) / STEP));
+      const top = n * STEP - GAP;
+      rideY += (top - rideY) * (moving() ? 0.12 : 1);
+      readyHost.style.transform = `translateY(${(-(rideY - 50)).toFixed(1)}px)`;
+    }
+    requestAnimationFrame(seaFrame);
+  }
+  requestAnimationFrame(seaFrame);
+  readyHost.addEventListener("mouseenter", () => { if (moving()) ready.setMood("laugh", 700); });
+  // spray from the board's tail when he hops back
+  readyHost.addEventListener("bloq:splash", (e) => {
+    if (!moving()) return;
+    const hr = readyHost.getBoundingClientRect(), sr = surf.getBoundingClientRect();
+    const tail = e.detail.dir > 0 ? 0.12 : 0.88, x0 = hr.left - sr.left + hr.width * tail, y0 = hr.bottom - sr.top - 6;
+    for (let i = 0; i < 12; i++) {
+      const d = document.createElement("span"); d.className = "drop";
+      d.style.background = ["#d4f033", "#b47ff0", "#ffffff"][i % 3]; d.style.left = x0 + "px"; d.style.top = y0 + "px";
+      surf.appendChild(d);
+      const vx = (Math.random() - 0.5) * 90 - e.detail.dir * 30, vy = -40 - Math.random() * 60;
+      const spin = (Math.random() - 0.5) * 540;
+      d.animate([{ transform: "translate(-50%,-50%) rotate(0) scale(1)", opacity: 1 }, { transform: `translate(calc(-50% + ${vx}px), calc(-50% + ${vy}px)) rotate(${spin / 2}deg) scale(.95)`, opacity: 1, offset: 0.5 },
+        { transform: `translate(calc(-50% + ${vx * 1.4}px), calc(-50% + ${vy * 0.2 + 30}px)) rotate(${spin}deg) scale(.5)`, opacity: 0 }], { duration: 750 + Math.random() * 300, easing: "ease-out" }).onfinish = () => d.remove();
+    }
+  });
+  const rs = $("#readyStart");
+  ["mouseenter", "focus"].forEach((ev) => rs.addEventListener(ev, () => { ready.rideWave(true).setMood("laugh", 900); }));
+  ["mouseleave", "blur"].forEach((ev) => rs.addEventListener(ev, () => ready.rideWave(false)));
+  rs.addEventListener("click", () => ready.wobble());
+
+  /* ASK BLOQ: docked in the corner; tap to chat with the AI agent.
+     Preview only: answers come from a small local copy of Ask Bloq's knowledge, following the same rules
+     (never quest answers, never money). In the app this calls useAskBloq -> relayer POST /ask -> NEAR AI Cloud. */
+  const dock = $("#dock"), dockBtn = $("#dockBtn"), chat = $("#askChat"), log = $("#chatLog"), form = $("#chatForm"), input = $("#chatIn"), sendBtn = $("#chatSend");
+  const dockB = new Bloq($("#dockBloq"), { hat: "agent", outfit: "agent", pose: "idle" });
+  const chatB = new Bloq($("#chatBloq"), { hat: "agent", outfit: "agent", pose: "idle" });
+  const KB = [
+    [/\b(answer|correct|right option|which one|solution)\b/i, "I won't hand out quest answers, that win is yours to take. Tell me which idea is confusing and I'll explain it, then you choose."],
+    [/\b(invest|worth|profit|price of near|buy near|token price|money|moon)\b/i, "I don't talk money or what tokens are worth. Everything in Bloqvia runs on NEAR testnet: gold and items are game pieces with no value."],
+    [/\b(who are you|what are you|agent|\bai\b|bot)\b/i, "I'm Bloq's AI side: an agent running on NEAR AI Cloud. I answer from Bloqvia's own notes, and in the app every answer is signed so you can check where it came from."],
+    [/\b(private key|public key|seed|keys?|wallet)\b/i, "Your public key is like your home mailbox: anyone can see it and drop a letter in. Your private key is the mailbox key: only you hold it, and if you lose it you can't get back in. Share the public one, never the private one."],
+    [/\b(gas|fee|fees)\b/i, "Every action on a network needs computer power, and gas is the small fee paid to the computers that do it. When the network is busy, fees go up. In Bloqvia my relayer pays the gas for you."],
+    [/\b(smart contract|contract|contracts)\b/i, "A smart contract is a vending machine made of code. Put in exactly what it asks for and it hands out the product by itself, with the rules printed on it for anyone to read."],
+    [/\b(price|prices|merchant|shop|sell|buy|bloqgold|gold)\b/i, "My prices come from one rule in the contract: the more of an item I hold, the less I pay for it. When players sell me an item, its price drops for everyone. Nobody can change a price by hand."],
+    [/\b(passport|nft|graduat\w*)\b/i, "Your Passport is an NFT minted when you start. Each founding quest raises its level on chain, and graduating seals it. The contract refuses transfers, so it can't be sold."],
+    [/\b(streak|check.?in)\b/i, "Once a day everyone can check in. If the community reaches the day's target, everyone who checked in gets STREAK tokens. If it misses, tokens are burned and the streak resets. The rule lives in the contract."],
+    [/\b(daily|today|quest|quests)\b/i, "Every day an AI agent writes one bonus quest. The relayer checks it and stores its text on the contract, with only a hash of the answer. So the chain checks your answer, not the AI."],
+    [/\b(dao|bount\w*|cohort)\b/i, "Graduates join the cohort board, owned by a DAO on testnet. Bounties pay testnet NEAR for tasks the chain can check: small ones straight away, bigger ones after a council vote."],
+    [/\b(account|name|named)\b/i, "On NEAR an account has a name you can read, like learner-7c4f.bloqvia.testnet. When you press Start I create one for you, with a key that can only play the game."],
+    [/\b(near|blockchain|block|chain|ledger)\b/i, "A blockchain is a shared record that many computers keep together. Each block carries a fingerprint of the one before, so changing an old block breaks everything after it. NEAR is a proof-of-stake chain where blocks settle in about a second."],
+  ];
+  const answerFor = (q) => (KB.find(([re]) => re.test(q)) || [0, "I don't know that one yet. I can explain keys, gas, smart contracts, my prices, the Passport or today's quest."])[1];
+  const SUGG = ["What's a private key?", "Who pays the gas?", "How do your prices work?", "Can you tell me the quest answer?"];
+  function bubble(cls, text) { const m = document.createElement("div"); m.className = "msg " + cls; m.textContent = text; log.appendChild(m); log.scrollTop = log.scrollHeight; return m; }
+  let busy = false;
+  function ask(q) {
+    q = q.replace(/\s+/g, " ").trim(); if (q.length < 2 || busy) return;
+    busy = true; sendBtn.disabled = true; $("#chatSugg").hidden = true;
+    bubble("me", q);
+    const m = bubble("bot", ""); m.innerHTML = '<span class="dots" aria-label="Bloq is thinking"><i></i><i></i><i></i></span>';
+    chatB.setMood("o"); dockB.setMood("o");
+    const text = answerFor(q);
+    setTimeout(() => {
+      m.textContent = ""; chatB.talk(text.length * 22); dockB.talk(text.length * 22);
+      let i = 0;
+      const tick = () => {
+        i = Math.min(text.length, i + 2 + Math.floor(Math.random() * 3)); m.textContent = text.slice(0, i); log.scrollTop = log.scrollHeight;
+        if (i < text.length) setTimeout(tick, moving() ? 22 : 0);
+        else { const meta = document.createElement("span"); meta.className = "meta"; meta.textContent = "Sample answer · in the app: NEAR AI Cloud, signed"; m.appendChild(meta); busy = false; sendBtn.disabled = false; input.focus(); }
+      };
+      tick();
+    }, 650 + Math.random() * 500);
+  }
+  function openChat() {
+    chat.hidden = false; dock.classList.add("hidden"); dockBtn.setAttribute("aria-expanded", "true");
+    if (!log.children.length) {
+      bubble("bot", "Hi, I'm Bloq's AI agent. Ask me anything about Bloqvia or Web3. I won't give quest answers, but I'll explain the idea behind them.");
+      $("#chatSugg").innerHTML = SUGG.map((q) => `<button type="button">${q}</button>`).join("");
+    }
+    chatB.jump(); setTimeout(() => input.focus(), 250);
+  }
+  function closeChat() { chat.hidden = true; dock.classList.remove("hidden"); dockBtn.setAttribute("aria-expanded", "false"); dockBtn.focus(); }
+  dockBtn.addEventListener("click", openChat);
+  $("#chatX").addEventListener("click", closeChat);
+  addEventListener("keydown", (e) => { if (e.key === "Escape" && !chat.hidden) closeChat(); });
+  $("#chatSugg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) ask(b.textContent); });
+  form.addEventListener("submit", (e) => { e.preventDefault(); const q = input.value; input.value = ""; ask(q); });
+  // the docked agent blinks and glances around on its own; a little hop now and then says "I'm here"
+  setInterval(() => { if (moving() && chat.hidden && !document.hidden) dockB.jump(); }, 14000);
+
+  /* LOGO: blocks drop and stack, then the name; replays on hover, wiggles now and then */
+  const brand = $("#brand");
+  const typedEl = $("#typed"), caret = $("#caret"); let typeT = [];
+  // type the name after the blocks land: a caret, one letter at a time with a little human jitter, then the caret fades
+  function typeName(delay) {
+    typeT.forEach(clearTimeout); typeT = [];
+    if (!moving()) { typedEl.textContent = "Bloqvia"; return; }
+    typedEl.textContent = ""; caret.className = "caret";
+    let at = delay;
+    typeT.push(setTimeout(() => (caret.className = "caret on"), at - 250));
+    "Bloqvia".split("").forEach((ch, i) => { at += 85 + Math.random() * 70; typeT.push(setTimeout(() => (typedEl.textContent += ch), at)); });
+    typeT.push(setTimeout(() => (caret.className = "caret out"), at + 1400));
+  }
+  typeName(900);
+  const replay = () => { if (!moving()) return; brand.classList.remove("stack", "wiggle"); void brand.offsetWidth; brand.classList.add("stack"); typeName(900); };
+  brand.addEventListener("mouseenter", replay); brand.addEventListener("focus", replay);
+  setInterval(() => { if (!moving() || document.hidden) return; brand.classList.remove("stack", "wiggle"); void brand.offsetWidth; brand.classList.add("wiggle"); }, 9000);
+
+  /* WARDROBE */
+  const play = new Bloq($("#playBloq"), { hat: "cap", prop: "thumb", pose: "thumbs" });
+  const chips = (id, list, pick, cur) => {
+    const box = $(id);
+    box.innerHTML = list.map((v) => `<button data-v="${v ?? ""}" class="${v === cur ? "on" : ""}">${v ?? "nothing"}</button>`).join("");
+    box.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; [...box.children].forEach((x) => x.classList.toggle("on", x === b)); pick(b.dataset.v || null); });
+  };
+  chips("#cHat", BLOQ_HATS, (v) => play.setHat(v), "cap");
+  chips("#cProp", [null, ...BLOQ_PROPS], (v) => play.setProp(v), "thumb");
+  chips("#cPose", BLOQ_POSES, (v) => { play.walking(v === "walk"); play.setPose(v); }, "thumbs");
+  chips("#cMood", ["smile", "laugh", "o"], (v) => play.setMood(v), "smile");
+  chips("#cHead", ["block", "round"], (v) => Bloq.setHead(v), "block");
+  const syncChips = (id, v) => [...$(id).children].forEach((x) => x.classList.toggle("on", (x.dataset.v || null) === v));
+  chips("#cOut", BLOQ_OUTFITS, (v) => play.setOutfit(v), null);
+  const PRESETS = {
+    "AI agent": { hat: "agent", prop: "chip", pose: "hold", outfit: "agent" },
+    "Biker": { hat: "moto", prop: null, pose: "bike", outfit: null },
+    "Cosmonaut": { hat: "astro", prop: null, pose: "space", outfit: "astro" },
+    "Explorer": { hat: "cap2", prop: null, pose: "wave", outfit: null },
+    "Surfer": { hat: "surf", prop: null, pose: "boardwave", outfit: "surf" },
+    "Graduate": { hat: "grad", prop: "badge", pose: "hold", outfit: null },
+    "Detective": { hat: "detective", prop: "magnifier", pose: "hold", outfit: null },
+  };
+  chips("#cPre", Object.keys(PRESETS), (v) => {
+    const k = PRESETS[v]; play.walking(false);
+    play.setHat(k.hat).setProp(k.prop).setOutfit(k.outfit).setPose(k.pose).setMood("laugh", 700);
+    syncChips("#cHat", k.hat); syncChips("#cProp", k.prop); syncChips("#cPose", k.pose); syncChips("#cOut", k.outfit);
+  }, null);
+  $("#cJump").addEventListener("click", () => play.jump());
+  $("#cTurn").addEventListener("click", () => play.face(play.facing === "left" ? "right" : "left"));
+
+  /* preview switches */
+  const tm = $("#tMotion");
+  tm.addEventListener("click", () => {
+    still = !still; tm.setAttribute("aria-pressed", String(!still)); document.body.classList.toggle("still", still);
+    if (still) pops.forEach((p) => p.classList.remove("pre"));
+  });
+})();
+</script>

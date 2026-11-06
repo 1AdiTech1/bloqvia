@@ -32,6 +32,7 @@ If any of these fail on a clean clone, stop and report the full output; do not
   When a screen needs chain data, add a hook or helper in `src/near/` and tell
   Adi which prop the screen should call.
 - Adi (with you) owns `contracts/`, `relayer/`, `scripts/`, `src/near/`,
+  `src/bloq/` (the animated Bloq character; screens import `@/bloq`),
   `src/content/`, `docs/`, `README.md`, `LICENSE`.
 - Modules A (`contracts/bloqvia-streak/`) and B (`contracts/bloqvia-bounties/`)
   were built on branches `module-a` / `module-b` and merged to `main` through
