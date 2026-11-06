@@ -13,7 +13,6 @@ import { InventoryBar } from "@/components/lab/InventoryBar";
 import { StreakCard } from "@/components/lab/StreakCard";
 import { DailyQuestCard } from "@/components/lab/DailyQuestCard";
 import { buzz } from "@/components/lab/motion";
-import { AskBloqButton, AskBloqSheet } from "@/components/lab/AskBloqSheet";
 
 const KINDS = ["vault", "battery", "contract"] as const;
 const POSTS = ["keys · ed25519", "gas · the relayer pays", "core.bloqvia.testnet"] as const;
@@ -39,7 +38,6 @@ function MapInner() {
   const [held, setHeld] = useState<Held | null>(null);
   const [heldLevel, setHeldLevel] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
-  const [asking, setAsking] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const trail = useRef<ChainTrailHandle>(null);
   const height = useFinalBlock();
@@ -84,7 +82,7 @@ function MapInner() {
       <div className="order-2 dk:order-2 dk:col-start-1 dk:row-start-2">
         <InventoryBar gold={held?.gold} items={held?.items} />
       </div>
-      <div className="order-3 mt-3 flex flex-col gap-3 dk:order-4 dk:col-span-2 dk:mt-6 dk:grid dk:grid-cols-2 dk:items-start dk:gap-4">
+      <div className="order-3 mt-3 flex flex-col gap-3 dk:order-4 dk:col-span-2 dk:mt-6 dk:grid dk:grid-cols-2 dk:items-stretch dk:gap-4">
         <StreakCard />
         <DailyQuestCard onPlay={openQuest} />
       </div>
@@ -111,7 +109,6 @@ function MapInner() {
                 Enter Bloq's shop
               </Link>
             )}
-            <AskBloqButton label="Ask Bloq a question" onClick={() => setAsking(true)} className="text-lavender" />
           </>
         }
       />
@@ -121,7 +118,6 @@ function MapInner() {
       <AnimatePresence>
         {open && <QuizSheet key={open} lessonId={open} onClose={close} onLanded={landed} saved={saved} />}
       </AnimatePresence>
-      <AskBloqSheet open={asking} onClose={() => setAsking(false)} context="map" />
     </PhoneShell>
   );
 }

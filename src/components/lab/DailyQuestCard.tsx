@@ -3,6 +3,7 @@ import { useDailyQuests } from "@/near";
 import { useGame, IS_MOCK } from "@/game/useGame";
 import { RewardChip } from "@/components/GameBits";
 import { Press } from "@/components/lab/motion";
+import { verifyUrl } from "@/components/lab/useDesktop";
 
 export function formatQuestDate(date: string) {
   return new Date(date + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
@@ -30,7 +31,7 @@ function DailyQuestInner({ onPlay }: { onPlay: (lessonId: string) => void }) {
   const tee = q.generated_by.signature?.signature_kind === "provider_tee";
 
   return (
-    <section className="rounded-[1.6rem] border border-ivory/10 bg-navy-soft p-5 text-ivory shadow-lift">
+    <section className="h-full rounded-[1.6rem] border border-ivory/10 bg-navy-soft p-5 text-ivory shadow-lift">
       <div className="flex items-center justify-between gap-2">
         <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-lavender">
           <span aria-hidden="true" className="h-2 w-2 rounded-full bg-lime" />
@@ -56,7 +57,7 @@ function DailyQuestInner({ onPlay }: { onPlay: (lessonId: string) => void }) {
       </div>
       <p className="mt-3 text-xs leading-relaxed text-lavender">
         Written by an AI agent on NEAR AI Cloud{tee && " · signed in a TEE"}{" · "}
-        <a href="https://cloud.near.ai/verify" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-lime underline-offset-4 hover:underline">
+        <a href={verifyUrl(q.generated_by.model)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-lime underline-offset-4 hover:underline">
           Verify <ExternalLink className="h-3.5 w-3.5" />
         </a>
       </p>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BadgeCheck, Map, Store, Users } from "lucide-react";
+import { BadgeCheck, House, Map, Store, Users } from "lucide-react";
 import { AgentPod, BloqviaLogo, type AgentPodHandle } from "@/bloq";
 import { useGame, IS_MOCK } from "@/game/useGame";
 import { LevelRing } from "@/components/GameBits";
@@ -24,7 +24,7 @@ export function PhoneShell({
   const ask = (el: HTMLElement) => { returnTo.current = el; setAsking(true); };
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-night text-ivory">
+    <div className="min-h-screen w-full overflow-x-clip bg-night text-ivory">
       <div
         className={cn(
           "dk:mx-auto dk:grid dk:min-h-screen dk:max-w-[1440px]",
@@ -79,11 +79,13 @@ export function GameHeader({ level: override, className }: { level?: number | un
 }
 
 const tabs = [
-  { to: "/map", label: "Map", icon: Map },
-  { to: "/shop", label: "Shop", icon: Store },
-  { to: "/cohort", label: "Missions", icon: Users },
-  { to: "/passport", label: "Passport", icon: BadgeCheck },
+  { to: "/map", label: "Map", short: "", icon: Map },
+  { to: "/shop", label: "Shop", short: "", icon: Store },
+  { to: "/cohort", label: "Missions", short: "", icon: Users },
+  { to: "/passport", label: "Passport", short: "Pass", icon: BadgeCheck },
 ] as const;
+
+const TAB = "tap flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1.5 text-[9px] font-semibold uppercase tracking-[0.02em] text-lavender max-[359px]:text-[8px] max-[359px]:tracking-normal transition-colors active:scale-[0.98]";
 
 const CONTEXT_BY_PATH: Record<string, AskContext> = { "/map": "map", "/shop": "shop", "/cohort": "missions", "/passport": "passport" };
 
@@ -111,6 +113,11 @@ function Rail({ onAsk, asking }: AskProps) {
           <BloqviaLogo nameClassName="text-ivory" />
         </Link>
         <nav aria-label="Game" className="flex flex-col gap-1.5">
+          <Link to="/" className="flex h-12 items-center gap-3 rounded-[14px] px-4 font-display text-[15px] font-medium text-ivory transition-colors hover:bg-navy-soft">
+            <House className="h-5 w-5" />
+            Home
+          </Link>
+          <div aria-hidden="true" className="my-1 h-px bg-ivory/10" />
           {tabs.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
@@ -154,17 +161,21 @@ function RailAgent({ onAsk, asking }: AskProps) {
 function BottomNav({ onAsk, asking }: AskProps) {
   return (
     <nav aria-label="Game" className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-4 dk:hidden">
-      <div className="flex w-full max-w-[440px] items-center gap-2.5">
-        <div className="flex flex-1 justify-around rounded-full border border-ivory/10 bg-navy-soft/95 p-1.5 shadow-lift backdrop-blur">
-          {tabs.map(({ to, label, icon: Icon }) => (
+      <div className="flex w-full max-w-[440px] items-center gap-2.5 max-[359px]:gap-1.5">
+        <div className="flex min-w-0 flex-1 justify-around rounded-full border border-ivory/10 bg-navy-soft/95 p-1 shadow-lift backdrop-blur">
+          <Link to="/" className={TAB} activeOptions={{ exact: true }}>
+            <House className="h-5 w-5" />
+            Home
+          </Link>
+          {tabs.map(({ to, label, short, icon: Icon }) => (
             <Link
               key={to}
               to={to}
-              className="tap flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-lavender transition-colors active:scale-[0.98]"
+              className={TAB}
               activeProps={{ className: "bg-lime !text-navy" }}
             >
               <Icon className="h-5 w-5" />
-              {label}
+              {short ? <><span className="max-[359px]:hidden">{label}</span><span className="min-[360px]:hidden">{short}</span></> : label}
             </Link>
           ))}
         </div>

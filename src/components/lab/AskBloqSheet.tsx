@@ -6,6 +6,7 @@ import { useAskBloq } from "@/near";
 import { IS_MOCK } from "@/game/useGame";
 import { LabLoader } from "@/components/LabLoader";
 import { Press, labEase } from "./motion";
+import { useIsDesktop, verifyUrl } from "./useDesktop";
 import { cn } from "@/lib/utils";
 
 export type AskContext = "quiz" | "shop" | "map" | "missions" | "passport";
@@ -40,6 +41,7 @@ export function AskBloqButton({ label, onClick, className }: { label: string; on
 
 function AskBloqPanel({ onClose, lessonId, context }: Props) {
   const reduce = useReducedMotion();
+  const desktop = useIsDesktop();
   const bloq = useAskBloq();
   const [text, setText] = useState("");
   const input = useRef<HTMLInputElement>(null);
@@ -79,16 +81,16 @@ function AskBloqPanel({ onClose, lessonId, context }: Props) {
   }, [bloq.answer]);
 
   return (
-    <motion.div className="fixed inset-0 z-[55] flex items-end justify-center dk:pl-[calc(max(0px,(100vw-1440px)/2)+220px)] dk:pr-[calc(max(0px,(100vw-1440px)/2)+330px)]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-modal="true" aria-label="Ask Bloq">
+    <motion.div className="fixed inset-0 z-[55] flex items-end justify-center dk:items-center dk:py-12 dk:pl-[calc(max(0px,(100vw-1440px)/2)+220px)] dk:pr-[calc(max(0px,(100vw-1440px)/2)+330px)]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-modal="true" aria-label="Ask Bloq">
       <button aria-label="Close" onClick={close} className="absolute inset-0 bg-navy/50" />
       <motion.div
-        initial={reduce ? false : { y: 80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={reduce ? { opacity: 0 } : { y: 80, opacity: 0 }}
-        transition={{ duration: 0.5, ease: labEase }}
-        className="relative max-h-[85vh] w-full max-w-[480px] dk:max-w-[560px] overflow-y-auto rounded-t-[2rem] bg-ivory px-6 pb-8 pt-4 text-navy shadow-lift"
+        initial={reduce ? { opacity: 0 } : desktop ? { scale: 0.96, opacity: 0 } : { y: 80, opacity: 0 }}
+        animate={{ y: 0, scale: 1, opacity: 1 }}
+        exit={reduce ? { opacity: 0 } : desktop ? { scale: 0.96, opacity: 0 } : { y: 80, opacity: 0 }}
+        transition={desktop ? { duration: 0.22, ease: labEase } : { duration: 0.5, ease: labEase }}
+        className="relative max-h-[85vh] w-full max-w-[480px] dk:max-w-[560px] overflow-y-auto rounded-t-[2rem] bg-ivory px-6 pb-8 pt-4 text-navy shadow-lift dk:max-h-[calc(100vh-96px)] dk:rounded-[28px] dk:pt-6"
       >
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-navy/15" />
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-navy/15 dk:hidden" />
         <Press onClick={close} aria-label="Close" className="absolute right-3 top-3 flex items-center justify-center rounded-full text-navy/60">
           <X className="h-5 w-5" />
         </Press>
@@ -121,7 +123,7 @@ function AskBloqPanel({ onClose, lessonId, context }: Props) {
               Answered by an AI on NEAR AI Cloud
               {p?.signature_kind === "provider_tee" && " · signed in a TEE"}
               {p && (
-                <> · <a href="https://cloud.near.ai/verify" target="_blank" rel="noreferrer" className="font-semibold underline underline-offset-2">Verify</a></>
+                <> · <a href={verifyUrl(p.model)} target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-2">Verify</a></>
               )}
             </p>
             {p && <p className="mt-1 break-all font-mono text-[11px] text-navy/50">chat {p.chat_id}</p>}

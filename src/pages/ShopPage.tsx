@@ -15,7 +15,6 @@ import { InventoryBar } from "@/components/lab/InventoryBar";
 import { AnimatedNumber, Press, buzz, labEase } from "@/components/lab/motion";
 import type { ItemPrice } from "@/game/types";
 import { cn } from "@/lib/utils";
-import { AskBloqButton, AskBloqSheet } from "@/components/lab/AskBloqSheet";
 
 export function ShopPage() {
   return (
@@ -72,7 +71,6 @@ function ShopInner() {
     { ok: Number(learner.gold) >= fee, label: `Fee: ${fee} BloqGold` },
   ];
 
-  const [asking, setAsking] = useState(false);
   const onTraded = (id: string, kind: "sell" | "buy") => {
     setLastItem(id);
     buzz();
@@ -133,15 +131,11 @@ function ShopInner() {
         </div>
       )}
 
-      <div className="mt-5 flex flex-col gap-3 dk:grid dk:grid-cols-2">
+      <div className="mt-5 flex flex-col gap-3 dk:grid dk:grid-cols-3">
         {bloq.prices.map((p) => (
           <TradeCard key={p.token_id} price={p} have={itemAmount(learner.items, p.token_id)} gold={Number(learner.gold)} shopOpen={bloq.shop_open} onTraded={onTraded} />
         ))}
       </div>
-      <div className="mt-3 flex justify-center">
-        <AskBloqButton label="Ask Bloq why prices move" onClick={() => setAsking(true)} className="text-lavender" />
-      </div>
-      <AskBloqSheet open={asking} onClose={() => setAsking(false)} context="shop" />
 
       <section className="mt-8 rounded-3xl bg-ivory p-6 text-navy shadow-lift">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Final step</p>
@@ -203,18 +197,18 @@ function TradeCard({ price, have, gold, shopOpen, onTraded }: { price: ItemPrice
   const canBuy = shopOpen && stock > 0 && gold >= Number(price.sell_price) * qty && !game.busy;
 
   return (
-    <article className="rounded-3xl bg-ivory p-4 text-navy shadow-lift">
-      <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-navy text-lime">
+    <article className="lab-trade rounded-3xl bg-ivory p-4 text-navy shadow-lift">
+      <div className="lab-trade-head flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-navy text-lime">
           <ItemIcon id={id} className="h-5 w-5" />
         </span>
-        <div className="flex-1">
+        <div className="lab-trade-name min-w-0 flex-1">
           <h3 className="font-display text-lg font-medium leading-tight">{itemLabel(id)}</h3>
           <p className="text-xs text-muted-foreground">
             You <strong className="text-navy">{have}</strong> · Bloq's stock <AnimatedNumber value={stock} className="font-semibold text-navy" />
           </p>
         </div>
-        <button aria-label="How prices work" aria-expanded={tip} onClick={() => setTip((t) => !t)} onBlur={() => setTip(false)} className="tap -mr-2 flex items-center justify-center rounded-full text-navy/60">
+        <button aria-label="How prices work" aria-expanded={tip} onClick={() => setTip((t) => !t)} onBlur={() => setTip(false)} className="tap -mr-2 ml-auto flex shrink-0 items-center justify-center rounded-full text-navy/60">
           <Info className="h-5 w-5" />
         </button>
       </div>
@@ -229,7 +223,7 @@ function TradeCard({ price, have, gold, shopOpen, onTraded }: { price: ItemPrice
         )}
       </AnimatePresence>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="lab-trade-prices mt-3 grid grid-cols-2 gap-2">
         <div className="rounded-2xl bg-lavender-soft px-3 py-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-navy/60">He pays</p>
           <p className="font-display text-2xl font-medium"><AnimatedNumber value={Number(price.buy_price)} className="-ml-1" /></p>
@@ -240,14 +234,16 @@ function TradeCard({ price, have, gold, shopOpen, onTraded }: { price: ItemPrice
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-2">
-        <div className="flex items-center rounded-full bg-muted">
+      <div className="mt-3 flex items-center gap-2 dk:flex-col dk:items-stretch">
+        <div className="flex items-center rounded-full bg-muted dk:justify-between">
           <Press aria-label="Less" disabled={qty <= 1} className="flex items-center justify-center disabled:opacity-30" onClick={() => setQty((q) => Math.max(1, q - 1))}><Minus className="h-4 w-4" /></Press>
           <span className="w-5 text-center font-display font-semibold tabular-nums" aria-live="polite">{qty}</span>
           <Press aria-label="More" disabled={qty >= 9} className="flex items-center justify-center disabled:opacity-30" onClick={() => setQty((q) => Math.min(9, q + 1))}><Plus className="h-4 w-4" /></Press>
         </div>
+        <div className="flex flex-1 gap-2 dk:flex-none">
         <Press disabled={!canSell} onClick={() => act(game.sellToBloq, "sell")} className="flex-1 rounded-full border-2 border-navy font-semibold disabled:opacity-30">Sell</Press>
         <Press disabled={!canBuy} onClick={() => act(game.buyFromBloq, "buy")} className="flex-1 rounded-full bg-navy font-semibold text-ivory disabled:opacity-30">Buy</Press>
+        </div>
       </div>
     </article>
   );

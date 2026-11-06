@@ -3,6 +3,7 @@ import { useReducedMotion } from "framer-motion";
 import { Copy, Check } from "lucide-react";
 import { AgentPod, talkMs, type AgentPodHandle } from "@/bloq";
 import { useAskBloq } from "@/near";
+import { verifyUrl } from "@/components/lab/useDesktop";
 
 type Prov = { model?: string; chat_id?: string; signature_kind?: string | null } | null;
 type Msg = { id: number; who: "bot" | "me"; text: string; prov?: Prov; typed?: boolean };
@@ -127,7 +128,7 @@ export function AskDock() {
         </button>
       </div>
 
-      <section id="lv-ask-chat" className="lv-chat" role="dialog" aria-label="Ask Bloq" hidden={!open}>
+      <section id="lv-ask-chat" className="lv-chat relative" role="dialog" aria-label="Ask Bloq" hidden={!open}>
         <div className="lv-chat-head" style={{ paddingTop: 40 }}>
           <AgentPod size={44} ref={chatPod} />
           <div>
@@ -151,7 +152,7 @@ export function AskDock() {
                   {m.prov.signature_kind && (
                     <>
                       <br />signed ({m.prov.signature_kind}) ·{" "}
-                      <a href="https://cloud.near.ai/verify" target="_blank" rel="noreferrer">Verify ↗</a>
+                      <a href={verifyUrl(m.prov.model)} target="_blank" rel="noopener noreferrer">Verify ↗</a>
                     </>
                   )}
                   {m.prov.chat_id && <> <CopyId id={m.prov.chat_id} /></>}

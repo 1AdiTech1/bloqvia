@@ -4,6 +4,7 @@ import { Check, ExternalLink, X } from "lucide-react";
 import { useBounties, claimStatusLabel, views } from "@/near";
 import type { Bounty, Claim, DaoProposal, Requirement, Tier } from "@/near";
 import { IS_MOCK, useGame } from "@/game/useGame";
+import { useIsDesktop } from "@/components/lab/useDesktop";
 import { Bloq, SpeechBubble, talkMs, useSay, type BloqHandle } from "@/bloq";
 import { PhoneShell } from "@/components/PhoneShell";
 import { RequireAccount } from "@/components/RequireAccount";
@@ -26,6 +27,7 @@ export function CohortPage() {
 function MissionsHeader() {
   const graduated = !!useGame().learner?.graduated;
   const bloq = useRef<BloqHandle>(null);
+  const desktop = useIsDesktop();
   const [line, sayLine] = useSay();
   const say = (t: string) => { sayLine(t); bloq.current?.talk(talkMs(t)); };
   useEffect(() => {
@@ -34,15 +36,15 @@ function MissionsHeader() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <div className="flex items-end justify-between gap-3 pt-20">
-      <div className="min-w-0">
+    <div className="flex items-end justify-between gap-3 pt-20 dk:items-start dk:pt-6">
+      <div className="min-w-0 dk:pt-[96px]">
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-lime">Graduates' board</p>
         <h1 className="mt-2 font-display text-4xl font-medium uppercase leading-none tracking-[-0.04em]">Missions</h1>
         <p className="mt-2 text-sm text-lavender">Graduates take on small tasks. The chain checks who qualified.</p>
       </div>
       <button type="button" aria-label="Bloq" onClick={() => { bloq.current?.jump(); say("Small bounties are paid by the board. Big ones need a DAO vote."); }} className="relative w-[112px] shrink-0">
         <Bloq ref={bloq} hat="beanie" prop="badge" pose="hold" label="Bloq in a beanie" />
-        <SpeechBubble text={line} tone="light" />
+        <SpeechBubble text={line} tone="light" side={desktop ? "left" : "above"} />
       </button>
     </div>
   );

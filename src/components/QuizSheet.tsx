@@ -11,6 +11,7 @@ import { RewardChip, ItemIcon } from "./GameBits";
 import { LabLoader } from "./LabLoader";
 import { Press, labEase } from "./lab/motion";
 import { cn } from "@/lib/utils";
+import { useIsDesktop, verifyUrl } from "./lab/useDesktop";
 import { AskBloqButton, AskBloqSheet } from "./lab/AskBloqSheet";
 
 type SheetLesson = Omit<LessonContent, "answer"> & { answer?: string; explanation?: string; generated_by?: GeneratedBy };
@@ -32,6 +33,7 @@ const CUBE_COLORS = ["#d4f033", "#b47ff0", "#ffffff"];
 export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: string; onClose: () => void; onLanded: () => void; saved: boolean }) {
   const game = useGame();
   const reduce = useReducedMotion();
+  const desktop = useIsDesktop();
   const daily = useDailyQuests().quests.find((q) => q.lesson_id === lessonId);
   const index = LESSON_CONTENT.findIndex((l) => l.lesson_id === lessonId);
   const founding = LESSON_CONTENT[index];
@@ -116,13 +118,13 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
   const lastWrong = wrong.length > 0 && !done;
 
   return (
-    <motion.div className="fixed inset-0 z-[45] flex items-end justify-center dk:pl-[calc(max(0px,(100vw-1440px)/2)+220px)] dk:pr-[calc(max(0px,(100vw-1440px)/2)+330px)]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-modal="true" aria-label={lesson.title}>
+    <motion.div className="fixed inset-0 z-[45] flex items-end justify-center dk:items-center dk:pb-6 dk:pt-[110px] dk:pl-[calc(max(0px,(100vw-1440px)/2)+220px)] dk:pr-[calc(max(0px,(100vw-1440px)/2)+330px)]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-modal="true" aria-label={lesson.title}>
       <button aria-label="Close" onClick={onClose} className="absolute inset-0 bg-navy/50" />
       <motion.div
-        initial={reduce ? false : { y: 80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={reduce ? { opacity: 0 } : { y: 80, opacity: 0 }}
-        transition={{ duration: 0.5, ease: labEase }}
+        initial={reduce ? { opacity: 0 } : desktop ? { scale: 0.96, opacity: 0 } : { y: 80, opacity: 0 }}
+        animate={{ y: 0, scale: 1, opacity: 1 }}
+        exit={reduce ? { opacity: 0 } : desktop ? { scale: 0.96, opacity: 0 } : { y: 80, opacity: 0 }}
+        transition={desktop ? { duration: 0.22, ease: labEase } : { duration: 0.5, ease: labEase }}
         className="relative w-full max-w-[480px] dk:max-w-[560px]"
       >
       <motion.div
@@ -138,8 +140,8 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
           {burst > 0 && <CubeBurst key={burst} />}
         </div>
       </motion.div>
-      <div className="max-h-[80vh] w-full overflow-y-auto rounded-t-[2rem] bg-ivory px-6 pb-8 pt-4 text-navy shadow-lift">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-navy/15" />
+      <div className="max-h-[80vh] w-full overflow-y-auto rounded-t-[2rem] bg-ivory px-6 pb-8 pt-4 dk:max-h-[calc(100vh-136px)] dk:rounded-[28px] dk:pt-6 text-navy shadow-lift">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-navy/15 dk:hidden" />
         <AskBloqSheet open={asking && !done} onClose={() => setAsking(false)} lessonId={lesson.lesson_id} context="quiz" />
         <Press onClick={onClose} aria-label="Close" className="absolute right-3 top-3 flex items-center justify-center rounded-full text-navy/60">
           <X className="h-5 w-5" />
@@ -228,7 +230,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
                     <p className="mt-2 text-sm leading-relaxed text-ivory/70">Signed inside a TEE (hardware enclave) by the model's provider.</p>
                   )}
                   <p className="mt-2 break-all font-mono text-xs text-ivory/70">chat {gen.chat_id}</p>
-                  <a href="https://cloud.near.ai/verify" target="_blank" rel="noreferrer" className="tap mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-lime underline-offset-4 hover:underline">
+                  <a href={verifyUrl(gen.model)} target="_blank" rel="noopener noreferrer" className="tap mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-lime underline-offset-4 hover:underline">
                     Verify the signature <ExternalLink className="h-4 w-4" />
                   </a>
                 </div>

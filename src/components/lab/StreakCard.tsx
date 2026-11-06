@@ -63,7 +63,7 @@ function StreakInner() {
   };
 
   return (
-    <section className="rounded-[1.6rem] bg-ivory p-5 text-navy shadow-lift">
+    <section className="h-full rounded-[1.6rem] bg-ivory p-5 text-navy shadow-lift">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-navy/60">Community streak</p>

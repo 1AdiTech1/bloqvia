@@ -1,11 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useNavigate } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { useGame } from "@/game/useGame";
 import { CTA, ease } from "./primitives";
 import { BloqMark } from "@/components/Logo";
-import { BloqFace } from "@/bloq";
+import { Bloq, type BloqHandle, type BloqPose } from "@/bloq";
 import { LabLoader } from "@/components/LabLoader";
 
 /** App-held key sign-in sheet: calls start() then goes to /map. */
@@ -54,12 +54,12 @@ export function SignInSheet({ open, onClose }: { open: boolean; onClose: () => v
               <X className="h-5 w-5" />
             </button>
             <BloqMark size={40} />
-            <BloqFace size={80} hat="cap" className="!absolute right-[60px] top-[14px]" />
+            <SittingBloq reduce={!!reduce} />
             <h2 id="signin-title" style={{ fontSize: "min(25px, 7.6cqi)" }}
               className="mt-6 whitespace-nowrap font-display font-medium uppercase tracking-[-0.04em]">
               {returning ? "Welcome back" : "Start without a wallet"}
             </h2>
-            <p className="mt-2 text-muted-foreground">
+            <p lang="en" className="si-copy mt-2 text-muted-foreground">
               {returning
                 ? "Your account is in this browser."
                 : "No seed phrase, no password, no downloads. We create a NEAR account for you right here in this browser and hold its key for you — you get the key at the end, with everything you earned."}
@@ -77,5 +77,87 @@ export function SignInSheet({ open, onClose }: { open: boolean; onClose: () => v
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+/** Bloq walks along the card's top edge to his spot and sits down, legs over the front. */
+function SittingBloq({ reduce }: { reduce: boolean }) {
+  const box = useRef<HTMLDivElement>(null);
+  const bloq = useRef<BloqHandle>(null);
+  const [pos, setPos] = useState<{ x: number; y: number; w: number; t: string } | null>(null);
+  const [pose, setPose] = useState<BloqPose>("idle");
+  const [seated, setSeated] = useState(false);
+  const [bounce, setBounce] = useState(0);
+
+  useEffect(() => {
+    const card = box.current?.parentElement;
+    if (!card) return;
+    const cw = card.getBoundingClientRect().width;
+    const narrow = cw < 400;
+    const w = narrow ? 96 : 112;
+    const h = (w * 4) / 3;
+    const target = cw - w - (narrow ? 50 : 62);
+    const sitY = h * 0.21;
+    const timers: number[] = [];
+    if (reduce) {
+      setPose("sit");
+      setPos({ x: target, y: sitY, w, t: "none" });
+      setSeated(true);
+      return;
+    }
+    setPos({ x: 26, y: 0, w, t: "none" });
+    const dur = Math.max(700, (target - 26) * 4);
+    timers.push(window.setTimeout(() => {
+      bloq.current?.walking(true);
+      setPos({ x: target, y: 0, w, t: `transform ${dur}ms linear` });
+      timers.push(window.setTimeout(() => {
+        bloq.current?.walking(false);
+        setPose("sit");
+        setPos({ x: target, y: sitY, w, t: "transform 420ms cubic-bezier(.3,.7,.4,1)" });
+        timers.push(window.setTimeout(() => { bloq.current?.setMood("laugh", 900); setSeated(true); }, 420));
+      }, dur));
+    }, 450));
+    return () => timers.forEach(clearTimeout);
+  }, [reduce]);
+
+  useEffect(() => {
+    if (!seated) return;
+    const onMove = (e: PointerEvent) => {
+      const el = box.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const dx = (e.clientX - (r.left + r.width / 2)) / (window.innerWidth / 2);
+      const dy = (e.clientY - (r.top + r.height * 0.3)) / (window.innerHeight / 2);
+      bloq.current?.look(Math.max(-1, Math.min(1, dx)), Math.max(-1, Math.min(1, dy)));
+    };
+    window.addEventListener("pointermove", onMove);
+    return () => window.removeEventListener("pointermove", onMove);
+  }, [seated]);
+
+  const w = pos?.w ?? 112;
+  return (
+    <div
+      ref={box}
+      className="absolute left-0 z-10"
+      style={{
+        width: w,
+        bottom: `calc(100% - ${(w * 4) / 3 * 0.04}px)`,
+        transform: `translate(${pos?.x ?? 26}px, ${pos?.y ?? 0}px)`,
+        transition: pos?.t ?? "none",
+        visibility: pos ? "visible" : "hidden",
+      }}
+    >
+      <button
+        type="button"
+        aria-label="Bloq, sitting on the card"
+        onPointerEnter={() => bloq.current?.setMood("laugh", 700)}
+        onClick={() => { bloq.current?.setMood("laugh", 1400); if (!reduce) setBounce((b) => b + 1); }}
+        className="block w-full cursor-pointer"
+      >
+        <div key={bounce} className={bounce ? "si-bounce" : undefined}>
+          <Bloq ref={bloq} hat="cap" pose={pose} facing="right" label="Bloq" />
+        </div>
+      </button>
+    </div>
   );
 }
