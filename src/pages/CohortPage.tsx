@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Check, ExternalLink, X } from "lucide-react";
 import { useBounties, claimStatusLabel, views } from "@/near";
 import type { Bounty, Claim, DaoProposal, Requirement, Tier } from "@/near";
-import { IS_MOCK } from "@/game/useGame";
+import { IS_MOCK, useGame } from "@/game/useGame";
+import { Bloq, SpeechBubble, talkMs, useSay, type BloqHandle } from "@/bloq";
 import { PhoneShell } from "@/components/PhoneShell";
 import { RequireAccount } from "@/components/RequireAccount";
 import { LabLoader } from "@/components/LabLoader";
@@ -15,11 +16,35 @@ export function CohortPage() {
   return (
     <RequireAccount>
       <PhoneShell nav>
-        <h1 className="font-display text-4xl font-medium uppercase leading-none tracking-[-0.04em]">Missions</h1>
-        <p className="mt-2 text-sm text-lavender">Graduates take on small tasks. The chain checks who qualified.</p>
+        <MissionsHeader />
         <div className="mt-6">{IS_MOCK ? <Note text="The missions board plays on chain. Switch off mock mode to see it." /> : <CohortInner />}</div>
       </PhoneShell>
     </RequireAccount>
+  );
+}
+
+function MissionsHeader() {
+  const graduated = !!useGame().learner?.graduated;
+  const bloq = useRef<BloqHandle>(null);
+  const [line, sayLine] = useSay();
+  const say = (t: string) => { sayLine(t); bloq.current?.talk(talkMs(t)); };
+  useEffect(() => {
+    const t = window.setTimeout(() => say(graduated ? "You graduated. The board checks you qualified, then pays." : "These open up once you graduate. The chain checks, not me."), 500);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <div className="flex items-end justify-between gap-3 pt-20">
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-lime">Graduates' board</p>
+        <h1 className="mt-2 font-display text-4xl font-medium uppercase leading-none tracking-[-0.04em]">Missions</h1>
+        <p className="mt-2 text-sm text-lavender">Graduates take on small tasks. The chain checks who qualified.</p>
+      </div>
+      <button type="button" aria-label="Bloq" onClick={() => { bloq.current?.jump(); say("Small bounties are paid by the board. Big ones need a DAO vote."); }} className="relative w-[112px] shrink-0">
+        <Bloq ref={bloq} hat="beanie" prop="badge" pose="hold" label="Bloq in a beanie" />
+        <SpeechBubble text={line} tone="light" />
+      </button>
+    </div>
   );
 }
 

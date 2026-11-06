@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "framer-motion";
 import { Copy, ExternalLink, KeyRound, ShieldCheck, TriangleAlert, User } from "lucide-react";
@@ -8,6 +8,8 @@ import { PhoneShell } from "@/components/PhoneShell";
 import { RequireAccount } from "@/components/RequireAccount";
 import { GoldSeal } from "@/components/GameBits";
 import { Press, labEase } from "@/components/lab/motion";
+import { Bloq, SpeechBubble, talkMs, useSay, type BloqHandle, type BloqPose } from "@/bloq";
+import { CubeBurst } from "@/components/lab/CubeBurst";
 
 export function RevealPage() {
   return (
@@ -73,6 +75,22 @@ function RevealInner() {
   };
   const preview = game.exportSecretKey();
 
+  const reduce = useReducedMotion();
+  const det = useRef<BloqHandle>(null);
+  const [pose, setPose] = useState<BloqPose>("hold");
+  const [burst, setBurst] = useState(false);
+  const [line, sayLine] = useSay();
+  useEffect(() => {
+    const say = (t: string) => { sayLine(t, 5200); det.current?.talk(talkMs(t)); };
+    const ts = [
+      window.setTimeout(() => { det.current?.setMood("o"); det.current?.look(-0.6, 0.6); say("Hmm… every step left a trace on chain."); }, 600),
+      window.setTimeout(() => { det.current?.look(0, 0); setPose("cheer"); det.current?.jump(); det.current?.setMood("laugh", 1600); if (!reduce) setBurst(true); }, 3400),
+      window.setTimeout(() => { setPose("thumbs"); say("Case closed: it was yours the whole time."); }, 4600),
+    ];
+    return () => ts.forEach((t) => window.clearTimeout(t));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const playAgain = () => {
     game.signOut();
     navigate({ to: "/" });
@@ -80,9 +98,16 @@ function RevealInner() {
 
   return (
     <>
-      <Beat delay={0.1} className="flex flex-col items-start pt-10">
-        <GoldSeal size={72} />
-        <h1 className="mt-8 font-display text-display-md font-medium uppercase tracking-[-0.04em] text-ivory">It was on NEAR the whole time.</h1>
+      <Beat delay={0.1} className="flex flex-col items-stretch pt-24">
+        <div className="flex items-end justify-between gap-4">
+          <GoldSeal size={72} />
+          <div className="relative w-[126px] shrink-0">
+            <Bloq ref={det} hat="detective" prop="magnifier" pose={pose} label="Bloq the detective" />
+            <SpeechBubble text={line} tone="light" />
+            {burst && <CubeBurst className="top-[55%]" />}
+          </div>
+        </div>
+        <h1 className="mt-6 font-display text-display-md font-medium uppercase tracking-[-0.04em] text-ivory">It was on NEAR the whole time.</h1>
       </Beat>
       <Beat delay={0.9}>
         <p className="mt-4 text-lg leading-relaxed text-lavender">

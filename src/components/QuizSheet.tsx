@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from "framer-motion";
 import { Check, ExternalLink, RotateCcw, X } from "lucide-react";
 import { useGame } from "@/game/useGame";
 import { Bloq, SpeechBubble, useSay, talkMs, type BloqHandle, type BloqHat, type BloqProp, type BloqPose } from "@/bloq";
@@ -23,7 +23,7 @@ const LOOKS: Record<string, { hat: BloqHat; prop: BloqProp; hello: string }> = {
   "smart-agreements": { hat: "beret", prop: "scroll", hello: "Last one: smart contracts. The rules are printed on the machine." },
 };
 const DAILY_LOOK = { hat: "bucket" as BloqHat, prop: "bulb" as BloqProp, hello: "Today's quest was written by an AI agent. The chain still checks your answer." };
-const CUBE_COLORS = ["#C7F36B", "#b47ff0", "#ffffff"];
+const CUBE_COLORS = ["#d4f033", "#b47ff0", "#ffffff"];
 
 /**
  * Quiz bottom sheet. On success the reward chips fly to the inventory bar,
@@ -51,7 +51,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
   const bloqBox = useRef<HTMLDivElement>(null);
   const [line, sayLine] = useSay();
   const [pose, setPose] = useState<BloqPose>("hold");
-  const [oops, setOops] = useState(0);
+  const shakeCtl = useAnimationControls();
   const [burst, setBurst] = useState(0);
   const look = daily ? DAILY_LOOK : LOOKS[lessonId] ?? DAILY_LOOK;
   const say = (t: string) => { sayLine(t); bloq.current?.talk(talkMs(t)); };
@@ -83,7 +83,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
       setShake((s) => s + 1);
       bloq.current?.look(0, 0);
       bloq.current?.setMood("o", 1400);
-      setOops((o) => o + 1);
+      if (!reduce) void shakeCtl.start({ x: [0, -7, 6, -4, 2, 0], transition: { duration: 0.5, ease: "easeOut" } });
       say("Oops, the contract said no. Read the hint below.");
     } finally {
       setPicked(null);
@@ -127,9 +127,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
       >
       <motion.div
         ref={bloqBox}
-        key={`bloq-${oops}`}
-        animate={oops && !reduce ? { x: [0, -7, 6, -4, 2, 0] } : { x: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+        animate={shakeCtl}
         className="absolute z-10 w-[104px] cursor-pointer"
         style={{ right: 22, top: 0, y: "-74%" }}
         onClick={() => { bloq.current?.jump(); bloq.current?.setMood("laugh", 800); }}

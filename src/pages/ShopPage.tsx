@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check, Info, Minus, Plus, TriangleAlert } from "lucide-react";
@@ -6,8 +6,11 @@ import { useGame } from "@/game/useGame";
 import { ITEM_IDS, itemAmount } from "@/game/content";
 import { PhoneShell } from "@/components/PhoneShell";
 import { RequireAccount } from "@/components/RequireAccount";
-import { BloqCharacter, bloqLine } from "@/components/Bloq";
-import { GoldSeal, ItemIcon, itemLabel } from "@/components/GameBits";
+import { bloqLine } from "@/components/Bloq";
+import { ItemIcon, itemLabel } from "@/components/GameBits";
+import { Bloq, talkMs, type BloqHandle, type BloqPose, type BloqProp } from "@/bloq";
+import { Web3Passport } from "@/components/lab/Web3Passport";
+import { CubeBurst } from "@/components/lab/CubeBurst";
 import { InventoryBar } from "@/components/lab/InventoryBar";
 import { AnimatedNumber, Press, buzz, labEase } from "@/components/lab/motion";
 import type { ItemPrice } from "@/game/types";
@@ -31,12 +34,36 @@ function ShopInner() {
   const bloq = game.bloq!;
   const learner = game.learner!;
   const [lastItem, setLastItem] = useState<string | null>(null);
-  const [trades, setTrades] = useState(0);
   const [ceremony, setCeremony] = useState(false);
+  const [stampBurst, setStampBurst] = useState(false);
+  const merchant = useRef<BloqHandle>(null);
+  const [prop, setProp] = useState<BloqProp>("cube");
+  const [pose, setPose] = useState<BloqPose>("hold");
+  const [reaction, setReaction] = useState<{ kind: "sell" | "buy" | "tap"; id: string; n: number } | null>(null);
+  const timers = useRef<number[]>([]);
+  useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
 
   const lowest = [...bloq.prices].sort((a, b) => Number(a.bloq_stock) - Number(b.bloq_stock))[0];
   const focus = bloq.prices.find((p) => p.token_id === lastItem) ?? lowest;
-  const line = bloqLine(Number(focus?.bloq_stock ?? 0), bloq.shop_open);
+  const baseLine = bloqLine(Number(focus?.bloq_stock ?? 0), bloq.shop_open);
+  // Reaction lines read the values the contract returned (the state after the trade).
+  const reacted = reaction ? bloq.prices.find((p) => p.token_id === reaction.id) : undefined;
+  const line =
+    reaction?.kind === "tap" ? "Sell me what I'm short on and I pay more. That's the whole rule."
+    : reaction?.kind === "sell" && reacted ? `Thanks! My stock is ${reacted.bloq_stock} now, so next time I pay ${reacted.buy_price}.`
+    : reaction?.kind === "buy" && reacted ? `Pleasure! I've got ${reacted.bloq_stock} left, so the price goes up a little.`
+    : baseLine;
+  useEffect(() => { merchant.current?.talk(talkMs(line)); }, [line]);
+  useEffect(() => { if (!bloq.shop_open) merchant.current?.setMood("o"); }, [bloq.shop_open]);
+
+  const later = (fn: () => void, ms: number) => { timers.current.push(window.setTimeout(fn, ms)); };
+  const react = (kind: "sell" | "buy" | "tap", id: string) => {
+    timers.current.forEach((t) => window.clearTimeout(t));
+    timers.current = [];
+    const n = Date.now();
+    setReaction({ kind, id, n });
+    later(() => setReaction((r) => (r?.n === n ? null : r)), 6000);
+  };
 
   const fee = Number(bloq.graduation_fee);
   const checks = [
@@ -46,14 +73,30 @@ function ShopInner() {
   ];
 
   const [asking, setAsking] = useState(false);
-  const onTraded = (id: string) => { setLastItem(id); setTrades((t) => t + 1); buzz(); };
+  const onTraded = (id: string, kind: "sell" | "buy") => {
+    setLastItem(id);
+    buzz();
+    react(kind, id);
+    if (kind === "sell") {
+      setProp(ITEM_PROP[id] ?? "cube");
+      setPose("hold");
+      merchant.current?.jump();
+      merchant.current?.setMood("laugh", 1100);
+    } else {
+      setProp("coin");
+      setPose("thumbs");
+      later(() => { setProp("cube"); setPose("hold"); }, 2600);
+    }
+  };
+  const tapMerchant = () => { merchant.current?.jump(); react("tap", ""); };
 
   const doGraduate = async () => {
     try {
       await game.graduate();
       buzz();
       setCeremony(true);
-      setTimeout(() => navigate({ to: "/reveal" }), reduce ? 400 : 1500);
+      setTimeout(() => setStampBurst(true), reduce ? 0 : 700);
+      setTimeout(() => navigate({ to: "/reveal" }), reduce ? 900 : 2600);
     } catch { /* coral toast shows the error */ }
   };
 
@@ -61,20 +104,30 @@ function ShopInner() {
     <>
       <InventoryBar />
 
-      <div className="mt-6 flex items-end gap-3">
-        <BloqCharacter size={112} pose={trades} />
-        <div className="relative mb-8 flex-1 rounded-3xl rounded-bl-md bg-ivory p-4 text-navy shadow-lift">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Bloq</p>
-          <AnimatePresence mode="wait">
-            <motion.p key={line} initial={reduce ? false : { opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="mt-1 font-display text-lg font-medium leading-snug">
-              “{line}”
-            </motion.p>
-          </AnimatePresence>
+      <div className="lab-stall mt-6">
+        <div className="awn" aria-hidden="true" />
+        <div className="row">
+          <button type="button" onClick={tapMerchant} aria-label="Bloq the merchant, in his top hat" className="relative w-full self-end">
+            <Bloq ref={merchant} hat="tophat" prop={prop} pose={pose} label="Bloq the merchant" />
+          </button>
+          <div className="mb-[26px] self-center rounded-[18px] rounded-bl-md bg-ivory px-4 py-3.5 text-navy" aria-live="polite">
+            <p className="mb-1.5 font-display text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Bloq</p>
+            <AnimatePresence mode="wait">
+              <motion.p key={line} initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} className="font-display text-[1.02rem] font-medium leading-[1.35] tracking-[-0.01em]">
+                “{line}”
+              </motion.p>
+            </AnimatePresence>
+          </div>
+        </div>
+        <div className="counter" aria-hidden="true" />
+        <div className="treasury">
+          <span>Treasury <b>{bloq.gold}</b> gold</span>
+          <span>Shop <b>{bloq.shop_open ? "open" : "closed"}</b></span>
         </div>
       </div>
 
       {!bloq.shop_open && (
-        <div className="mt-2 flex items-start gap-3 rounded-2xl bg-coral p-4 text-sm font-medium text-navy">
+        <div className="mt-4 flex items-start gap-3 rounded-2xl bg-coral p-4 text-sm font-medium text-navy">
           <TriangleAlert className="h-5 w-5 shrink-0" />
           Bloq's treasury is below 500 gold — shop closed until it refills.
         </div>
@@ -117,13 +170,11 @@ function ShopInner() {
       <AnimatePresence>
         {ceremony && (
           <motion.div className="fixed inset-0 z-[55] flex items-center justify-center bg-navy/90 backdrop-blur" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="relative flex h-72 w-52 flex-col items-center justify-center rounded-3xl border-l-4 border-lime bg-navy-soft shadow-lift">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-lavender">Passport</p>
-              <motion.div className="mt-6" initial={reduce ? false : { scale: 2.2, opacity: 0, rotate: -25 }} animate={{ scale: 1, opacity: 1, rotate: -6 }} transition={{ duration: 0.7, delay: 0.25, ease: labEase }}>
-                <GoldSeal size={110} />
-              </motion.div>
-              <p className="mt-6 font-display text-xl font-medium uppercase tracking-[-0.02em] text-ivory">Graduate</p>
-            </div>
+            <motion.div className="relative w-[min(88vw,400px)]" initial={reduce ? false : { scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} transition={{ duration: 0.5, ease: labEase }}>
+              <p className="mb-5 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-lime">Sealing your Passport</p>
+              <Web3Passport holder={game.passport?.owner_id ?? game.accountId ?? ""} level={game.passport?.level ?? 3} graduated sealed={stampBurst} stampDelay={reduce ? undefined : 0} />
+              {stampBurst && !reduce && <CubeBurst className="left-[80%] top-[52%]" />}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -131,17 +182,19 @@ function ShopInner() {
   );
 }
 
-function TradeCard({ price, have, gold, shopOpen, onTraded }: { price: ItemPrice; have: number; gold: number; shopOpen: boolean; onTraded: (id: string) => void }) {
+const ITEM_PROP: Record<string, BloqProp> = { "key-fragment": "key", "fuel-cell": "fuel", "contract-seal": "scroll" };
+
+function TradeCard({ price, have, gold, shopOpen, onTraded }: { price: ItemPrice; have: number; gold: number; shopOpen: boolean; onTraded: (id: string, kind: "sell" | "buy") => void }) {
   const game = useGame();
   const [qty, setQty] = useState(1);
   const [tip, setTip] = useState(false);
   const id = price.token_id;
   const stock = Number(price.bloq_stock);
 
-  const act = async (fn: typeof game.sellToBloq) => {
+  const act = async (fn: typeof game.sellToBloq, kind: "sell" | "buy") => {
     try {
       await fn(id, qty);
-      onTraded(id);
+      onTraded(id, kind);
       setQty(1);
     } catch { /* coral toast shows the error */ }
   };
@@ -193,8 +246,8 @@ function TradeCard({ price, have, gold, shopOpen, onTraded }: { price: ItemPrice
           <span className="w-5 text-center font-display font-semibold tabular-nums" aria-live="polite">{qty}</span>
           <Press aria-label="More" disabled={qty >= 9} className="flex items-center justify-center disabled:opacity-30" onClick={() => setQty((q) => Math.min(9, q + 1))}><Plus className="h-4 w-4" /></Press>
         </div>
-        <Press disabled={!canSell} onClick={() => act(game.sellToBloq)} className="flex-1 rounded-full border-2 border-navy font-semibold disabled:opacity-30">Sell</Press>
-        <Press disabled={!canBuy} onClick={() => act(game.buyFromBloq)} className="flex-1 rounded-full bg-navy font-semibold text-ivory disabled:opacity-30">Buy</Press>
+        <Press disabled={!canSell} onClick={() => act(game.sellToBloq, "sell")} className="flex-1 rounded-full border-2 border-navy font-semibold disabled:opacity-30">Sell</Press>
+        <Press disabled={!canBuy} onClick={() => act(game.buyFromBloq, "buy")} className="flex-1 rounded-full bg-navy font-semibold text-ivory disabled:opacity-30">Buy</Press>
       </div>
     </article>
   );
