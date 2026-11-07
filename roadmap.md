@@ -1,4 +1,4 @@
-- [ ] Delay landing Passport entry by 500ms and cancel on scroll back.
-- [ ] Gate Season 2 on graduation, preserving stamped access.
-- [ ] Add Season 2 reveal and post-celebration navigation.
-- [ ] Reorder only the phone map and verify sandbox timing/layouts.
+- [x] Delay landing Passport entry by 500ms and cancel on scroll back.
+- [x] Gate Season 2 on graduation, preserving stamped access.
+- [x] Add Season 2 reveal and post-celebration navigation.
+- [x] Reorder only the phone map and verify sandbox timing/layouts.

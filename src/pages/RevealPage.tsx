@@ -142,7 +142,7 @@ function RevealInner({ season2 = false }: { season2?: boolean }) {
         </Beat>
         <Beat delay={2.1}>
           <Card icon={<ShieldCheck className="h-5 w-5" />} title="Your Passport">
-            {season2 && game.passport && <Web3Passport holder={game.passport.owner_id} level={game.passport.level} graduated={game.passport.graduated} stamps={game.passport.stamps} />}
+            {season2 && game.passport && <Web3Passport className="mb-5 max-w-none" holder={game.passport.owner_id} level={game.passport.level} graduated={game.passport.graduated} stamps={game.passport.stamps} />}
             <p className="text-sm text-muted-foreground">A non-transferable token at level {game.passport?.level}{graduated ? ", sealed as Graduate" : ""}{season2 ? ", with the Season 2 stamp." : "."}</p>
             <ExtLink href={game.explorer.passport(id)}>View Passport</ExtLink>
           </Card>
