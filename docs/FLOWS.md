@@ -174,6 +174,52 @@ stateDiagram-v2
         Non-transferable.
         Level and metadata updated on-chain at every step.
     end note
+    note left of L3
+        Season 2 stamp: added by core when the three
+        chapters are done (from level 3, graduated or not).
+        It is extra metadata, not a level.
+    end note
+```
+
+## User flow: Season 2 (built Nov 7)
+
+```mermaid
+flowchart TD
+    A[Season 1 done: the three founding quests] --> B[Bloq walks from the shop to the<br/>Season 2 card and sits on its edge]
+    B --> C[Player taps Start Season 2]
+    C --> D[Bloq jumps onto Network City<br/>the merchant goes behind his curtain]
+    D --> E[Chapter 04 Digital Ownership]
+    E --> F[Chapter 05 Transactions]
+    F --> G[Chapter 06 Decentralised Finance]
+    G --> H[The same transaction stamps the Passport]
+    H --> I[Passport office: the stamp moment,<br/>Stamped on NEAR, See your Passport]
+    I --> J[The reveal offers Play again]
+    E & F & G -.-> K[Each chapter: 50 gold + 1 item,<br/>Passport level unchanged, Ask Bloq inside]
+```
+
+## Sequence: the third chapter stamps the Passport
+
+```mermaid
+sequenceDiagram
+    actor U as Learner
+    participant W as Web app
+    participant R as Relayer
+    participant C as bloqvia-core
+    participant P as bloqvia-passport
+
+    U->>W: Answers chapter 06
+    W->>R: Signed delegate: complete_lesson(chapter-defi, answer)
+    R->>C: SignedDelegate transaction, relayer pays gas
+    C->>C: Season 1 done? answer hash matches? first time?
+    C->>C: mint 50 gold + 1 item, level unchanged (bonus quest)
+    C->>C: all three SEASON2_CHAPTERS done?
+    C->>P: add_stamp(learner, "season-2")
+    P->>P: caller is core? Passport exists? stamp not there yet?
+    P-->>C: extra = {level, graduated, stamps: ["season-2"]}
+    C-->>R: receipts
+    R-->>W: transaction hash
+    W-->>U: Stamp moment at the Passport office, explorer link
+    Note over C,P: resync_stamp(account) repeats the request if it ever failed, and it re-checks the three chapters
 ```
 
 ## Bloq's economy loop
