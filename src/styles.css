@@ -421,6 +421,8 @@ html.touch-sb::-webkit-scrollbar { display: none; }
   --season-stamp-glow: drop-shadow(0 0 6px rgb(212 240 51 / .35));
 }
 .season-map { container-type: inline-size; min-width: 0; }
+.journey-line { container-type: inline-size; min-width: 0; }
+@media (min-width: 1100px) { .journey-line h2 { font-size: min(2rem, 4.3cqi); } }
 .scard { display: flex; align-items: center; gap: 12px; padding: 10px 14px; min-width: 0; border: 1.5px solid var(--season-border); border-radius: 1.1rem; background: var(--season-fields); }
 .scard.season-2 { margin-top: 64px; scroll-margin-top: 96px; background: var(--season-city); }
 .scard.open { border-color: var(--lime); box-shadow: var(--season-glow); }

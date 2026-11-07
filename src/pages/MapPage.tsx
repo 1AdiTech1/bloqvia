@@ -78,6 +78,7 @@ function MapInner() {
   const thirdThisVisit = useRef(false);
   const celebrated = useRef(false);
   const pendingS1 = useRef(false);
+  const seated = useRef(false);
   const mounted = useRef(true);
   const startReady = useRef(false);
   const chapterCount = useRef(chaptersDone);
@@ -102,14 +103,18 @@ function MapInner() {
     return { x: Math.max(Math.min((gapL + b.left) / 2, b.left - 46), gapL + 16), y: r.top };
   };
   useEffect(() => {
-    if (!s1Done || started || (!reduce && pendingS1.current) || !startReady.current) return;
-    const perch = () => { const target = seat(); if (target) void trail.current?.perchAt(target, ASK, true, true); };
+    if (!(trailLevel >= 3 && !started && !pendingS1.current) || !startReady.current) return;
+    const perch = async () => { const target = seat(); if (target) { await trail.current?.perchAt(target, ASK, true, true); seated.current = true; } };
     const timer = setTimeout(perch, 450);
+    return () => clearTimeout(timer);
+  }, [trailLevel, started, reduce]);
+
+  useEffect(() => {
     let resizeTimer: ReturnType<typeof setTimeout>;
-    const resize = () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(perch, 200); };
+    const resize = () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (!seated.current) return; const target = seat(); if (target) void trail.current?.perchAt(target, ASK, true, true); }, 200); };
     window.addEventListener("resize", resize);
-    return () => { clearTimeout(timer); clearTimeout(resizeTimer); window.removeEventListener("resize", resize); };
-  }, [s1Done, started, reduce]);
+    return () => { clearTimeout(resizeTimer); window.removeEventListener("resize", resize); };
+  }, []);
 
   useEffect(() => {
     if (chaptersDone !== 3 || stamped) { setStampWaitExpired(false); return; }
@@ -123,17 +128,19 @@ function MapInner() {
   }, [chaptersDone, stamped, game.refresh]);
 
   useEffect(() => {
+    if (chaptersDone === 3 && s2Level < 3) thirdThisVisit.current = true;
+  }, [chaptersDone, s2Level]);
+
+  useEffect(() => {
     if (!arrivedOffice || !stamped || !thirdThisVisit.current || celebrated.current) return;
-    celebrated.current = true;
     setMoment(true);
-    const timer = setTimeout(() => { setMoment(false); trail2.current?.cheer("Stamped! Season 2 is on your Passport for good."); }, 2600);
+    const timer = setTimeout(() => { celebrated.current = true; setMoment(false); trail2.current?.cheer("Stamped! Season 2 is on your Passport for good."); }, 2600);
     return () => clearTimeout(timer);
   }, [arrivedOffice, stamped]);
 
   const arrived1 = (n: number) => {
     if (n !== 3 || started) return;
-    pendingS1.current = false;
-    requestAnimationFrame(() => requestAnimationFrame(() => { if (!mounted.current) return; const target = seat(); if (target) void trail.current?.perchAt(target, ASK, false, true); }));
+    requestAnimationFrame(() => requestAnimationFrame(async () => { if (!mounted.current) return; const target = seat(); if (target) { await trail.current?.perchAt(target, ASK, false, true); pendingS1.current = false; seated.current = true; } }));
   };
   const startSeason2 = async () => {
     if (!s1Done || IS_MOCK || startingRef.current) return false;
@@ -141,6 +148,7 @@ function MapInner() {
     const target = trail2.current?.entry();
     if (!target) return false;
     startingRef.current = true;
+    seated.current = false;
     setStarting(true);
     try { if (game.accountId) localStorage.setItem(`bloqvia:s2:${game.accountId}`, "1"); } catch { /* Keep start in memory when storage is unavailable. */ }
     const timer = setTimeout(() => { if (mounted.current) setCurtain(true); }, reduce ? 0 : 900);
@@ -198,6 +206,7 @@ function MapInner() {
   };
 
   const shopOpen = trailLevel >= 3;
+  const stampPendingMoment = (thirdThisVisit.current || (chaptersDone === 3 && s2Level < 3)) && !celebrated.current;
 
   return (
     <PhoneShell nav inlineHeader>
@@ -212,9 +221,12 @@ function MapInner() {
         <DailyQuestCard onPlay={openQuest} />
       </div>
 
-      <div className="order-4 dk:order-1 dk:col-span-2 dk:mb-5">
+      <div className="journey-line order-4 dk:order-1 dk:col-span-2 dk:mb-5">
         <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-lime dk:mt-0">Your journey</p>
-        <h2 className="mt-2 font-display text-2xl font-medium leading-tight tracking-[-0.03em] dk:text-[2rem]">Three quests. One merchant. A Passport that's yours.</h2>
+        <h2 className="mt-2 whitespace-nowrap font-display text-2xl font-medium leading-tight tracking-[-0.03em]">
+          <span className="dk:hidden">Two seasons. One Passport.</span>
+          <span className="hidden dk:inline">Six quests. Two seasons. A Passport that's yours.</span>
+        </h2>
       </div>
 
       <div className="season-map order-5 dk:order-3 dk:col-span-2">
@@ -250,7 +262,7 @@ function MapInner() {
         guideAt={started ? "here" : "gone"} intro={started} blockHeight={height}
         tip={(l, st) => l >= 3 ? "Season 2 done! Your Passport has its stamp." : `Welcome to Network City! Chapter 0${l + 4}: ${st[l]?.title}. Tap the glowing block.`}
         onPlay={(i) => void playChapter(i)} onArrived={(n) => { if (n === 3) setArrivedOffice(true); }}
-        door={<>{stamped && !moment ? <><p className="text-sm text-ivory"><span className="text-lime">✓</span> Stamped on NEAR · Season 2</p><Link to="/passport" className="tap inline-flex items-center rounded-full border-[1.5px] border-lime px-6 font-semibold text-lime">See your Passport</Link></> : <p className="text-sm text-lavender">{chaptersDone < 3 ? "Finish Season 2 to get your Passport stamp" : stampWaitExpired ? "Your stamp is on its way. Check back in a minute." : "Season 2 complete. Here comes your stamp…"}</p>}</>} />
+        door={<>{stamped && !moment && !stampPendingMoment ? <><p className="text-sm text-ivory"><span className="text-lime">✓</span> Stamped on NEAR · Season 2</p><Link to="/passport" className="tap inline-flex items-center rounded-full border-[1.5px] border-lime px-6 font-semibold text-lime">See your Passport</Link></> : <p className="text-sm text-lavender">{chaptersDone < 3 ? "Finish Season 2 to get your Passport stamp" : stampWaitExpired && !stampPendingMoment ? "Your stamp is on its way. Check back in a minute." : "Season 2 complete. Here comes your stamp…"}</p>}</>} />
         {moment && game.passport && <div className="season-stamp-moment" role="status" aria-label="Your Passport gets the Season 2 stamp"><Web3Passport holder={game.passport.owner_id} level={game.passport.level} graduated={game.passport.graduated} stamps={["season-2"]} slam={!reduce} />{game.lastTx && <a className="season-stamp-caption" href={game.lastTx.url} target="_blank" rel="noopener noreferrer">Stamped on NEAR · View transaction ↗</a>}</div>}
       </div>
       </div>
