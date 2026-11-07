@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Journey Line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* The map's "Your journey" heading with the two-season line, on one line, at the app's real column widths. */
+:root {
+  --night: #131f33; --navy: #16243a; --navy-2: #22324c; --ivory: #f7f4eb; --lime: #d4f033; --lav: #c9b8ec; --lavender: #c9a6f3;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--night); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased; padding: 28px 16px 64px; }
+.wrap { max-width: 1160px; margin: 0 auto; display: grid; gap: 26px; }
+header h1 { margin: 0; font: 600 26px/1.15 var(--display); letter-spacing: -.02em; }
+header p { margin: 8px 0 0; color: var(--lav); max-width: 84ch; }
+h2.sec { margin: 8px 0 0; font: 600 19px/1.25 var(--display); }
+.row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.frame { background: var(--navy); border-radius: 20px; padding: 22px 0 26px; overflow: hidden; max-width: 100%; }
+.frame .tag { display: block; padding: 0 20px 12px; font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--lavender); }
+.frame.desk .tag { padding-inline: 28px; }
+.col { padding: 0 20px; }
+.frame.desk .col { padding: 0 28px; }
+/* the heading block, as in MapPage: eyebrow + h2 */
+.journey { container-type: inline-size; }
+.journey .eb { margin: 0; font: 600 11px/1 var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--lime); }
+.journey h2 { margin: 8px 0 0; font-family: var(--display); font-weight: 500; line-height: 1.25; letter-spacing: -0.03em; }
+.journey.today h2 { font-size: 24px; }
+.frame.desk .journey.today h2 { font-size: 32px; }
+/* new: one line, as large as the column allows, never above today's 2rem */
+.journey.new h2 { white-space: nowrap; font-size: min(2rem, 4.3cqi); }
+.journey.short h2 { white-space: nowrap; font-size: 24px; }
+.frame.pick { box-shadow: 0 0 0 2px var(--lime); }
+.scard { margin-top: 18px; display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 1.1rem; border: 1.5px solid var(--lime); background: linear-gradient(90deg, #23344f, #1f2d47); }
+.scard i { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: rgb(212 240 51 / .12); color: var(--lime); font: 700 13px/1 var(--display); font-style: normal; flex: none; }
+.scard b { display: block; font: 500 15px/1.3 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scard small { display: block; font: 600 10px/1.4 var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--lime); }
+.frame.desk .scard { padding: 10px 14px; }
+.frame.desk .scard b { font-size: 15.5px; }
+.measure { margin: 10px 0 0; font: 500 11.5px/1.4 var(--mono); color: var(--lav); }
+.note { background: var(--navy-2); border-radius: 14px; padding: 14px 16px; color: var(--lav); font-size: 14px; max-width: 86ch; }
+.note b { color: var(--ivory); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>"Your journey" line for two seasons</h1>
+    <p>Desktop: the full line, <b>"Six quests. Two seasons. A Passport that's yours."</b>, on one line, sized to the map column (never bigger than today's 32px). Phones and tablets: a <b>shorter line at today's 24px</b>, also on one line. Two short lines to choose from: <b>A · "Six quests. Two seasons."</b> and <b>B · "Two seasons. One Passport."</b> Each frame is the app's real column width; the number under it is the font size and the line count.</p>
+  </header>
+
+  <h2 class="sec">Desktop (the centre column between the rail and the On NEAR panel)</h2>
+  <div class="row" id="desk"></div>
+
+  <h2 class="sec">Phones</h2>
+  <div class="row" id="phone"></div>
+
+  <h2 class="sec">Phones, option B</h2>
+  <div class="row" id="alt"></div>
+</div>
+<script>
+const LINE = "Six quests. Two seasons. A Passport that's yours.";
+const SHORT_A = "Six quests. Two seasons.";
+const SHORT_B = "Two seasons. One Passport.";
+const OLD = "Three quests. One merchant. A Passport that's yours.";
+const card = '<div class="scard"><i>✓</i><div><small>Season 1 · The Block Fields · 3/3</small><b>The Vault · The Fuel System · Smart Agreements</b></div></div>';
+const cardShort = '<div class="scard"><i>✓</i><div><small>Season 1 · The Block Fields · 3/3</small><b>Vault · Fuel · Agreements</b></div></div>';
+function frame(where, tag, contentW, kind, desk, short) {
+  const f = document.createElement('div');
+  f.className = 'frame' + (desk ? ' desk' : '');
+  const pad = desk ? 56 : 40;
+  f.style.width = (contentW + pad) + 'px';
+  const text = kind === 'today' ? OLD : kind === 'short' ? short : LINE;
+  f.innerHTML = `<span class="tag">${tag}</span><div class="col"><div class="journey ${kind}"><p class="eb">Your journey</p><h2>${text}</h2></div>${desk && contentW > 600 ? card : cardShort}<p class="measure"></p></div>`;
+  document.getElementById(where).appendChild(f);
+  return f;
+}
+const frames = [
+  frame('desk', 'Desktop 1440px · column 704px', 704, 'new', true),
+  frame('desk', 'Desktop 1100px · column 494px', 494, 'new', true),
+  frame('desk', 'Today · desktop 1440px', 704, 'today', true),
+  frame('phone', 'A · Phone 430px', 390, 'short', false, SHORT_A),
+  frame('phone', 'A · Phone 390px', 350, 'short', false, SHORT_A),
+  frame('phone', 'A · Phone 360px', 320, 'short', false, SHORT_A),
+  frame('phone', 'Today · phone 390px', 350, 'today', false),
+  frame('alt', 'B · Phone 430px', 390, 'short', false, SHORT_B),
+  frame('alt', 'B · Phone 390px', 350, 'short', false, SHORT_B),
+  frame('alt', 'B · Phone 360px', 320, 'short', false, SHORT_B),
+];
+const report = () => frames.forEach((f) => {
+  const h = f.querySelector('h2'), col = f.querySelector('.journey');
+  const fs = parseFloat(getComputedStyle(h).fontSize);
+  const lines = Math.round(h.getBoundingClientRect().height / (fs * 1.25));
+  const fits = h.scrollWidth <= col.clientWidth + 1;
+  f.querySelector('.measure').textContent = `${fs.toFixed(1)}px · ${lines} line${lines > 1 ? 's' : ''}${fits ? '' : ' · overflows'}`;
+});
+document.fonts.ready.then(report); window.addEventListener('resize', report); setTimeout(report, 800);
+</script>
+</body>
+</html>

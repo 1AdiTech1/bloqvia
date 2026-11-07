@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { DailyCap, KNOWLEDGE, MAX_ANSWER_CHARS, SYSTEM_PROMPT, buildMessages, cleanAnswer, questContextFor, validateQuestion } from "../src/ask.js";
+import { DailyCap, KNOWLEDGE, MAX_ANSWER_CHARS, SYSTEM_PROMPT, QUEST_RULE, buildMessages, cleanAnswer, questContextFor, validateQuestion } from "../src/ask.js";
 
 test("cleanAnswer drops leaked thinking, unwraps JSON and caps at a sentence end", () => {
   assert.equal(cleanAnswer("<think>hmm</think>  Gas is the fee.  It pays the computers. "), "Gas is the fee. It pays the computers.");
@@ -53,4 +53,13 @@ test("quest context: daily quests and Season 2 chapters from chain, never foundi
   assert.equal(await questContextFor(ctx, "the-vault", cache), null);
   assert.equal(await questContextFor(ctx, "chapter-defi", cache), null);
   assert.ok(KNOWLEDGE.includes("Season 2"));
+});
+
+test("asking from inside a quest adds the rule: no option named, an outside example, a question back", () => {
+  const inQuest = buildMessages("Explain this another way", "Title: Transactions\nQuestion: Who signed it?\nOptions: The relayer / Your key");
+  assert.ok(inQuest[1]!.content.includes(QUEST_RULE));
+  assert.match(QUEST_RULE, /don't repeat or reword any option/);
+  assert.ok(inQuest[1]!.content.indexOf(QUEST_RULE) < inQuest[1]!.content.indexOf("Question: Explain"), "the rule comes before the learner's question");
+  const outside = buildMessages("What is gas?", null);
+  assert.ok(!outside[1]!.content.includes(QUEST_RULE), "general questions are unchanged");
 });

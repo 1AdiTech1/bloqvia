@@ -101,9 +101,13 @@ export function validateQuestion(q: unknown): string {
 }
 
 /** The messages for one question. `questContext` is the public text of the quest the player is on (never its answer). */
+/** Extra rule when the learner asks from inside a quest: explain, never point at an option. */
+export const QUEST_RULE =
+  "Don't say which option is right, and don't repeat or reword any option. Explain the idea with an everyday example that is not about this question, then end with one short question that helps them pick for themselves.";
+
 export function buildMessages(question: string, questContext: string | null): ChatMessage[] {
   const user = questContext
-    ? `The learner is looking at this quest (its answer is not available to you):\n${questContext}\n\nQuestion: ${question}`
+    ? `The learner is looking at this quest (its answer is not available to you):\n${questContext}\n\n${QUEST_RULE}\n\nQuestion: ${question}`
     : `Question: ${question}`;
   return [
     { role: "system", content: SYSTEM_PROMPT },
