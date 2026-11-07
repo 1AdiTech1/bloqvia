@@ -11,6 +11,11 @@
 //! 2. Its level lives in on-chain metadata (NEP-177 `extra`, as JSON) and is
 //!    updated by `set_level` / `graduate`, which only `bloqvia-core` may call.
 //! 3. There is no method that lets the owner change a level by hand.
+//! 4. Season stamps (e.g. `season-2`) are added by `add_stamp`, which only
+//!    `bloqvia-core` may call, and core only calls it once the learner has
+//!    completed that season's chapters. A stamp is added once and never removed.
+//!    Stamps live under their own storage key, outside the contract struct,
+//!    so adding them needed no state migration.
 //!
 //! Threat model for transfer, as the nfts track asks: the only way to move a
 //! Passport is a transfer, and every transfer path runs through the hook that
@@ -31,6 +36,13 @@ use near_sdk_contract_tools::nft::{
 enum StorageKey {
     Levels,
     Graduates,
+    Stamps,
+}
+
+/// Season stamps per learner. Not a field of `Contract` (so the deployed state
+/// keeps its layout); opened on demand under its own prefix.
+fn stamps_map() -> LookupMap<AccountId, Vec<String>> {
+    LookupMap::new(StorageKey::Stamps)
 }
 
 /// Transfer hook that refuses every transfer.
@@ -49,6 +61,7 @@ pub struct PassportView {
     pub owner_id: AccountId,
     pub level: u8,
     pub graduated: bool,
+    pub stamps: Vec<String>,
 }
 
 #[derive(Nep171, Nep177, PanicOnDefault)]
@@ -84,7 +97,7 @@ impl Contract {
         self.require_core();
         let token_id = account_id.to_string();
         let owner: &AccountIdRef = &account_id;
-        self.mint_with_metadata(&token_id, owner, &Self::metadata_for(0, false))
+        self.mint_with_metadata(&token_id, owner, &Self::metadata_for(0, false, &[]))
             .unwrap_or_else(|e| env::panic_str(&format!("mint: {e}")));
         self.levels.insert(account_id, 0);
     }
@@ -96,7 +109,7 @@ impl Contract {
         let token_id = account_id.to_string();
         require!(self.token_owner(&token_id).is_some(), "No Passport for this account");
         let graduated = self.graduates.contains(&account_id);
-        self.set_token_metadata(&token_id, &Self::metadata_for(level, graduated))
+        self.set_token_metadata(&token_id, &Self::metadata_for(level, graduated, &Self::stamps_of(&account_id)))
             .unwrap_or_else(|e| env::panic_str(&format!("metadata: {e}")));
         self.levels.insert(account_id, level);
     }
@@ -107,9 +120,34 @@ impl Contract {
         let token_id = account_id.to_string();
         require!(self.token_owner(&token_id).is_some(), "No Passport for this account");
         let level = self.levels.get(&account_id).copied().unwrap_or(0);
-        self.set_token_metadata(&token_id, &Self::metadata_for(level, true))
+        self.set_token_metadata(&token_id, &Self::metadata_for(level, true, &Self::stamps_of(&account_id)))
             .unwrap_or_else(|e| env::panic_str(&format!("metadata: {e}")));
         self.graduates.insert(account_id);
+    }
+
+    /// Adds a season stamp (e.g. "season-2"). Only `bloqvia-core`, which checks the
+    /// learner finished that season first. Adding a stamp the Passport already has
+    /// changes nothing, so core can safely retry.
+    pub fn add_stamp(&mut self, account_id: AccountId, stamp: String) {
+        self.require_core();
+        require!(
+            !stamp.is_empty() && stamp.len() <= 32 && stamp.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-'),
+            "Stamp must be a short lowercase id"
+        );
+        let token_id = account_id.to_string();
+        require!(self.token_owner(&token_id).is_some(), "No Passport for this account");
+        let mut map = stamps_map();
+        let mut list = map.get(&account_id).cloned().unwrap_or_default();
+        if list.contains(&stamp) {
+            return;
+        }
+        list.push(stamp);
+        map.insert(account_id.clone(), list.clone());
+        map.flush();
+        let level = self.levels.get(&account_id).copied().unwrap_or(0);
+        let graduated = self.graduates.contains(&account_id);
+        self.set_token_metadata(&token_id, &Self::metadata_for(level, graduated, &list))
+            .unwrap_or_else(|e| env::panic_str(&format!("metadata: {e}")));
     }
 
     /// Lets the owner point the Passport at a redeployed core contract. It
@@ -126,6 +164,7 @@ impl Contract {
             owner_id,
             level: self.levels.get(&account_id).copied().unwrap_or(0),
             graduated: self.graduates.contains(&account_id),
+            stamps: Self::stamps_of(&account_id),
         })
     }
 
@@ -142,7 +181,11 @@ impl Contract {
         );
     }
 
-    fn metadata_for(level: u8, graduated: bool) -> TokenMetadata {
+    fn stamps_of(account_id: &AccountId) -> Vec<String> {
+        stamps_map().get(account_id).cloned().unwrap_or_default()
+    }
+
+    fn metadata_for(level: u8, graduated: bool, stamps: &[String]) -> TokenMetadata {
         let title = if graduated {
             "Bloqvia Passport — Graduate".to_string()
         } else {
@@ -151,7 +194,13 @@ impl Contract {
         TokenMetadata::new()
             .title(title)
             .description("Proof of what this learner has done on Bloqvia. Non-transferable.")
-            .extra(format!(r#"{{"level":{level},"graduated":{graduated}}}"#))
+            .extra(if stamps.is_empty() {
+                // Unchanged for Passports without stamps.
+                format!(r#"{{"level":{level},"graduated":{graduated}}}"#)
+            } else {
+                let list = stamps.iter().map(|s| format!("\"{s}\"")).collect::<Vec<_>>().join(",");
+                format!(r#"{{"level":{level},"graduated":{graduated},"stamps":[{list}]}}"#)
+            })
     }
 }
 
@@ -248,6 +297,63 @@ mod tests {
         as_caller(core());
         c.mint_passport(alice());
         c.mint_passport(alice());
+    }
+
+    #[test]
+    fn core_adds_a_stamp_once_and_it_survives_level_changes() {
+        let mut c = deployed();
+        as_caller(core());
+        c.mint_passport(alice());
+        c.set_level(alice(), 3);
+        c.graduate(alice());
+        c.add_stamp(alice(), "season-2".into());
+        c.add_stamp(alice(), "season-2".into()); // a retry changes nothing
+        let p = c.get_passport(alice()).unwrap();
+        assert_eq!(p.stamps, vec!["season-2".to_string()]);
+        let meta = c.token_metadata(&alice().to_string()).unwrap();
+        assert_eq!(meta.extra.as_deref(), Some(r#"{"level":3,"graduated":true,"stamps":["season-2"]}"#));
+        c.set_level(alice(), 3); // a later resync keeps the stamp
+        let meta = c.token_metadata(&alice().to_string()).unwrap();
+        assert!(meta.extra.unwrap().contains(r#""stamps":["season-2"]"#));
+    }
+
+    #[test]
+    #[should_panic(expected = "Only bloqvia-core")]
+    fn owner_cannot_stamp() {
+        let mut c = deployed();
+        as_caller(core());
+        c.mint_passport(alice());
+        as_caller(owner());
+        c.add_stamp(alice(), "season-2".into());
+    }
+
+    #[test]
+    #[should_panic(expected = "Only bloqvia-core")]
+    fn learner_cannot_stamp_themselves() {
+        let mut c = deployed();
+        as_caller(core());
+        c.mint_passport(alice());
+        as_caller(alice());
+        c.add_stamp(alice(), "season-2".into());
+    }
+
+    #[test]
+    #[should_panic(expected = "No Passport for this account")]
+    fn no_stamp_without_a_passport() {
+        let mut c = deployed();
+        as_caller(core());
+        c.add_stamp(alice(), "season-2".into());
+    }
+
+    #[test]
+    fn passport_without_stamps_reads_as_before() {
+        let mut c = deployed();
+        as_caller(core());
+        c.mint_passport(alice());
+        c.set_level(alice(), 1);
+        assert!(c.get_passport(alice()).unwrap().stamps.is_empty());
+        let meta = c.token_metadata(&alice().to_string()).unwrap();
+        assert_eq!(meta.extra.as_deref(), Some(r#"{"level":1,"graduated":false}"#));
     }
 
     #[test]

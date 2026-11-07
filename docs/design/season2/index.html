@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bloqvia Season 2 Stamp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="preview.css">
+<style>
+/* Season 2 ending at the Passport office, and the stamped Passport. Real trail component; Passport card copied from the landing (.lv-pass). */
+:root {
+  --night: #131f33; --navy: #16243a; --navy-soft: #23344f; --navy-2: #22324c; --ivory: #f7f4eb; --lime: #d4f033; --lime-d: #a6c21a;
+  --lav: #c9b8ec; --lavender: #c9a6f3; --purple: #8b45d9; --purple-d: #6630b3; --muted: #4f5b6e;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--night); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased; padding: 28px 16px 64px; }
+.wrap { max-width: 1160px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 52px; }
+header h1 { margin: 0; font: 600 26px/1.15 var(--display); letter-spacing: -.02em; }
+header p { margin: 8px 0 0; color: var(--lav); max-width: 80ch; }
+section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; }
+.hd { display: flex; gap: 14px; align-items: baseline; }
+.no { font: 700 13px/1 var(--mono); color: var(--navy); background: var(--lime); border-radius: 8px; padding: 6px 8px; flex: none; }
+.hd h2 { margin: 0; font: 600 19px/1.25 var(--display); letter-spacing: -.01em; }
+.hd p { margin: 4px 0 0; color: var(--lav); font-size: 14.5px; max-width: 86ch; }
+.eb { margin: 0; font: 600 11px/1 var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--lime); }
+.mono { font-family: var(--mono); font-size: .92em; }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+
+.demo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.hint { font-size: 13.5px; color: var(--lav); }
+.seg { display: inline-flex; flex-wrap: wrap; padding: 4px; border-radius: 999px; background: var(--navy-2); justify-self: start; }
+.seg button { border: 0; background: transparent; color: var(--lav); font: 600 13.5px/1 var(--display); padding: 10px 14px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ivory); color: var(--navy); }
+.stage { min-width: 0; background: radial-gradient(90% 40% at 50% 0%, #2a2f55, #1b2742 70%); border-radius: 22px; padding: 20px 16px 36px; display: flex; justify-content: center; }
+.mapcol { position: relative; max-width: 100%; }
+.door-p { margin: 0; font-size: 14px; color: var(--lav); }
+.door-p.ok { color: var(--lime); font-weight: 600; }
+.door-btn { display: inline-block; margin-top: 2px; padding: 12px 20px; border: 0; border-radius: 999px; background: var(--lime); color: var(--navy); font: 600 15px/1 var(--display); cursor: pointer; min-height: 44px; }
+.door-btn:disabled { opacity: .7; cursor: progress; }
+.door-btn.ghost { background: transparent; color: var(--lime); box-shadow: inset 0 0 0 1.5px var(--lime); }
+.gate { margin: 0 0 6px; display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border-radius: 1.4rem; background: var(--navy-soft); border: 1.5px solid var(--lime); box-shadow: 0 0 30px -10px rgb(212 240 51 / .5); position: relative; z-index: 3; }
+.gate .g-ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--lime); color: var(--navy); font-weight: 700; flex: none; }
+.gate b { display: block; margin-top: 6px; font: 500 17px/1.25 var(--display); }
+.gate small { display: block; margin-top: 4px; font-size: 13px; color: var(--lav); }
+
+/* the stamp moment over the office */
+.moment { position: absolute; left: 50%; bottom: 150px; z-index: 20; transform: translateX(-50%); display: grid; justify-items: center; gap: 8px; animation: m-in .45s cubic-bezier(.34,1.4,.64,1) both; }
+.moment p { margin: 0; font-size: 12.5px; color: var(--ivory); background: rgb(13 22 38 / .85); padding: 6px 10px; border-radius: 999px; }
+@keyframes m-in { from { opacity: 0; transform: translateX(-50%) translateY(24px) scale(.7); } to { opacity: 1; transform: translateX(-50%); } }
+
+/* Passport card (from styles.css .lv-pass) */
+.pwrap { width: min(420px, 100%); perspective: 900px; }
+.pwrap.small { width: min(300px, 84vw); }
+.lv-pass { display: block; position: relative; width: 100%; aspect-ratio: 1.5; border-radius: 20px; overflow: hidden;
+  background: radial-gradient(120% 90% at 0% 0%, #2b3d63 0%, transparent 55%), radial-gradient(90% 80% at 100% 100%, #3a2170 0%, transparent 60%), #111c30;
+  border: 1.5px solid rgb(212 240 51 / .55); box-shadow: 0 0 0 4px rgb(255 255 255 / .9), 6px 8px 0 4px rgb(201 166 243 / .45), 0 22px 36px -22px rgb(22 36 58 / .5); color: var(--ivory); }
+.lv-pass .guil { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .22; }
+.lv-pass .holo { position: absolute; inset: -40%; background: linear-gradient(115deg, transparent 30%, rgb(212 240 51 / .28) 40%, rgb(180 127 240 / .38) 47%, rgb(120 220 255 / .28) 54%, rgb(255 255 255 / .18) 58%, transparent 68%); mix-blend-mode: screen; animation: holo 6s ease-in-out infinite; pointer-events: none; }
+.lv-pass .prow { position: absolute; display: flex; align-items: center; gap: 8px; }
+.lv-pass .brandrow { left: 7%; top: 9%; } .lv-pass .brandrow svg { width: 22px; height: 21px; } .lv-pass .brandrow b { font: 600 15px/1 var(--display); letter-spacing: -0.02em; }
+.lv-pass .kind { right: 7%; top: 10%; font: 700 9px/1 var(--mono); letter-spacing: .22em; color: var(--lime); }
+.lv-pass .chipic { position: absolute; left: 7%; top: 25%; width: 13%; aspect-ratio: 1.25; border-radius: 6px; background: linear-gradient(135deg, #f1fb9a, #c9e12e 45%, #93ab12); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .25); }
+.lv-pass .fields { position: absolute; left: 7%; right: 33%; top: 43%; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.lv-pass .fields .wide { grid-column: 1 / -1; }
+.lv-pass .fields span { display: grid; gap: 2px; min-width: 0; }
+.lv-pass .fields small { font: 500 7.5px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgb(247 244 235 / .55); }
+.lv-pass .fields i { font: 600 11px/1.15 var(--display); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pwrap:not(.small) .lv-pass .fields i { font-size: 13px; } .pwrap:not(.small) .lv-pass .fields small { font-size: 8.5px; }
+.lv-pass .seal { position: absolute; right: 6%; top: 28%; width: 30%; aspect-ratio: 1; }
+.lv-pass .seal .spinner { transform-origin: 50% 50%; animation: spin 14s linear infinite; }
+.lv-pass .mrz { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 7% 7px; background: rgb(0 0 0 / .28); font: 500 8.4px/1.35 var(--mono); letter-spacing: .12em; color: rgb(247 244 235 / .78); white-space: nowrap; overflow: hidden; }
+.lv-pass .scan { position: absolute; left: 0; right: 0; height: 30%; top: -30%; background: linear-gradient(180deg, transparent, rgb(212 240 51 / .14), transparent); animation: scan 4.5s ease-in-out infinite; pointer-events: none; }
+@keyframes holo { 0%,100% { translate: -18% 0; } 50% { translate: 18% 0; } }
+@keyframes scan { 0%, 55% { top: -30%; } 85%, 100% { top: 100%; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+/* the new stamp */
+.lv-pass .stamp { position: absolute; left: 49%; top: 57%; width: 38%; transform: rotate(-9deg); transform-origin: 50% 50%; z-index: 2; mix-blend-mode: screen; filter: drop-shadow(0 0 6px rgb(212 240 51 / .35)); }
+.lv-pass .stamp.slam { animation: slam .7s cubic-bezier(.2,.9,.3,1.2) .35s both; }
+@keyframes slam { 0% { opacity: 0; transform: scale(2.4) rotate(-28deg); } 55% { opacity: 1; transform: scale(.9) rotate(-8deg); } 72% { transform: scale(1.05) rotate(-9.5deg); } 100% { opacity: 1; transform: scale(1) rotate(-9deg); } }
+.lv-pass.shake { animation: shake .35s ease-out .72s both; }
+@keyframes shake { 0%, 100% { transform: none; } 30% { transform: translateY(3px) scale(.99); } 60% { transform: translateY(-1px); } }
+@media (prefers-reduced-motion: reduce) { .lv-pass .holo, .lv-pass .scan, .lv-pass .spinner, .lv-pass .stamp.slam, .lv-pass.shake, .moment { animation: none; } }
+
+/* section 2 */
+.pdemo { display: grid; gap: 18px; }
+.prow2 { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; padding: 26px 22px; border-radius: 22px; background: #efe7fb; }
+.chainbox { flex: 1 1 300px; min-width: 0; display: grid; gap: 10px; color: var(--navy); }
+.chainbox .eb { color: var(--purple-d); }
+.chainbox pre { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--navy); color: var(--lime); font: 500 12.5px/1.5 var(--mono); white-space: pre-wrap; word-break: break-all; }
+.chainbox .small { margin: 0; font-size: 13.5px; color: var(--muted); }
+.stamps { display: grid; gap: 8px; padding: 14px; border-radius: 14px; background: #fff; }
+.stamps ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.stamps li { display: flex; gap: 10px; align-items: center; font: 500 14.5px/1.3 var(--display); }
+.stamps em { margin-left: auto; font: 500 12px var(--mono); font-style: normal; color: var(--muted); }
+.stamps .dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: #ece8dc; color: var(--muted); font-size: 13px; flex: none; }
+.stamps .dot.ok { background: var(--lime); color: var(--navy); }
+
+.how { display: grid; gap: 10px; max-width: 92ch; margin: 0; padding-left: 20px; color: var(--lav); font-size: 14.5px; }
+.how b { color: var(--ivory); font-weight: 600; }
+.how code { font: 500 12.5px var(--mono); color: var(--ivory); background: rgb(247 244 235 / .08); padding: 1px 5px; border-radius: 5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Season 2 ends at the Passport office</h1>
+    <p>Season 1 ends at Bloq's shop. Season 2's road, below the gate, ends at the <b>Passport office</b> (<code>passport.bloqvia.testnet</code> on the plate), where Bloq the officer stamps your Passport. The map below is the real component: press <b>▶ Finish chapter 06</b> and watch Bloq walk to the office, the stamp land and both Bloqs cheer.</p>
+  </header>
+
+  <section>
+    <div class="hd"><span class="no">1</span><div><h2>The road and the stamp moment</h2>
+      <p>There is no extra button: the right answer to the third chapter is the transaction that stamps the Passport (the core contract asks the passport contract in the same transaction). Back on the map, Bloq walks to the office, your Passport pops up over it, the stamp slams down, and both Bloqs cheer. Afterwards the door says "✓ Stamped on NEAR · Season 2" and links to your Passport and to that transaction.</p></div></div>
+    <div id="season2"></div>
+  </section>
+
+  <section>
+    <div class="hd"><span class="no">2</span><div><h2>The stamped Passport</h2>
+      <p>The same card as today, with the Season 2 stamp across it and "Seasons 1 · 2" in the fields. On the Passport page there's a row per season, and the stamp's transaction opens on the explorer.</p></div></div>
+    <div id="passport"></div>
+  </section>
+
+  <section>
+    <div class="hd"><span class="no">3</span><div><h2>Under the hood (after your "go")</h2></div></div>
+    <ol class="how">
+      <li><b>core:</b> <code>chapter-</code> ids count as bonus quests: they pay BloqGold and an item and never change the Passport level. They are refused until Season 1's three quests are done. When the last of the three chapters is completed, <code>complete_lesson</code> asks the passport contract for the stamp in the same transaction. That way every player's existing key works (a new method would not be on their key's allow-list). <code>resync_stamp(account_id)</code> repeats the request if a stamp ever failed to land; anyone can call it, and it still checks the three chapters.</li>
+      <li><b>passport:</b> a new <code>add_stamp</code> that <b>only core can call</b>. It adds <code>"season-2"</code> once, so a second call changes nothing. The stamp shows in the token's on-chain metadata (<code>extra</code>). Stamps are kept in their own storage map, so the contract needs no migration and existing Passports read exactly as before.</li>
+      <li><b>Tests:</b> core 36 (chapters pay but don't level; chapters wait for Season 1; the third chapter stamps; a daily quest never stamps; resync refused early and allowed after), passport 11 (core stamps once and it survives level changes; the owner and the learner can't stamp; no stamp without a Passport; a Passport without stamps reads as before).</li>
+      <li><b>Then:</b> two code-only redeploys and the chapter seed (your go-ahead), and one Lovable prompt for the seasons map, the stamp moment, the Passport card and page, the Reveal buttons and the landing line.</li>
+    </ol>
+  </section>
+</div>
+<script src="preview.js"></script>
+</body>
+</html>

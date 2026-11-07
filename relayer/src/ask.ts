@@ -13,7 +13,7 @@
  */
 import { chat, extractJson, fetchSignature, signatureMatches, type AiConfig, type ChatMessage } from "./ai.js";
 import { PolicyError, RateLimiter } from "./policy.js";
-import { DAILY_PREFIX } from "./quests.js";
+import { CHAPTER_PREFIX, DAILY_PREFIX } from "./quests.js";
 import { view, type NearContext } from "./near.js";
 
 export const MAX_QUESTION_CHARS = 300;
@@ -32,6 +32,7 @@ export const KNOWLEDGE = `BLOQVIA
 - Graduation needs Passport level 3, one of each item, and a fee equal to Bloq's current price; it seals the Passport.
 - Community streak: one check-in per account per 'day' (10 minutes on testnet); if the community reaches the day's target (2 check-ins) everyone who checked in is minted 10 STREAK tokens (NEP-141); if it misses, 100 STREAK are burned from the treasury and the streak resets. The rule is the contract's, with no admin key.
 - Daily quest: once a day an AI agent on NEAR AI Cloud writes one bonus quest. The relayer validates it, stores its text and the model's signature on the contract, and stores only a hash of the answer. A daily quest pays 50 gold and 1 item and does not change the Passport level. The chain checks the answer, not the AI.
+- Season 2 (after the three founding quests): three chapters, Digital Ownership (tokens, NFTs, soulbound), Transactions (who signs, who pays) and Decentralised Finance (markets run by contracts, like Bloq's price rule). Each pays 50 gold and 1 item and does not change the Passport level. The contract refuses them until the founding quests are done. Completing the third chapter also stamps the Passport with "season-2" in the same transaction; only the game contract can add a stamp.
 - A wrong quiz answer is rejected by the contract itself ("Wrong answer"); the app only shows the contract's message.
 - The cohort board (Cohort tab): a Sputnik DAO on testnet (bloqvia-dao.sputnik-v2.testnet, council of Bloqvia's founders) owns a bounty board. A bounty is a small task with a reward in testnet NEAR and a requirement the chain checks against the game contract: Passport level, a quest completed, or graduated. Small bounties are paid at once by the board from an allowance the DAO funded; medium ones become a DAO proposal that one council vote approves; large ones are only certified by the board and go through the DAO's normal proposal. Claiming is free (the relayer pays gas). If the requirement is not met, the claim is refused by the contract and can be tried again later. Nobody moves money by hand; the board holds no key to the DAO.
 
@@ -53,7 +54,7 @@ NEAR BASICS
 
 export const SYSTEM_PROMPT = `You are Bloq, the merchant in Bloqvia, answering a learner's question in the game. Calm, concrete, adult; plain words; one everyday analogy is welcome. Answer in at most four short sentences, plain text, no lists, no markdown.
 Use only the FACTS below. If the question is not covered by them, say in one sentence that you do not know that one yet and name two things you can explain (keys, gas, smart contracts, Bloq's prices, the Passport, the streak, today's quest, the cohort board).
-Never give the answer to any quest, founding or daily: explain the idea behind it instead and let the learner choose.
+Never give the answer to any quest, founding, daily or chapter: explain the idea behind it instead and let the learner choose.
 Never talk about money, investing, token prices, or what anything is worth; gold and items here are game pieces on a test network. Never invent balances, prices or transactions: you cannot see the player's account.
 
 FACTS
@@ -61,7 +62,7 @@ ${KNOWLEDGE}`;
 
 export interface AskRequest {
   question: string;
-  /** The quest the player is looking at, if any (founding id or daily-YYYY-MM-DD). */
+  /** The quest the player is looking at, if any (founding id, daily-YYYY-MM-DD or a chapter- id). */
   lessonId?: string;
 }
 
@@ -135,9 +136,9 @@ interface LessonWithText {
   text: string | null;
 }
 
-/** Public text of a daily quest from chain, cached briefly; founding lessons are already in KNOWLEDGE. */
+/** Public text of a daily quest or a Season 2 chapter from chain, cached briefly; founding lessons are already in KNOWLEDGE. */
 export async function questContextFor(ctx: NearContext, lessonId: string | undefined, cache: { at: number; items: LessonWithText[] }): Promise<string | null> {
-  if (!lessonId || !lessonId.startsWith(DAILY_PREFIX)) return null;
+  if (!lessonId || !(lessonId.startsWith(DAILY_PREFIX) || lessonId.startsWith(CHAPTER_PREFIX))) return null;
   if (Date.now() - cache.at > 5 * 60_000) {
     cache.items = await view<LessonWithText[]>(ctx, ctx.config.coreContractId, "get_lessons_with_text");
     cache.at = Date.now();

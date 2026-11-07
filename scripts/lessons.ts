@@ -24,6 +24,9 @@ export interface LessonSource {
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const LESSONS_SRC = resolve(ROOT, "src/content/lessons.json");
 export const LESSONS_PUBLIC = resolve(ROOT, "src/content/lessons.public.json");
+/** Season 2 chapters: bonus quests (chapter- ids) whose public text is stored on chain. */
+export const CHAPTERS_SRC = resolve(ROOT, "src/content/chapters.json");
+export const CHAPTERS_PUBLIC = resolve(ROOT, "src/content/chapters.public.json");
 
 /** hex(sha256("{lesson_id}|{answer.trim().toLowerCase()}")) — same as the contract. */
 export function answerHash(lessonId: string, answer: string): string {
@@ -33,6 +36,17 @@ export function answerHash(lessonId: string, answer: string): string {
 export function loadLessons(): LessonSource[] {
   const json = JSON.parse(readFileSync(LESSONS_SRC, "utf8")) as { lessons: LessonSource[] };
   return json.lessons;
+}
+
+export function loadChapters(): LessonSource[] {
+  const json = JSON.parse(readFileSync(CHAPTERS_SRC, "utf8")) as { lessons: LessonSource[] };
+  return json.lessons;
+}
+
+/** The public text a chapter carries on chain (set_lesson_text): everything except the answer and the rewards. */
+export function chapterText(l: LessonSource): string {
+  const { title, topic, concept, question, options, success, near_reveal, explanation } = l;
+  return JSON.stringify({ title, topic, concept, question, options, success, near_reveal, explanation: explanation ?? "" });
 }
 
 /** The exact JSON `add_lesson` takes. */

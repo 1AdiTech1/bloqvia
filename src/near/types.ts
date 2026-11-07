@@ -49,6 +49,8 @@ export interface PassportView {
   owner_id: string;
   level: number;
   graduated: boolean;
+  /** Season stamps, e.g. ["season-2"]. Empty for a Passport with none (and on the pre-Season-2 contract). */
+  stamps: string[];
 }
 
 export interface RegisterResult {
@@ -88,6 +90,9 @@ export interface DailyQuest {
   reward_gold: string; reward_item: string; reward_item_amount: string;
   generated_by: GeneratedBy;
 }
+
+/** A Season 2 chapter: same shape as a daily quest, written by us (no model provenance). */
+export type Chapter = Omit<DailyQuest, "generated_by">;
 
 /** POST /ask — what the model said and how to verify that it said it. */
 export interface AskResult {

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bloqvia Seasons Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="preview.css">
+<style>
+/* Season cards, the walk around the blocks, Bloq waiting on the Season 2 card, the jump over it, and the Reveal buttons. Real trail component. */
+:root {
+  --night: #131f33; --navy: #16243a; --navy-soft: #23344f; --navy-2: #22324c; --ivory: #f7f4eb; --lime: #d4f033;
+  --lav: #c9b8ec; --lavender: #c9a6f3; --purple: #8b45d9; --coral: #f5a58b;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--night); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased; padding: 28px 16px 64px; }
+.wrap { max-width: 1160px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 30px; }
+header h1 { margin: 0; font: 600 26px/1.15 var(--display); letter-spacing: -.02em; }
+header p { margin: 8px 0 0; color: var(--lav); max-width: 84ch; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.notes div { background: var(--navy-2); border-radius: 14px; padding: 14px 16px; font-size: 13.8px; color: var(--lav); }
+.notes b { display: block; font: 600 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--lime); margin-bottom: 8px; }
+.notes em { color: var(--ivory); font-style: normal; font-weight: 600; }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+h2.sec { margin: 22px 0 0; font: 600 19px/1.25 var(--display); }
+
+.demo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; position: sticky; top: 8px; z-index: 30; }
+.seg { display: inline-flex; flex-wrap: wrap; padding: 4px; border-radius: 999px; background: var(--navy-2); box-shadow: 0 8px 20px rgb(0 0 0 / .35); }
+.seg button { border: 0; background: transparent; color: var(--lav); font: 600 13.5px/1 var(--display); padding: 10px 14px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ivory); color: var(--navy); }
+.stage { min-width: 0; background: #1b2742; border-radius: 22px; padding: 24px 16px 60px; display: flex; justify-content: center; }
+.mapcol { position: relative; max-width: 100%; }
+.door-p { margin: 0; font-size: 14px; color: var(--lav); }
+.door-btn { display: inline-block; margin-top: 2px; padding: 12px 20px; border-radius: 999px; background: var(--lime); color: var(--navy); font: 600 15px/1 var(--display); }
+.bloq-trail-wrap.dim .bloq-trail { opacity: .55; filter: saturate(.6); }
+
+/* the season cards: one slim two-line card per season */
+.mapcol { container-type: inline-size; }
+.scard { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 1.1rem; position: relative; z-index: 3; border: 1.5px solid rgb(247 244 235 / .14); }
+.scard.s1 { background: linear-gradient(90deg, #23344f, #1f2d47); }
+.scard.s2 { margin-top: 64px; background: linear-gradient(90deg, #23344f, #2c2058); }
+.scard.open, .scard.done { border-color: var(--lime); box-shadow: 0 0 24px -12px rgb(212 240 51 / .45); }
+.scard.locked { border: 1.5px dashed rgb(201 166 243 / .5); }
+.scard .g-ico { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--navy); color: var(--lavender); font: 700 14px/1 var(--display); flex: none; }
+.scard.open .g-ico, .scard.done .g-ico { color: var(--navy); background: var(--lime); }
+.scard .g-txt { flex: 1 1 auto; min-width: 0; }
+.scard .eb { margin: 0; font: 600 10.5px/1.2 var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--lime); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scard.s2 .eb { color: #e8beff; }
+.scard .eb .prog { color: var(--lav); }
+.scard b { display: block; margin-top: 4px; font: 500 15.5px/1.25 var(--display); letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scard .short { display: none; }
+.g-btn { border: 0; border-radius: 999px; min-height: 40px; padding: 0 16px; background: var(--lime); color: var(--navy); font: 600 14.5px/1 var(--display); cursor: pointer; flex: none; animation: g-pulse 1.8s ease-in-out infinite; }
+.g-btn:disabled { animation: none; opacity: .75; cursor: default; }
+@keyframes g-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgb(212 240 51 / .5); } 50% { box-shadow: 0 0 0 8px rgb(212 240 51 / 0); } }
+@media (prefers-reduced-motion: reduce) { .g-btn { animation: none; } }
+@container (max-width: 480px) {
+  .scard .long { display: none; } .scard .short { display: inline; }
+  .scard .g-ico { width: 26px; height: 26px; font-size: 12px; }
+  .scard b { font-size: 15px; }
+  .scard .eb { letter-spacing: .1em; font-size: 10px; }
+  .scard { gap: 10px; padding: 10px 12px; }
+}
+.mapcol > .bloq-trail-wrap { margin-top: 16px; } /* the app's mt-4 */
+/* as in the app today (styles.css, prompt 13): phones show the block pill above each road; from 1100px it lives in the On NEAR panel instead */
+.mapcol.desk .bloq-trail-wrap > .bloq-ticker { display: none; }
+
+/* Reveal page */
+.reveals { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 18px; }
+.rv { background: radial-gradient(120% 80% at 50% 0%, #26304f, #1b2742); border-radius: 22px; padding: 22px 22px 26px; display: grid; gap: 14px; }
+.rv .tag { font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--lavender); }
+.rv .eb { margin: 0; font: 600 11px/1 var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--lime); }
+.rv ol { margin: 0; padding: 0 0 0 18px; list-style: none; border-left: 1px solid rgb(247 244 235 / .16); display: grid; gap: 12px; }
+.rv li { position: relative; font: 500 14.5px/1.35 var(--display); }
+.rv li::before { content: ""; position: absolute; left: -25px; top: 2px; width: 13px; height: 13px; border-radius: 4px; background: var(--lime); box-shadow: 0 0 0 2px var(--navy); }
+.rv li.new::before { background: #e8beff; }
+.rv li a { display: block; margin-top: 3px; font: 600 12.5px/1 var(--display); color: var(--lime); text-decoration: none; }
+.rv li.new a { color: #e8beff; }
+.rv .thanks { margin: 6px 0 0; text-align: center; font: 500 17px/1.3 var(--display); }
+.rv .btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.rv .b1 { min-height: 44px; padding: 0 20px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; background: var(--lime); color: var(--navy); font: 600 15px/1 var(--display); border: 0; }
+.rv .b2 { min-height: 44px; padding: 0 20px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--lavender); font: 600 15px/1 var(--display); border: 1.5px solid rgb(201 166 243 / .55); }
+.rv .note { margin: 0; font-size: 12.5px; color: var(--lav); text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Seasons on the map: cards, walking, waiting, jumping</h1>
+    <p>This is the real map component. It opens with Season 1 done: Bloq is <b>sitting on the Season 2 card's edge</b>, waiting just left of the Start button, like on the "Start without a wallet" card. Press <b>Start Season 2 ↓</b> and he jumps over the card onto Digital Ownership. <b>▶ Walk Season 1 from the start</b> shows him walking the road and round every block. <b>▶ Finish quest 3</b> shows the last stretch, the cheer at the shop, and his walk down to the card, where he sits on the edge.</p>
+  </header>
+  <div class="notes">
+    <div><b>1 · Season cards</b>One slim card per season, two lines, both naming the season's three blocks: <em>"Season 1 · The Block Fields · 3/3"</em> over "The Vault · The Fuel System · Smart Agreements", and "Season 2 · Network City" over "Digital ownership · Transactions · Decentralised finance". No block number. Phones get the short line ("Vault · Fuel · Agreements", "Ownership · Tx · DeFi").</div>
+    <div><b>2 · Walking, never hopping</b>He walks the road facing where he's going, leaves it just before each block and <em>walks round it</em> to his spot beside it (left of The Fuel System, right of Smart Agreements), then walks back onto the road after it. He walks round the shop's left side to the door. No hops anywhere, phones included.</div>
+    <div><b>4 · Walking to the card, sitting on its edge</b>After the cheer at the shop he walks down the left of the shop (clear of its text), steps onto the Season 2 card's top edge and walks along it to <em>just left of the Start button</em>. Then he sits down on the edge exactly as on the "Start without a wallet" card: he lowers by a fifth of his height in 420ms, with only his shoes over the front. Once seated he faces right, laughs, his eyes follow your pointer, and tapping him gives the same little bounce. "Ready for Season 2? Press Start and I'll jump in!" <em>The only jump is when you press Start.</em></div>
+  </div>
+  <div id="seasons"></div>
+
+  <h2 class="sec">3 · The Reveal page after each season</h2>
+  <div class="reveals">
+    <div class="rv">
+      <span class="tag">After Season 1 (graduated, Season 2 not done)</span>
+      <p class="eb">What happened</p>
+      <ol>
+        <li>You tapped Start: a NEAR account was created for you, and Bloqvia's relayer paid for it<a href="#">View transaction ↗</a></li>
+        <li>Quests "The Vault", "The Fuel System", "Smart Agreements": rewards minted to your account<a href="#">View transactions ↗</a></li>
+        <li>Your trades with Bloq, settled by his smart contract<a href="#">View transaction ↗</a></li>
+        <li>Graduation: your Passport was sealed<a href="#">View transaction ↗</a></li>
+      </ol>
+      <p class="thanks">Season 1 done. Everything you earned is yours.</p>
+      <div class="btns"><span class="b2">← Back to the map</span><span class="b1">Continue your journey →</span></div>
+      <p class="note">"Continue your journey" goes to the map and scrolls to the Season 2 card, where Bloq is waiting.</p>
+    </div>
+    <div class="rv">
+      <span class="tag">After Season 2 (stamped)</span>
+      <p class="eb">What happened</p>
+      <ol>
+        <li>You tapped Start: a NEAR account was created for you, and Bloqvia's relayer paid for it<a href="#">View transaction ↗</a></li>
+        <li>Season 1 quests and your trades with Bloq<a href="#">View transactions ↗</a></li>
+        <li>Graduation: your Passport was sealed<a href="#">View transaction ↗</a></li>
+        <li class="new">Chapters "Digital Ownership", "Transactions", "Decentralised Finance": rewards minted<a href="#">View transactions ↗</a></li>
+        <li class="new">Season 2 stamp: added to your Passport by the Passport office<a href="#">View transaction ↗</a></li>
+      </ol>
+      <p class="thanks">Both seasons done. Thanks for playing. Everything you earned is yours.</p>
+      <div class="btns"><span class="b1">← Back to the map</span><span class="b2">Play again</span></div>
+      <p class="note">"Play again" only appears once both seasons are finished.</p>
+    </div>
+  </div>
+</div>
+<script src="preview.js"></script>
+</body>
+</html>

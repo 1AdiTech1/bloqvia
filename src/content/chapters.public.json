@@ -1,0 +1,61 @@
+{
+  "lessons": [
+    {
+      "lesson_id": "chapter-ownership",
+      "title": "Digital Ownership",
+      "topic": "Tokens and NFTs",
+      "concept": "Owning something digital means the shared ledger records it under your account, not in one company's database. Some tokens are alike and can be swapped one for another, like your gold. Some are one of a kind (NFTs). And some can't be moved at all.",
+      "question": "Your Bloqvia Passport is soulbound. What does that mean?",
+      "options": [
+        "It can never be sent or sold to another account",
+        "Bloqvia can take it back whenever it wants",
+        "It only exists while the app is open"
+      ],
+      "reward_gold": "50",
+      "reward_item": "key-fragment",
+      "reward_item_amount": "1",
+      "success": "+50 gold and 1 Key Fragment minted to your account. Same ledger, same rules as your Passport.",
+      "near_reveal": "Your items are NEP-245 multi-tokens in core.bloqvia.testnet, and your Passport is a NEP-171 NFT in passport.bloqvia.testnet. Both are recorded under your account name, and anyone can look them up on the explorer.",
+      "explanation": "Not that one. Soulbound means it stays with your account for good: the contract refuses every transfer and has no way to burn it. Nobody can sell you one or take yours. Try again.",
+      "answer_hash": "551bd79d536b853efe01624e00a9ef91d97082b3bfbbe271a649c9f939a49d49"
+    },
+    {
+      "lesson_id": "chapter-transactions",
+      "title": "Transactions",
+      "topic": "Signed instructions",
+      "concept": "A transaction is a signed instruction: who sends it, which contract it calls and what to do. The signature proves it came from your key, so nobody can change it on the way. Validators put it in a block, and within about two seconds it's final.",
+      "question": "The relayer paid the gas for your last quest. Who signed it?",
+      "options": [
+        "The relayer, because it paid",
+        "Your account's key, kept in this browser",
+        "Nobody: quests don't need a signature"
+      ],
+      "reward_gold": "50",
+      "reward_item": "fuel-cell",
+      "reward_item_amount": "1",
+      "success": "+50 gold and 1 Fuel Cell. You signed that answer; the relayer only paid for it.",
+      "near_reveal": "Open any of your transactions from the On NEAR panel. The outer transaction is the relayer's, and inside it is a delegate action signed by your account (NEP-366). The relayer can pay for it, but it can't change a word.",
+      "explanation": "Paying and signing are different jobs. The relayer only wraps your signed instruction and pays the gas. The signature comes from your account's key in this browser. Try again.",
+      "answer_hash": "d261d46324f0f5e484fb30d33425924b8a4fb8b7a7e737b96763ea6a11d94b98"
+    },
+    {
+      "lesson_id": "chapter-defi",
+      "title": "Decentralised Finance",
+      "topic": "Markets run by contracts",
+      "concept": "Decentralised finance (DeFi) means money tools run by smart contracts instead of banks: swapping, lending, saving. Many exchanges have no order book. A pool sets the price with a formula based on what it holds. Bloq's shop works the same way.",
+      "question": "Lots of players sell Fuel Cells to Bloq. What happens to the price he pays for the next one?",
+      "options": [
+        "It goes down",
+        "It goes up",
+        "It stays the same, because a person sets it"
+      ],
+      "reward_gold": "50",
+      "reward_item": "contract-seal",
+      "reward_item_amount": "1",
+      "success": "+50 gold and 1 Contract Seal, minted by the same rule as every reward.",
+      "near_reveal": "The price rule is in pricing.rs, inside core.bloqvia.testnet: the more of an item Bloq holds, the less he pays for it. Sell one in the shop and watch his price drop. BloqGold is test gold for playing, not money.",
+      "explanation": "The other way round. Every Fuel Cell sold adds to Bloq's stock, and his rule pays less for what he already has plenty of. Try again.",
+      "answer_hash": "ce83b1a2542fac1fa1263bdfe748f503316b0a8e67d7f0edb949b557abcbcba4"
+    }
+  ]
+}

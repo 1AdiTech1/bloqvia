@@ -130,7 +130,7 @@
 .bloq-ticker b { color: var(--ivory); font-weight: 700; font-variant-numeric: tabular-nums; }
 .bloq-ticker i { width: 7px; height: 7px; border-radius: 2px; background: var(--lime); transform: rotate(45deg); animation: bq-tick .5s cubic-bezier(.34,1.56,.64,1); }
 @keyframes bq-tick { 40% { transform: rotate(45deg) scale(1.7); box-shadow: 0 0 8px #d4f033; } }
-.bloq-trail { position: relative; margin-top: 18px; }
+.bloq-trail { position: relative; margin-top: 46px; } /* room for the first block's number above the road, clear of a season card or the block pill */
 .bloq-trail .world { position: absolute; inset: -14px -16px -10px; overflow: hidden; pointer-events: none; border-radius: 28px;
   -webkit-mask-image: radial-gradient(130% 90% at 50% 50%, #000 55%, transparent 100%); mask-image: radial-gradient(130% 90% at 50% 50%, #000 55%, transparent 100%); }
 .bloq-trail .world::before { content: ""; position: absolute; inset: 0; background-image: repeating-linear-gradient(30deg, rgb(201 166 243 / .075) 0 1px, transparent 1px 30px), repeating-linear-gradient(150deg, rgb(201 166 243 / .075) 0 1px, transparent 1px 30px); }
@@ -181,6 +181,10 @@
 @keyframes bq-charge-bar { 0% { opacity: .25; } 50% { opacity: 1; } }
 .bloq-trail .stop.avail .dial { transform-box: fill-box; transform-origin: 50% 50%; animation: bq-dial 4s ease-in-out infinite; }
 @keyframes bq-dial { 0%, 100% { transform: rotate(0); } 40% { transform: rotate(80deg); } 70% { transform: rotate(-30deg); } }
+.bloq-trail .stop.avail .seal { transform-box: fill-box; transform-origin: 50% 50%; animation: bq-seal 2.4s ease-in-out infinite; }
+@keyframes bq-seal { 0%, 70%, 100% { transform: none; } 80% { transform: scale(1.2); } }
+.bloq-trail .stop.avail .curve { stroke-dasharray: 90; animation: bq-curve 3.2s ease-in-out infinite; }
+@keyframes bq-curve { 0% { stroke-dashoffset: 90; } 60%, 100% { stroke-dashoffset: 0; } }
 .bloq-trail .lbl { padding: 5px 8px; border-radius: 7px; background: rgb(13 22 38 / .78); font: 600 11px/1 "Space Grotesk", ui-sans-serif, system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; color: rgb(247 244 235 / .92); }
 .bloq-trail .stop.locked .lbl { color: rgb(201 166 243 / .7); }
 .bloq-trail .post { font: 500 9.5px/1 "JetBrains Mono", ui-monospace, monospace; letter-spacing: .04em; padding: 4px 7px; border-radius: 6px; background: rgb(13 22 38 / .85); border: 1px solid rgb(201 166 243 / .28); color: #c9b8ec; white-space: nowrap; }
@@ -203,6 +207,42 @@
 .bloq-trail .arch .awn { position: absolute; left: -2px; right: -2px; top: -2px; height: 18px; z-index: 3; background: repeating-linear-gradient(90deg, #d4f033 0 16px, #8b45d9 16px 32px); opacity: 0; transition: opacity .5s 1s;
   clip-path: polygon(0 0, 100% 0, 100% 60%, 94% 100%, 88% 60%, 82% 100%, 76% 60%, 70% 100%, 64% 60%, 58% 100%, 52% 60%, 46% 100%, 40% 60%, 34% 100%, 28% 60%, 22% 100%, 16% 60%, 10% 100%, 4% 60%, 0 100%); }
 .bloq-trail .door.open .arch .awn { opacity: 1; }
+
+/* Season 2 world: the network city at dusk (violet sky, skyline, RPC nodes, coins floating up) */
+.w-city .bloq-trail .world { background: linear-gradient(180deg, #2a1d52 0%, #22204a 38%, #1b2742 100%); }
+.w-city .bloq-trail .world::before { background-image: radial-gradient(rgb(201 166 243 / .16) 1px, transparent 1.4px); background-size: 22px 22px; }
+.w-city .bloq-trail .world::after { background: radial-gradient(50% 22% at 70% 8%, rgb(232 121 249 / .16), transparent 70%), radial-gradient(40% 25% at 20% 45%, rgb(139 69 217 / .2), transparent 70%), radial-gradient(45% 25% at 60% 88%, rgb(212 240 51 / .08), transparent 70%); }
+.w-city .bloq-trail .skyline { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 34%; opacity: .75; }
+.w-city .bloq-trail .skyline .win { fill: rgb(201 166 243 / .22); }
+.w-city .bloq-trail .skyline .win.on { fill: rgb(212 240 51 / .55); animation: bq-win 7s ease-in-out infinite; }
+@keyframes bq-win { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+.w-city .bloq-trail .tower small { color: rgb(232 190 255 / .65); }
+.w-city .bloq-trail .chunk.coin { width: 11px; height: 11px; border-radius: 50%; transform: none; border: 1.5px solid rgb(212 240 51 / .55); background: rgb(212 240 51 / .1); }
+.w-city .bloq-trail .chunk.coin.l { border-color: rgb(232 121 249 / .55); background: rgb(232 121 249 / .12); border-radius: 3px; width: 13px; height: 9px; }
+.w-city .bloq-trail .p-rim { stroke: rgb(232 121 249 / .3); }
+.w-city .bloq-trail .p-base { stroke: #2a2350; }
+.w-city .bloq-trail .p-tiles { stroke: #3d3270; }
+.w-city .bloq-trail .lamp circle.dot { fill: #b98be6; }
+.w-city .bloq-trail .lamp line { stroke: #4a3c7e; }
+
+/* Seated guide tapped: the same little bounce as on the sign-in card */
+.bloq-trail .bq-sit-bounce { transform-origin: 50% 75%; animation: bq-sit-bounce .9s cubic-bezier(.3,.7,.4,1); }
+@keyframes bq-sit-bounce { 0% { transform: none; } 25% { transform: scale(1.06, .92); } 55% { transform: scale(.96, 1.06) rotate(-3deg); } 80% { transform: scale(1.01, .99); } 100% { transform: none; } }
+
+/* The merchant gone in behind his curtain; he peeks out on hover, focus or tap */
+.bloq-trail .arch .curtain { position: absolute; inset: -2px; z-index: 2; border-radius: inherit; overflow: hidden; pointer-events: none; }
+.bloq-trail .arch .curtain i { position: absolute; top: 0; bottom: 0; width: 51%; transform: scaleX(0); transition: transform .7s cubic-bezier(.5,0,.2,1);
+  background: repeating-linear-gradient(90deg, #6630b3 0 8px, #8b45d9 8px 13px, #6630b3 13px 19px); box-shadow: inset 0 -16px 18px -10px rgb(0 0 0 / .45); }
+.bloq-trail .arch .curtain i::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 8px; background: repeating-linear-gradient(90deg, #d4f033 0 5px, transparent 5px 9px); }
+.bloq-trail .arch .curtain .l { left: 0; transform-origin: 0 50%; }
+.bloq-trail .arch .curtain .r { right: 0; transform-origin: 100% 50%; }
+.bloq-trail .door.curtained .arch .curtain i { transform: scaleX(1); }
+.bloq-trail .door.curtained.peek .arch .curtain i { transform: scaleX(.2); transition-duration: .5s; }
+.bloq-trail .door.curtained .arch .merchant { transform: translateX(-50%) translateY(55%); transition: transform .6s cubic-bezier(.34,1.56,.64,1); }
+.bloq-trail .door.curtained.peek .arch .merchant { transform: translateX(-50%) translateY(0); transition-delay: .12s; }
+.bloq-trail .door.curtained .arch-wrap { cursor: pointer; border-radius: 56px 56px 10px 10px; }
+.bloq-trail .door.curtained .arch-wrap:focus-visible { outline: 2px solid #d4f033; outline-offset: 4px; }
+.bloq-trail .host-say { bottom: calc(100% + 18px); left: 50%; }
 .bloq-trail .spark { position: absolute; width: 9px; height: 9px; border-radius: 2px; background: #d4f033; border: 1.5px solid #121a28; z-index: 5; pointer-events: none; }
 .bloq-trail .spark.p { background: #c9a6f3; }
 @media (prefers-reduced-motion: reduce) {

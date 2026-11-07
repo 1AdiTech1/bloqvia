@@ -24,7 +24,10 @@ export const views = {
   pricing: () => view<PricingParams>(NEAR_CONFIG.coreContractId, "get_pricing"),
   learner: (accountId: string) => view<LearnerView>(NEAR_CONFIG.coreContractId, "get_learner", { account_id: accountId }),
   passport: (accountId: string) =>
-    view<PassportView | null>(NEAR_CONFIG.passportContractId, "get_passport", { account_id: accountId }),
+    view<PassportView | null>(NEAR_CONFIG.passportContractId, "get_passport", { account_id: accountId }).then(
+      // the passport contract before Season 2 has no `stamps` field
+      (p) => (p ? { ...p, stamps: p.stamps ?? [] } : null),
+    ),
   /** Every lesson with its public text; bonus (daily) quests carry the AI provenance. */
   lessonsWithText: () => view<LessonWithText[]>(NEAR_CONFIG.coreContractId, "get_lessons_with_text"),
   /** Module A: null when core has no streak contract set (module not deployed). */

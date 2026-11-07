@@ -14,6 +14,8 @@ import { GAS_30, ZERO, view, type NearContext } from "./near.js";
 
 export const ITEMS = ["key-fragment", "fuel-cell", "contract-seal"] as const;
 export const DAILY_PREFIX = "daily-";
+/** Season 2 chapters (seeded by scripts/seed-lessons.ts, not by the agent); Ask Bloq reads their text too. */
+export const CHAPTER_PREFIX = "chapter-";
 export const DAILY_REWARD_GOLD = "50";
 export const DAILY_REWARD_ITEM_AMOUNT = "1";
 export const MAX_TEXT_BYTES = 4096; // must match core::MAX_LESSON_TEXT_BYTES

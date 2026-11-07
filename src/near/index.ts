@@ -9,6 +9,7 @@ export { useBloqvia } from "./useBloqvia";
 export type { Bloqvia, BloqviaState, TxEntry } from "./useBloqvia";
 export { useStreak } from "./useStreak";
 export { useDailyQuests, parseDailyQuest } from "./useDailyQuests";
+export { useChapters, parseChapter, season2Done, SEASON2_CHAPTERS, SEASON2_STAMP } from "./useChapters";
 export { useAskBloq } from "./useAskBloq";
 export { useFinalBlock, fetchFinalBlockHeight } from "./useFinalBlock";
 export { humanError } from "./errors";
@@ -16,5 +17,6 @@ export { useBounties, unmet as bountyUnmet, statusLabel as claimStatusLabel } fr
 export type { BountiesStore, BountiesState, DaoView } from "./useBounties";
 export type { AskBloqState } from "./useAskBloq";
 export type { DailyQuestsStore, DailyQuestsState } from "./useDailyQuests";
+export type { ChaptersStore, ChaptersState, ChapterId } from "./useChapters";
 export type { StreakStore, StreakState } from "./useStreak";
 export * from "./types";

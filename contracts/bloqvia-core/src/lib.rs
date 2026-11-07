@@ -47,6 +47,7 @@ pub trait Passport {
     fn mint_passport(&mut self, account_id: AccountId);
     fn set_level(&mut self, account_id: AccountId, level: u8);
     fn graduate(&mut self, account_id: AccountId);
+    fn add_stamp(&mut self, account_id: AccountId, stamp: String);
 }
 
 /// Cross-contract interface of `bloqvia-streak` (Module A, optional).
@@ -83,6 +84,15 @@ const BOUNTIES_ID_KEY: &[u8] = b"bounties_id";
 /// but do not count toward the Passport level, which is reserved for the
 /// three founding quests, so the shop and graduation rules are unchanged.
 pub const BONUS_PREFIX: &str = "daily-";
+
+/// Season 2 chapters are bonus quests too: same rewards rule, no Passport level.
+pub const CHAPTER_PREFIX: &str = "chapter-";
+
+/// The three Season 2 chapters. Completing the last of the three stamps the
+/// learner's Passport with `season-2`, in the same transaction (so it works for
+/// every learner key, old ones included: no new method is needed).
+pub const SEASON2_CHAPTERS: [&str; 3] = ["chapter-ownership", "chapter-transactions", "chapter-defi"];
+pub const SEASON2_STAMP: &str = "season-2";
 
 /// Public lesson text (concept, question, options, explanation, and the
 /// AI signature for generated quests) lives under its own storage key per
@@ -329,6 +339,13 @@ impl Contract {
             "Wrong answer"
         );
 
+        // Season 2 opens after Season 1: chapters need the three founding quests.
+        require!(
+            !lesson_id.starts_with(CHAPTER_PREFIX)
+                || self.completed_count.get(&learner).copied().unwrap_or(0) as usize >= ITEMS.len(),
+            "Finish Season 1 first"
+        );
+
         let key = completion_key(&learner, &lesson_id);
         require!(self.completions.insert(key), "Lesson already completed");
 
@@ -364,7 +381,12 @@ impl Contract {
         );
 
         if bonus {
-            PromiseOrValue::Value(())
+            // The last of the three Season 2 chapters: stamp the Passport in this transaction.
+            if SEASON2_CHAPTERS.contains(&lesson_id.as_str()) && self.season2_done(&learner) {
+                PromiseOrValue::Promise(self.send_stamp(learner))
+            } else {
+                PromiseOrValue::Value(())
+            }
         } else {
             PromiseOrValue::Promise(self.sync_passport(learner, level))
         }
@@ -480,6 +502,16 @@ impl Contract {
             )
     }
 
+    /// Re-sends the Season 2 stamp for `account_id` if, and only if, that account has
+    /// completed all three Season 2 chapters here. Anyone can call it; the Passport
+    /// adds a stamp once, so it is idempotent. It exists so a failed cross-contract
+    /// call can never leave a finished learner without their stamp.
+    pub fn resync_stamp(&mut self, account_id: AccountId) -> Promise {
+        require!(self.learners.contains(&account_id), "Not a registered learner");
+        require!(self.season2_done(&account_id), "Finish the three Season 2 chapters first");
+        self.send_stamp(account_id)
+    }
+
     /// Re-sends the learner's level to the Passport from this contract's own
     /// record. Anyone can call it; it is idempotent and exists so a failed
     /// cross-contract call can never leave a Passport behind.
@@ -575,7 +607,7 @@ impl Contract {
     }
 
     /// Every lesson with its public text (None for the founding three, whose
-    /// text ships with the app). Bonus quests are the ones starting `daily-`.
+    /// text ships with the app). Bonus quests are the ones starting `daily-` or `chapter-`.
     pub fn get_lessons_with_text(&self) -> Vec<LessonWithText> {
         self.lessons
             .values()
@@ -671,6 +703,25 @@ impl Contract {
             .unwrap_or_else(|e| env::panic_str(&format!("transfer: {e}")));
     }
 
+    fn season2_done(&self, account_id: &AccountId) -> bool {
+        SEASON2_CHAPTERS.iter().all(|id| self.completions.contains(&completion_key(account_id, id)))
+    }
+
+    fn send_stamp(&self, account_id: AccountId) -> Promise {
+        log_event(
+            "stamp_requested",
+            &near_sdk::serde_json::json!({ "account_id": account_id, "stamp": SEASON2_STAMP }),
+        );
+        ext_passport::ext(self.passport_id.clone())
+            .with_static_gas(GAS_PASSPORT_CALL)
+            .add_stamp(account_id.clone(), SEASON2_STAMP.to_string())
+            .then(
+                Self::ext(env::current_account_id())
+                    .with_static_gas(GAS_PASSPORT_CALLBACK)
+                    .on_passport_synced(account_id, u8::MAX),
+            )
+    }
+
     fn sync_passport(&self, account_id: AccountId, level: u8) -> Promise {
         ext_passport::ext(self.passport_id.clone())
             .with_static_gas(GAS_PASSPORT_CALL)
@@ -684,7 +735,7 @@ impl Contract {
 }
 
 fn is_bonus(lesson_id: &str) -> bool {
-    lesson_id.starts_with(BONUS_PREFIX)
+    lesson_id.starts_with(BONUS_PREFIX) || lesson_id.starts_with(CHAPTER_PREFIX)
 }
 
 fn lesson_text_key(lesson_id: &str) -> Vec<u8> {
@@ -1036,6 +1087,117 @@ mod tests {
         assert_eq!(c.balance_of(ITEMS[1], &alice()), 1);
         assert!(v.completed.contains(&"daily-2026-11-06".to_string()));
         assert!(c.is_completed(alice(), "daily-2026-11-06".into()));
+    }
+
+    /// Alice finishes Season 1 (the three founding quests).
+    fn finish_season1(c: &mut Contract) {
+        for id in ["lesson-1", "lesson-2", "lesson-3"] {
+            as_caller(alice());
+            let _ = c.complete_lesson(id.into(), "public key".into());
+        }
+    }
+
+    /// The three Season 2 chapters, and Alice through Season 1 so she may play them.
+    fn add_chapters(c: &mut Contract) {
+        finish_season1(c);
+        as_caller(owner());
+        for (i, id) in SEASON2_CHAPTERS.iter().enumerate() {
+            c.add_lesson(Lesson {
+                lesson_id: id.to_string(),
+                title: format!("Chapter {}", i + 4),
+                answer_hash: answer_hash(id, "Yes"),
+                reward_gold: U128(50),
+                reward_item: ITEMS[i].to_string(),
+                reward_item_amount: U128(1),
+            });
+        }
+    }
+
+    #[test]
+    fn chapters_pay_but_do_not_level() {
+        let mut c = deployed();
+        add_chapters(&mut c);
+        for id in SEASON2_CHAPTERS {
+            as_caller(alice());
+            let _ = c.complete_lesson(id.into(), "yes".into());
+        }
+        let v = c.get_learner(alice());
+        assert_eq!(v.level, 3, "chapters never raise the Passport level");
+        assert_eq!(v.gold.0, 300 + 150);
+        for item in ITEMS {
+            assert_eq!(c.balance_of(item, &alice()), 3 + 1);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "Finish Season 1 first")]
+    fn chapters_wait_for_season1() {
+        let mut c = deployed();
+        as_caller(owner());
+        c.add_lesson(Lesson {
+            lesson_id: "chapter-ownership".into(),
+            title: "Chapter 4".into(),
+            answer_hash: answer_hash("chapter-ownership", "Yes"),
+            reward_gold: U128(50),
+            reward_item: ITEMS[0].to_string(),
+            reward_item_amount: U128(1),
+        });
+        as_caller(alice());
+        let _ = c.complete_lesson("chapter-ownership".into(), "yes".into());
+    }
+
+    #[test]
+    fn the_third_chapter_stamps_the_passport() {
+        let mut c = deployed();
+        add_chapters(&mut c);
+        as_caller(alice());
+        let r = c.complete_lesson("chapter-ownership".into(), "yes".into());
+        assert!(matches!(r, PromiseOrValue::Value(())), "one chapter: no stamp yet");
+        as_caller(alice());
+        let r = c.complete_lesson("chapter-defi".into(), "yes".into());
+        assert!(matches!(r, PromiseOrValue::Value(())), "two chapters: no stamp yet");
+        as_caller(alice());
+        let r = c.complete_lesson("chapter-transactions".into(), "yes".into());
+        assert!(matches!(r, PromiseOrValue::Promise(_)), "the third chapter calls the Passport");
+        let logs = near_sdk::test_utils::get_logs();
+        assert!(logs.iter().any(|l| l.contains("stamp_requested") && l.contains("season-2")), "{logs:?}");
+    }
+
+    #[test]
+    fn a_daily_quest_never_stamps() {
+        let mut c = deployed();
+        add_chapters(&mut c);
+        add_daily(&mut c, "daily-2026-11-07");
+        for id in ["chapter-ownership", "chapter-transactions"] {
+            as_caller(alice());
+            let _ = c.complete_lesson(id.into(), "yes".into());
+        }
+        as_caller(alice());
+        let r = c.complete_lesson("daily-2026-11-07".into(), "true".into());
+        assert!(matches!(r, PromiseOrValue::Value(())));
+    }
+
+    #[test]
+    #[should_panic(expected = "Finish the three Season 2 chapters first")]
+    fn resync_stamp_refused_before_the_three_chapters() {
+        let mut c = deployed();
+        add_chapters(&mut c);
+        as_caller(alice());
+        let _ = c.complete_lesson("chapter-ownership".into(), "yes".into());
+        as_caller(accounts(5)); // anyone may call it, but it checks the learner's record
+        let _ = c.resync_stamp(alice());
+    }
+
+    #[test]
+    fn resync_stamp_after_the_three_chapters() {
+        let mut c = deployed();
+        add_chapters(&mut c);
+        for id in SEASON2_CHAPTERS {
+            as_caller(alice());
+            let _ = c.complete_lesson(id.into(), "yes".into());
+        }
+        as_caller(accounts(5));
+        let _ = c.resync_stamp(alice());
     }
 
     #[test]

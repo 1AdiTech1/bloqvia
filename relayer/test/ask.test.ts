@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { DailyCap, KNOWLEDGE, MAX_ANSWER_CHARS, SYSTEM_PROMPT, buildMessages, cleanAnswer, validateQuestion } from "../src/ask.js";
+import { DailyCap, KNOWLEDGE, MAX_ANSWER_CHARS, SYSTEM_PROMPT, buildMessages, cleanAnswer, questContextFor, validateQuestion } from "../src/ask.js";
 
 test("cleanAnswer drops leaked thinking, unwraps JSON and caps at a sentence end", () => {
   assert.equal(cleanAnswer("<think>hmm</think>  Gas is the fee.  It pays the computers. "), "Gas is the fee. It pays the computers.");
@@ -34,4 +34,23 @@ test("the daily cap resets at UTC midnight", () => {
   assert.throws(() => cap.take(d1), /enough for today/);
   cap.take(new Date("2026-11-06T00:00:01Z"));
   assert.equal(cap.remaining, 1);
+});
+
+test("quest context: daily quests and Season 2 chapters from chain, never founding or unknown ids", async () => {
+  const text = JSON.stringify({ title: "Transactions", concept: "A signed instruction.", question: "Who signed it?", options: ["The relayer", "Your key"] });
+  // fresh cache, so no RPC call is made
+  const cache = {
+    at: Date.now(),
+    items: [
+      { lesson: { lesson_id: "chapter-transactions", title: "Transactions" }, bonus: true, text },
+      { lesson: { lesson_id: "daily-2026-11-07", title: "Daily" }, bonus: true, text },
+    ],
+  };
+  const ctx = {} as Parameters<typeof questContextFor>[0];
+  const ch = await questContextFor(ctx, "chapter-transactions", cache);
+  assert.ok(ch?.includes("Question: Who signed it?") && ch.includes("Options: The relayer / Your key"), String(ch));
+  assert.ok(await questContextFor(ctx, "daily-2026-11-07", cache));
+  assert.equal(await questContextFor(ctx, "the-vault", cache), null);
+  assert.equal(await questContextFor(ctx, "chapter-defi", cache), null);
+  assert.ok(KNOWLEDGE.includes("Season 2"));
 });
