@@ -176,7 +176,7 @@ stateDiagram-v2
     end note
     note left of L3
         Season 2 stamp: added by core when the three
-        chapters are done (from level 3, graduated or not).
+        chapters are done (chapters open after graduation).
         It is extra metadata, not a level.
     end note
 ```
@@ -185,7 +185,9 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    A[Season 1 done: the three founding quests] --> B[Bloq walks from the shop to the<br/>Season 2 card and sits on its edge]
+    A0[Season 1 done: the three founding quests] --> A1[Bloq at the shop door:<br/>graduate in my shop first]
+    A1 --> A[Graduates: the Passport is sealed]
+    A --> B[Back on the map Bloq sits on the<br/>Season 2 card's edge]
     B --> C[Player taps Start Season 2]
     C --> D[Bloq jumps onto Network City<br/>the merchant goes behind his curtain]
     D --> E[Chapter 04 Digital Ownership]
@@ -193,7 +195,7 @@ flowchart TD
     F --> G[Chapter 06 Decentralised Finance]
     G --> H[The same transaction stamps the Passport]
     H --> I[Passport office: the stamp moment,<br/>Stamped on NEAR, See your Passport]
-    I --> J[The reveal offers Play again]
+    I --> J[The Season 2 reveal: what happened on chain,<br/>Back to the map or Start again]
     E & F & G -.-> K[Each chapter: 50 gold + 1 item,<br/>Passport level unchanged, Ask Bloq inside]
 ```
 
@@ -210,7 +212,7 @@ sequenceDiagram
     U->>W: Answers chapter 06
     W->>R: Signed delegate: complete_lesson(chapter-defi, answer)
     R->>C: SignedDelegate transaction, relayer pays gas
-    C->>C: Season 1 done? answer hash matches? first time?
+    C->>C: graduated? answer hash matches? first time?
     C->>C: mint 50 gold + 1 item, level unchanged (bonus quest)
     C->>C: all three SEASON2_CHAPTERS done?
     C->>P: add_stamp(learner, "season-2")
