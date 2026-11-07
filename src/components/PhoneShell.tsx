@@ -155,13 +155,13 @@ function RailAgent({ onAsk, asking }: AskProps) {
       aria-haspopup="dialog"
       aria-expanded={asking}
       onClick={(e) => onAsk(e.currentTarget)}
-      className="mt-auto flex items-center gap-3 rounded-2xl bg-navy-soft p-3 pt-5 text-left transition-colors hover:bg-navy-soft/80"
+      className="mt-auto flex items-center gap-2.5 rounded-2xl bg-navy-soft px-2.5 pb-3 pt-5 text-left transition-colors hover:bg-navy-soft/80"
     >
-      <AgentPod size={44} ref={pod} />
-      <span className="flex flex-col leading-tight">
-        <span className="font-display text-[15px] font-semibold text-ivory">Ask Bloq</span>
-        <span className="mt-0.5 flex items-center gap-1.5 text-xs text-lavender">
-          <span aria-hidden="true" className="h-2 w-2 rounded-full bg-lime motion-safe:animate-pulse" />AI agent · online
+      <AgentPod size={42} ref={pod} />
+      <span className="grid gap-1 leading-none">
+        <span className="font-display text-[15px] font-semibold leading-none text-ivory">Ask Bloq</span>
+        <span className="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium leading-none text-ivory/70">
+          <span aria-hidden="true" className="h-[7px] w-[7px] rounded-full bg-lime motion-safe:animate-pulse" />AI agent · online
         </span>
       </span>
     </button>
