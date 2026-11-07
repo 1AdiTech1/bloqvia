@@ -29,7 +29,7 @@ vi.mock("@/game/useGame", () => ({ IS_MOCK: false, useGame: () => ({
   accountId: "sandbox.testnet", learner: { completed: sandbox.completed, level: 2, gold: "100", items: [] },
   passport: null, refresh: async () => {},
 }) }));
-vi.mock("@tanstack/react-router", () => ({ Link: ({ children }: { children: ReactNode }) => <a>{children}</a> }));
+vi.mock("@tanstack/react-router", () => ({ Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a> }));
 vi.mock("framer-motion", () => ({ useReducedMotion: () => sandbox.reduce, AnimatePresence: ({ children }: { children: ReactNode }) => children }));
 vi.mock("@/components/PhoneShell", () => ({ PhoneShell: ({ children }: { children: ReactNode }) => children, GameHeader: () => null }));
 vi.mock("@/components/RequireAccount", () => ({ RequireAccount: ({ children }: { children: ReactNode }) => children }));
