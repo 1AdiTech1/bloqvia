@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bloqvia Fixes Nov 8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="preview.css">
+<style>
+/* Four fixes after Adi's check on Nov 8: the landing hop timing, graduation before Season 2, the Season 2 reveal, and the card order on phones. Real Bloq components. */
+:root {
+  --night: #131f33; --navy: #16243a; --navy-soft: #23344f; --navy-2: #22324c; --ivory: #f7f4eb; --lime: #d4f033; --lime-d: #a6c21a;
+  --lav: #c9b8ec; --lavender: #c9a6f3; --lavender-soft: #efe7fb; --purple: #8b45d9; --purple-d: #6630b3; --coral: #f5a58b; --card: #fffdf7; --muted-fg: #4f5b6e; --border: #ddd8c9;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: var(--display); --font-sans: var(--body);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--night); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased; padding: 28px 16px 64px; }
+.wrap { max-width: 1160px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 26px; }
+header h1 { margin: 0; font: 600 26px/1.15 var(--display); letter-spacing: -.02em; }
+header p { margin: 8px 0 0; color: var(--lav); max-width: 86ch; }
+h2.sec { margin: 14px 0 0; font: 600 19px/1.25 var(--display); }
+p.lead { margin: -12px 0 0; color: var(--lav); max-width: 88ch; font-size: 14.5px; }
+p.lead b { color: var(--ivory); }
+.demo { display: grid; gap: 14px; min-width: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.seg { display: inline-flex; flex-wrap: wrap; padding: 4px; border-radius: 999px; background: var(--navy-2); box-shadow: 0 8px 20px rgb(0 0 0 / .35); }
+.seg button { border: 0; background: transparent; color: var(--lav); font: 600 13.5px/1 var(--display); padding: 10px 14px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ivory); color: var(--navy); }
+.hint { font-size: 13px; color: var(--lav); }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+
+/* ---- 1 · landing phone ---- */
+.phone { position: relative; width: 390px; max-width: 100%; height: 720px; margin: 0 auto; border-radius: 34px; overflow: hidden; background: var(--ivory); color: var(--navy); box-shadow: 0 0 0 10px #0b1220, 0 30px 60px rgb(0 0 0 / .5); }
+.phone-scroll { position: absolute; inset: 0; overflow-y: auto; }
+.h-box { position: relative; padding: 40px 20px 0; }
+.h-host { position: absolute; left: 0; top: 0; z-index: 4; width: 86px; cursor: pointer; }
+.h-title { margin: 0; font: 500 1.6rem/1.15 var(--display); letter-spacing: -.035em; }
+.h-sub { margin: 14px 0 0; color: #566174; font-size: 1.02rem; }
+.h-cards { margin-top: 30px; padding-top: 100px; display: grid; gap: 14px; }
+.h-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 22px; display: grid; gap: 8px; transition: transform .3s, border-color .3s; }
+.h-card.on { transform: translateY(-4px); border-color: var(--navy); }
+.h-card .ic { width: 36px; height: 36px; border-radius: 11px; border: 2px solid var(--navy); display: block; margin-bottom: 8px; }
+.h-card .ic0 { background: var(--purple-soft, #c9a6f3); } .h-card .ic1 { background: var(--lime); border-radius: 50% 50% 50% 8px; } .h-card .ic2 { background: #f4b27c; } .h-card .ic3 { background: var(--lavender-soft); border-radius: 50%; }
+.h-card b { font: 600 1.05rem/1.2 var(--display); } .h-card small { font-size: 14px; color: #566174; }
+.h-note { margin: 26px 0 0; border-left: 4px solid var(--lime); padding-left: 18px; color: #566174; font-size: 1.06rem; }
+.h-panel { position: relative; margin-top: 36px; background: var(--lavender-soft); border-radius: 30px; min-height: 520px; }
+.h-pass { position: absolute; right: 4%; top: 6%; width: 220px; }
+.wait-chip { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); z-index: 9; background: var(--navy); color: var(--lime); font: 600 12px/1 var(--mono); padding: 8px 12px; border-radius: 999px; }
+.bloq-say.hop-say { left: auto; right: 74px; bottom: 34%; max-width: 168px; font-size: 13px; line-height: 1.4; padding: 10px 13px; --ox: 100%; }
+.bloq-say.hop-say::after { bottom: 16px; left: auto; right: -7px; transform: rotate(-45deg); }
+.bloq-say.hop-say.hop-up { right: auto; left: 0; bottom: 100%; max-width: 230px; margin-bottom: 8px; --ox: 0%; }
+.bloq-say.hop-say.hop-up::after { left: 22px; right: auto; bottom: -7px; }
+
+/* ---- 2 · map ---- */
+.stage { min-width: 0; background: #1b2742; border-radius: 22px; padding: 24px 16px 60px; display: flex; justify-content: center; }
+.mapcol { position: relative; max-width: 100%; container-type: inline-size; }
+.mapcol > .bloq-trail-wrap, .mapcol > div > .bloq-trail-wrap { margin-top: 16px; }
+.mapcol.desk .bloq-trail-wrap > .bloq-ticker { display: none; }
+.door-p { margin: 0; font-size: 14px; color: var(--lav); }
+.door-btn { display: inline-block; margin-top: 2px; padding: 12px 20px; border-radius: 999px; background: var(--lime); color: var(--navy); font: 600 15px/1 var(--display); }
+.bloq-trail-wrap.dim .bloq-trail { opacity: .55; filter: saturate(.6); }
+.scard { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 1.1rem; position: relative; z-index: 3; border: 1.5px solid rgb(247 244 235 / .14); background: linear-gradient(90deg, #23344f, #1f2d47); }
+.scard.s2 { margin-top: 64px; background: linear-gradient(90deg, #23344f, #2c2058); cursor: pointer; }
+.scard.open, .scard.done { border-color: var(--lime); box-shadow: 0 0 22px rgb(212 240 51 / .09); }
+.scard.locked { border: 1.5px dashed rgb(201 166 243 / .5); }
+.scard .g-ico { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: rgb(212 240 51 / .12); color: var(--lime); font: 700 15px/1 var(--display); flex: none; }
+.scard.locked .g-ico { background: var(--navy); color: var(--lavender); }
+.scard .g-txt { flex: 1 1 auto; min-width: 0; }
+.scard .eb { margin: 0; font: 600 10.5px/1.5 var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--lime); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scard.s2 .eb { color: #e8beff; } .scard .eb .prog { color: var(--lav); }
+.scard b { display: block; font: 500 15.5px/1.5 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scard .short { display: none; }
+.g-btn { border: 0; border-radius: 999px; min-height: 40px; padding: 0 14px; display: inline-flex; align-items: center; background: var(--lime); color: var(--navy); font: 600 12px/1 var(--display); cursor: pointer; flex: none; animation: g-pulse 1.8s ease-in-out infinite; }
+.g-btn.ghost { background: transparent; color: var(--lime); box-shadow: inset 0 0 0 1.5px var(--lime); animation: none; }
+.g-btn:disabled { animation: none; opacity: .75; }
+@keyframes g-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgb(212 240 51 / .5); } 50% { box-shadow: 0 0 0 5px rgb(212 240 51 / 0); } }
+@container (max-width: 479px) { .scard .long { display: none; } .scard .short { display: inline; } .scard .g-ico { width: 26px; height: 26px; } .scard b { font-size: 15px; } .scard .eb { letter-spacing: .1em; font-size: 10px; } .scard { gap: 10px; padding: 10px 12px; } }
+
+/* ---- 3 · reveal ---- */
+.rstage { display: flex; gap: 24px; justify-content: center; background: radial-gradient(120% 60% at 50% 0%, #26304f, #131f33); border-radius: 22px; padding: 26px 20px 40px; }
+.rstage.r-phone .rcol { width: 350px; max-width: 100%; }
+.rstage.r-desk .rcol { width: 640px; max-width: 100%; }
+.r-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: 70px; }
+.r-stamp { width: 132px; transform: rotate(-9deg); filter: drop-shadow(0 0 8px rgb(212 240 51 / .35)); margin-bottom: 18px; }
+.r-pass { margin: 4px 0 14px; max-width: 340px; }
+.r-bloq { position: relative; width: 120px; flex: none; }
+.r-h1 { margin: 26px 0 0; font: 500 clamp(1.75rem, 4vw, 2.6rem)/1 var(--display); text-transform: uppercase; letter-spacing: -.04em; }
+.r-lead { margin: 16px 0 0; color: var(--lavender); font-size: 1.1rem; line-height: 1.6; }
+.r-cards { margin-top: 32px; display: grid; gap: 14px; }
+.r-card { background: var(--ivory); color: var(--navy); border-radius: 28px; padding: 20px; box-shadow: 0 20px 44px -18px rgb(22 36 58 / .4); }
+.r-card h2 { margin: 0 0 12px; display: flex; align-items: center; gap: 12px; font: 500 1.25rem/1 var(--display); }
+.r-card h2 span { width: 40px; height: 40px; border-radius: 16px; background: var(--navy); display: grid; place-items: center; font-size: 17px; }
+.r-card .mono { margin: 0; background: #ece8dc; border-radius: 16px; padding: 12px; font: 13px var(--mono); word-break: break-all; }
+.r-card .muted { margin: 0; color: var(--muted-fg); font-size: 14px; }
+.r-card a { display: inline-block; margin-top: 10px; font: 600 14px var(--body); }
+.keyrow { display: flex; gap: 8px; align-items: center; } .keyrow .key { flex: 1; }
+.copy { background: var(--navy); color: var(--ivory); border-radius: 999px; padding: 12px 16px; font: 600 14px var(--body); }
+.warn { margin: 12px 0 0; background: var(--coral); border-radius: 16px; padding: 12px; font-size: 14px; font-weight: 500; }
+.r-eb { margin: 44px 0 0; font: 600 11px/1 var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--lime); }
+.r-steps { margin: 20px 0 0; padding: 0 0 0 24px; list-style: none; border-left: 1px solid rgb(201 166 243 / .4); display: grid; gap: 22px; }
+.r-steps li { position: relative; font-weight: 500; }
+.r-steps li::before { content: ""; position: absolute; left: -31px; top: 4px; width: 14px; height: 14px; border-radius: 4px; background: #e8beff; box-shadow: 0 0 0 4px var(--navy); }
+.r-steps li:last-child::before { background: var(--lime); }
+.r-steps a { display: block; margin-top: 4px; color: var(--lime); font: 600 14px var(--body); }
+.r-thanks { margin: 34px 0 0; text-align: center; font: 500 1.5rem/1.2 var(--display); }
+.r-btns { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.b1, .b2 { min-height: 52px; padding: 0 24px; border-radius: 999px; display: inline-flex; align-items: center; font: 600 16px/1 var(--display); }
+.b1 { background: var(--lime); color: var(--navy); } .b2 { border: 1.5px solid rgb(201 166 243 / .4); color: var(--lavender); }
+.r-panel { width: 280px; flex: none; padding-top: 10px; } .r-panel .cp-eb { margin: 0; color: var(--lime); font: 600 11px/1 var(--body); letter-spacing: .18em; text-transform: uppercase; } .r-panel h3 { margin: 8px 0; font: 500 20px var(--display); } .r-panel .muted { color: var(--lav); font-size: 13.5px; }
+@media (max-width: 760px) { .rstage.r-desk .r-panel { display: none; } }
+
+/* ---- 4 · order ---- */
+.orow { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+.ophone { width: 300px; background: var(--navy); border-radius: 28px; padding: 18px 14px 22px; display: grid; gap: 10px; box-shadow: 0 0 0 8px #0b1220; }
+.otag { font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--lavender); padding: 0 4px 4px; }
+.oblk { border-radius: 14px; padding: 10px 12px; background: var(--navy-2); font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
+.o-head { flex-direction: row; justify-content: space-between; align-items: center; background: transparent; padding: 2px 4px; }
+.o-head .logo { color: var(--ivory); } .o-head .pill { background: var(--ivory); color: var(--navy); border-radius: 999px; padding: 6px 10px; font-weight: 600; font-size: 12px; }
+.o-inv { background: var(--ivory); color: var(--navy); font-weight: 600; }
+.o-cards .mini { background: var(--ivory); color: var(--navy); border-radius: 12px; padding: 10px; font-weight: 600; }
+.o-head2 small { color: var(--lime); font: 600 10px/1 var(--body); letter-spacing: .18em; } .o-head2 b { font: 500 19px/1.2 var(--display); white-space: nowrap; } .o-head2 { background: transparent; }
+.mcard { border: 1.5px solid var(--lime); border-radius: 12px; padding: 8px 10px; font: 600 11px/1.3 var(--display); color: var(--lime); text-transform: uppercase; letter-spacing: .06em; }
+.mcard.v { color: #e8beff; background: linear-gradient(90deg, #23344f, #2c2058); }
+.road { height: 150px; border-radius: 12px; background: repeating-linear-gradient(45deg, rgb(255 255 255 / .03) 0 10px, transparent 10px 20px), #1b2742; display: grid; place-items: center; color: var(--lav); font-size: 12px; text-align: center; padding: 0 12px; }
+.road.v { background: repeating-radial-gradient(circle at 10px 10px, rgb(255 255 255 / .05) 0 1px, transparent 1px 16px), #2a1f4d; }
+.o-streak, .o-daily { background: var(--ivory); color: var(--navy); box-shadow: 0 0 0 2px var(--lime); }
+.o-streak .big small, .o-daily .big small { display: block; color: var(--muted-fg); font-size: 12px; margin-top: 4px; } .big { font-weight: 600; }
+.onote { flex: 1 1 260px; background: var(--navy-2); border-radius: 14px; padding: 14px 16px; color: var(--lav); font-size: 14px; } .onote b { color: var(--ivory); }
+.note { background: var(--navy-2); border-radius: 14px; padding: 14px 16px; color: var(--lav); font-size: 14px; max-width: 92ch; } .note b { color: var(--ivory); } .note code { font: 500 12.5px var(--mono); color: var(--ivory); }
+.lab-pass-wrap { position: relative; width: 100%; max-width: 440px; perspective: 900px; }
+.lv-pass { display: block; position: relative; width: 100%; aspect-ratio: 1.5; border-radius: 20px; overflow: hidden;
+  background: radial-gradient(120% 90% at 0% 0%, #2b3d63 0%, transparent 55%), radial-gradient(90% 80% at 100% 100%, #3a2170 0%, transparent 60%), #111c30;
+  border: 1.5px solid rgb(212 240 51 / .55); box-shadow: 0 0 0 4px rgb(255 255 255 / .9), 6px 8px 0 4px rgb(201 166 243 / .45), 0 22px 36px -22px rgb(22 36 58 / .5); color: var(--ivory); font-family: var(--body); }
+.lv-pass .guil { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .22; }
+.lv-pass .holo { position: absolute; inset: -40%; background: linear-gradient(115deg, transparent 30%, rgb(212 240 51 / .28) 40%, rgb(180 127 240 / .38) 47%, rgb(120 220 255 / .28) 54%, rgb(255 255 255 / .18) 58%, transparent 68%); mix-blend-mode: screen; animation: lv-holo 6s ease-in-out infinite; pointer-events: none; }
+.lv-pass .prow { position: absolute; display: flex; align-items: center; gap: 8px; }
+.lv-pass .brandrow { left: 7%; top: 9%; } .lv-pass .brandrow svg { width: 22px; height: 21px; } .lv-pass .brandrow b { font: 600 15px/1 var(--display); letter-spacing: -0.02em; }
+.lv-pass .kind { right: 7%; top: 10%; font: 700 9px/1 var(--mono); letter-spacing: .22em; color: var(--lime); }
+.lv-pass .chipic { position: absolute; left: 7%; top: 25%; width: 13%; aspect-ratio: 1.25; border-radius: 6px; background: linear-gradient(135deg, #f1fb9a, #c9e12e 45%, #93ab12); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .25); }
+.lv-pass .nfc { position: absolute; left: 23%; top: 26%; width: 6%; aspect-ratio: .7; opacity: .7; }
+.lv-pass .fields { position: absolute; left: 7%; right: 33%; top: 43%; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.lv-pass .fields .wide { grid-column: 1 / -1; }
+.lv-pass .fields span { display: grid; gap: 2px; min-width: 0; }
+.lv-pass .fields small { font: 500 8.5px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgb(247 244 235 / .55); }
+.lv-pass .fields i { font: 600 13px/1.15 var(--display); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lv-pass .seal { position: absolute; right: 6%; top: 28%; width: 30%; aspect-ratio: 1; }
+.lv-pass .seal .spinner { transform-origin: 50% 50%; animation: lv-spin 14s linear infinite; }
+.lv-pass .mrz { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 7% 7px; background: rgb(0 0 0 / .28); font: 500 8.4px/1.35 var(--mono); letter-spacing: .12em; color: rgb(247 244 235 / .78); white-space: nowrap; overflow: hidden; }
+.lv-pass .scan { position: absolute; left: 0; right: 0; height: 30%; top: -30%; background: linear-gradient(180deg, transparent, rgb(212 240 51 / .14), transparent); animation: lv-scan 4.5s ease-in-out infinite; pointer-events: none; }
+.lv-pass .stamp { position: absolute; left: 49%; top: 57%; width: 38%; transform: rotate(-9deg); transform-origin: 50% 50%; z-index: 2; mix-blend-mode: screen; filter: drop-shadow(0 0 6px rgb(212 240 51 / .35)); }
+.lv-pass .stamp.slam { animation: slam .7s cubic-bezier(.2,.9,.3,1.2) .35s both; }
+@keyframes slam { 0% { opacity: 0; transform: scale(2.4) rotate(-28deg); } 55% { opacity: 1; transform: scale(.9) rotate(-8deg); } 72% { transform: scale(1.05) rotate(-9.5deg); } 100% { opacity: 1; transform: scale(1) rotate(-9deg); } }
+.lv-pass.shake { animation: shake .35s ease-out .72s both; }
+@keyframes shake { 0%, 100% { transform: none; } 30% { transform: translateY(3px) scale(.99); } 60% { transform: translateY(-1px); } }
+@keyframes lv-holo { 0%,100% { translate: -18% 0; } 50% { translate: 18% 0; } }
+@keyframes lv-scan { 0%, 55% { top: -30%; } 85%, 100% { top: 100%; } }
+@keyframes lv-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .lv-pass .holo, .lv-pass .scan, .lv-pass .spinner, .lv-pass .stamp.slam, .lv-pass.shake, .g-btn { animation: none; } }
+
+.r-pass .lv-pass .fields i { font-size: 12px; } .r-pass .lv-pass .fields small { font-size: 8px; }
+.h-pass .lv-pass .fields i { font-size: 10.5px; } .h-pass .lv-pass .fields small { font-size: 7px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Fixes after your check: four changes</h1>
+    <p>Real Bloq components. Nothing else on these screens changes. Updated: the landing wait is half a second, and on phones the journey line comes before the inventory.</p>
+  </header>
+
+  <h2 class="sec">1 · Landing on phones: Bloq waits half a second before jumping to the Passport</h2>
+  <p class="lead">Today he jumps the moment the Passport panel is a little over a third into view. New: when the panel comes into view he <b>stays on the Contract Seal card for half a second</b>, then jumps, and only if the panel is still in view. Scroll back up within that half second and he stays on the cards. Scrolling up from the panel is as quick as today.</p>
+  <div id="hop"></div>
+
+  <h2 class="sec">2 · Season 2 opens only after graduation, on phones and desktop</h2>
+  <p class="lead">With Season 1 done but no graduation: Bloq stays at the shop door and says <b>"Graduate in my shop first. Your sealed Passport opens Season 2."</b> The Season 2 card stays locked (dashed, 🔒) and its button is <b>Graduate first ↑</b> (<b>Graduate ↑</b> on phones), which opens the shop. Tapping the card or the locked road repeats his line. After graduating, the reveal's <b>Continue your journey →</b> brings the player back to the map, and it plays as approved: Bloq sits on the card next to <b>Start Season 2 ↓</b>.</p>
+  <div id="gate"></div>
+  <div class="note"><b>Also on chain, so it can't be skipped:</b> the core contract would refuse a chapter until the account has graduated (today it only needs the three Season 1 quests). One line in <code>complete_lesson</code>, a test, and a code-only redeploy of core with your go-ahead. Players who already started Season 2 without graduating keep what they earned.</div>
+
+  <h2 class="sec">3 · After the stamp: a Season 2 reveal page</h2>
+  <p class="lead">Like the page after graduation: after the stamp moment at the Passport office and the cheer, the game opens this page by itself. <b>Captain Bloq</b> next to the Season 2 stamp (where the Season 1 reveal has its gold seal), your account, your Passport (the stamped card) and your key, then <b>What happened in Season 2</b> (one line per chapter, the last one with the stamp), and two buttons: <b>← Back to the map</b> and <b>Start again</b> (signs out and starts over, as Play again does today). On desktop the On NEAR panel stays on the right, as on today's reveal.</p>
+  <div id="reveal2"></div>
+
+  <h2 class="sec">4 · Phones: the journey line first, the streak and Today's quest at the bottom</h2>
+  <p class="lead">Under the app bar: <b>Your journey</b> and its line, then the inventory (gold, key, fuel, seal), both seasons' roads, then the two cards.</p>
+  <div id="order"></div>
+</div>
+<script src="preview.js"></script>
+</body>
+</html>

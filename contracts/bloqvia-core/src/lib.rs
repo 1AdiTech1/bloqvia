@@ -339,11 +339,11 @@ impl Contract {
             "Wrong answer"
         );
 
-        // Season 2 opens after Season 1: chapters need the three founding quests.
+        // Season 2 opens with a sealed Passport: chapters need graduation
+        // (which itself needs the three founding quests, one of each item and the fee).
         require!(
-            !lesson_id.starts_with(CHAPTER_PREFIX)
-                || self.completed_count.get(&learner).copied().unwrap_or(0) as usize >= ITEMS.len(),
-            "Finish Season 1 first"
+            !lesson_id.starts_with(CHAPTER_PREFIX) || self.graduates.contains(&learner),
+            "Graduate first to open Season 2"
         );
 
         let key = completion_key(&learner, &lesson_id);
@@ -1097,9 +1097,11 @@ mod tests {
         }
     }
 
-    /// The three Season 2 chapters, and Alice through Season 1 so she may play them.
+    /// The three Season 2 chapters, and Alice through Season 1 and graduated so she may play them.
     fn add_chapters(c: &mut Contract) {
         finish_season1(c);
+        as_caller(alice());
+        let _ = c.graduate();
         as_caller(owner());
         for (i, id) in SEASON2_CHAPTERS.iter().enumerate() {
             c.add_lesson(Lesson {
@@ -1117,22 +1119,21 @@ mod tests {
     fn chapters_pay_but_do_not_level() {
         let mut c = deployed();
         add_chapters(&mut c);
+        let gold_before = c.get_learner(alice()).gold.0;
+        let items_before: Vec<u128> = ITEMS.iter().map(|i| c.balance_of(i, &alice())).collect();
         for id in SEASON2_CHAPTERS {
             as_caller(alice());
             let _ = c.complete_lesson(id.into(), "yes".into());
         }
         let v = c.get_learner(alice());
         assert_eq!(v.level, 3, "chapters never raise the Passport level");
-        assert_eq!(v.gold.0, 300 + 150);
-        for item in ITEMS {
-            assert_eq!(c.balance_of(item, &alice()), 3 + 1);
+        assert_eq!(v.gold.0, gold_before + 150);
+        for (i, item) in ITEMS.iter().enumerate() {
+            assert_eq!(c.balance_of(item, &alice()), items_before[i] + 1);
         }
     }
 
-    #[test]
-    #[should_panic(expected = "Finish Season 1 first")]
-    fn chapters_wait_for_season1() {
-        let mut c = deployed();
+    fn add_one_chapter(c: &mut Contract) {
         as_caller(owner());
         c.add_lesson(Lesson {
             lesson_id: "chapter-ownership".into(),
@@ -1142,8 +1143,34 @@ mod tests {
             reward_item: ITEMS[0].to_string(),
             reward_item_amount: U128(1),
         });
+    }
+
+    #[test]
+    #[should_panic(expected = "Graduate first to open Season 2")]
+    fn chapters_wait_for_season1() {
+        let mut c = deployed();
+        add_one_chapter(&mut c);
         as_caller(alice());
         let _ = c.complete_lesson("chapter-ownership".into(), "yes".into());
+    }
+
+    #[test]
+    #[should_panic(expected = "Graduate first to open Season 2")]
+    fn chapters_wait_for_graduation() {
+        let mut c = deployed();
+        finish_season1(&mut c);
+        add_one_chapter(&mut c);
+        as_caller(alice());
+        let _ = c.complete_lesson("chapter-ownership".into(), "yes".into());
+    }
+
+    #[test]
+    fn a_daily_quest_needs_no_graduation() {
+        let mut c = deployed();
+        add_daily(&mut c, "daily-2026-11-08");
+        as_caller(alice());
+        let _ = c.complete_lesson("daily-2026-11-08".into(), "true".into());
+        assert!(c.is_completed(alice(), "daily-2026-11-08".into()));
     }
 
     #[test]

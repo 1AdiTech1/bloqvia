@@ -15,7 +15,7 @@ Tracks: games (primary), nfts, memecoins, social, open. Read `README.md` first, 
 
 1. `npx skills add near/agent-skills` — the official NEAR agent skills; read
    `near-smart-contracts`, `near-api-js`, `near-cli-rs` before touching those areas.
-2. `cd contracts/bloqvia-core && cargo test` → expect 36 passed.
+2. `cd contracts/bloqvia-core && cargo test` → expect 38 passed.
    `cd ../bloqvia-passport && cargo test` → expect 11 passed.
    `cd ../bloqvia-streak && cargo test` → expect 9 passed (Module A, merged).
    `cd ../bloqvia-bounties && cargo test` → expect 14 passed (Module B, merged Nov 5 after its on-chain proof).
@@ -66,7 +66,7 @@ If any of these fail on a clean clone, stop and report the full output; do not
 
 | Task | Command | Expect |
 | --- | --- | --- |
-| Contract tests | `cargo test` in each crate | 36 / 11 / 9 / 14 passed |
+| Contract tests | `cargo test` in each crate | 38 / 11 / 9 / 14 passed |
 | Build wasm | `cargo near build non-reproducible-wasm` in each crate | `target/near/*.wasm` |
 | Deploy + seed (Adi's go-ahead) | `./contracts/deploy/deploy-testnet.sh` (reads `relayer/.env`) | `get_bloq`, `get_lessons` print |
 | Deploy Module A (Adi's go-ahead) | `./contracts/deploy/deploy-streak.sh` (after the line above) | `get_streak_contract`, `get_streak` print |
