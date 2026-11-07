@@ -10,7 +10,8 @@ import { GoldSeal } from "@/components/GameBits";
 import { Press, labEase } from "@/components/lab/motion";
 import { Bloq, SpeechBubble, talkMs, useSay, type BloqHandle, type BloqPose } from "@/bloq";
 import { CubeBurst } from "@/components/lab/CubeBurst";
-import { useChapters, SEASON2_CHAPTERS, season2Done } from "@/near";
+import { useBloqvia, useChapters, SEASON2_CHAPTERS, season2Done } from "@/near";
+import { SeasonStamp, Web3Passport } from "@/components/lab/Web3Passport";
 
 export function RevealPage() {
   return (
@@ -20,6 +21,10 @@ export function RevealPage() {
       </PhoneShell>
     </RequireAccount>
   );
+}
+
+export function Season2RevealPage() {
+  return <RequireAccount><PhoneShell chain><RevealInner season2 /></PhoneShell></RequireAccount>;
 }
 
 function Beat({ delay, children, className }: { delay: number; children: ReactNode; className?: string }) {
@@ -51,18 +56,22 @@ function ExtLink({ href, children, light = false }: { href: string; children: Re
   );
 }
 
-function RevealInner() {
+function RevealInner({ season2 = false }: { season2?: boolean }) {
   const game = useGame();
   const navigate = useNavigate();
   const id = game.accountId ?? "";
   const s2 = season2Done(game.passport);
   const { chapters } = useChapters();
+  const { txLog } = useBloqvia();
   const completedChapters = SEASON2_CHAPTERS.filter((chapterId) => game.learner?.completed.includes(chapterId));
   const fallbackTitles = ["Digital Ownership", "Transactions", "Decentralised Finance"];
   const [copied, setCopied] = useState(false);
   const accountUrl = game.explorer.account(id);
   const graduated = game.learner?.graduated;
   const lastUrl = game.lastTx ? game.explorer.tx(game.lastTx.txHash) : accountUrl;
+  useEffect(() => {
+    if (season2 && !s2) void navigate({ to: "/map", replace: true });
+  }, [season2, s2, navigate]);
 
   const steps = [
     "You tapped Start — a NEAR account was created for you, and Bloqvia's relayer paid for it",
@@ -90,9 +99,9 @@ function RevealInner() {
   useEffect(() => {
     const say = (t: string) => { sayLine(t, 5200); det.current?.talk(talkMs(t)); };
     const ts = [
-      window.setTimeout(() => { det.current?.setMood("o"); det.current?.look(-0.6, 0.6); say("Hmm… every step left a trace on chain."); }, 600),
+      window.setTimeout(() => { det.current?.setMood("o"); det.current?.look(-0.6, 0.6); say(season2 ? "Three chapters, one stamp. All of it on chain." : "Hmm… every step left a trace on chain."); }, 600),
       window.setTimeout(() => { det.current?.look(0, 0); setPose("cheer"); det.current?.jump(); det.current?.setMood("laugh", 1600); if (!reduce) setBurst(true); }, 3400),
-      window.setTimeout(() => { setPose("thumbs"); say("Case closed: it was yours the whole time."); }, 4600),
+      window.setTimeout(() => { setPose("thumbs"); say(season2 ? "Stamped for good. This Passport only ever gains." : "Case closed: it was yours the whole time."); }, 4600),
     ];
     return () => ts.forEach((t) => window.clearTimeout(t));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -103,22 +112,24 @@ function RevealInner() {
     navigate({ to: "/" });
   };
 
+  if (season2 && !s2) return null;
+
   return (
     <>
       <Beat delay={0.1} className="flex flex-col items-stretch pt-24">
         <div className="flex items-end justify-between gap-4">
-          <GoldSeal size={72} />
+          {season2 ? <SeasonStamp className="season-reveal-stamp" /> : <GoldSeal size={72} />}
           <div className="relative w-[126px] shrink-0">
-            <Bloq ref={det} hat="detective" prop="magnifier" pose={pose} label="Bloq the detective" />
+            <Bloq ref={det} hat={season2 ? "captain" : "detective"} prop={season2 ? "passport" : "magnifier"} pose={pose} label={season2 ? "Bloq the Passport officer" : "Bloq the detective"} />
             <SpeechBubble text={line} tone="light" />
             {burst && <CubeBurst className="top-[55%]" />}
           </div>
         </div>
-        <h1 className="mt-6 font-display text-display-md font-medium uppercase tracking-[-0.04em] text-ivory">It was on NEAR the whole time.</h1>
+        <h1 className="mt-6 font-display text-display-md font-medium uppercase tracking-[-0.04em] text-ivory">{season2 ? "Season 2, stamped on NEAR." : "It was on NEAR the whole time."}</h1>
       </Beat>
       <Beat delay={0.9}>
         <p className="mt-4 text-lg leading-relaxed text-lavender">
-          Every quest, trade and stamp was a real transaction on the NEAR blockchain — in an account that belongs to you.
+          {season2 ? "Three chapters and a stamp: real transactions on the NEAR blockchain, in an account that belongs to you." : "Every quest, trade and stamp was a real transaction on the NEAR blockchain — in an account that belongs to you."}
         </p>
       </Beat>
 
@@ -131,7 +142,8 @@ function RevealInner() {
         </Beat>
         <Beat delay={2.1}>
           <Card icon={<ShieldCheck className="h-5 w-5" />} title="Your Passport">
-            <p className="text-sm text-muted-foreground">A non-transferable token at level {game.passport?.level}{graduated ? ", sealed as Graduate" : ""}.</p>
+            {season2 && game.passport && <Web3Passport holder={game.passport.owner_id} level={game.passport.level} graduated={game.passport.graduated} stamps={game.passport.stamps} />}
+            <p className="text-sm text-muted-foreground">A non-transferable token at level {game.passport?.level}{graduated ? ", sealed as Graduate" : ""}{season2 ? ", with the Season 2 stamp." : "."}</p>
             <ExtLink href={game.explorer.passport(id)}>View Passport</ExtLink>
           </Card>
         </Beat>
@@ -152,9 +164,18 @@ function RevealInner() {
       </div>
 
       <Beat delay={3.2}>
-        <p className="mt-12 text-[11px] font-semibold uppercase tracking-[0.18em] text-lime">What happened</p>
+        <p className="mt-12 text-[11px] font-semibold uppercase tracking-[0.18em] text-lime">{season2 ? "What happened in Season 2" : "What happened"}</p>
         <ol className="mt-5 border-l border-lavender/40 pl-6">
-          {steps.map((label, i) => (
+          {season2 ? completedChapters.map((chapterId) => {
+            const title = chapters.find((c) => c.lesson_id === chapterId)?.title ?? fallbackTitles[SEASON2_CHAPTERS.indexOf(chapterId)];
+            const last = chapterId === "chapter-defi";
+            const tx = txLog.find((entry) => entry.kind === "quest" && entry.ref === chapterId);
+            return <li key={chapterId} className="relative pb-6">
+              <span className={`absolute -left-[31px] top-1 h-3.5 w-3.5 rounded-[4px] ring-4 ring-navy ${last ? "bg-lime" : "season-chapter-bullet"}`} />
+              <p className="font-medium text-ivory">Chapter "{title}": {last ? "rewards minted, and your Passport stamped in the same transaction" : "rewards minted to your account"}</p>
+              <ExtLink light href={tx?.url ?? accountUrl}>View transaction</ExtLink>
+            </li>;
+          }) : steps.map((label, i) => (
             <li key={i} className="relative pb-6">
               <span className="absolute -left-[31px] top-1 h-3.5 w-3.5 rounded-[4px] bg-lime ring-4 ring-navy" />
               <p className="font-medium text-ivory">{label}</p>
@@ -170,7 +191,7 @@ function RevealInner() {
           <Press onClick={() => navigate({ to: "/map" })} className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full px-6 font-display font-semibold ${s2 ? "bg-lime text-navy shadow-lift" : "border-[1.5px] border-lavender/40 bg-transparent text-lavender"}`}>
             <ArrowLeft className="h-5 w-5" /> Back to the map
           </Press>
-          {s2 ? <Press onClick={playAgain} className="min-h-[52px] rounded-full border-[1.5px] border-lavender/40 bg-transparent px-6 font-semibold text-lavender">Play again</Press> : <Press onClick={() => navigate({ to: "/map", hash: "season-2" })} className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-lime px-6 font-display font-semibold text-navy shadow-lift">Continue your journey →</Press>}
+          {s2 ? <Press onClick={playAgain} className="min-h-[52px] rounded-full border-[1.5px] border-lavender/40 bg-transparent px-6 font-semibold text-lavender">{season2 ? "Start again" : "Play again"}</Press> : <Press onClick={() => navigate({ to: "/map", hash: "season-2" })} className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-lime px-6 font-display font-semibold text-navy shadow-lift">Continue your journey →</Press>}
         </div>
       </Beat>
     </>

@@ -6,6 +6,9 @@ const sandbox = vi.hoisted(() => ({
   completed: ["the-vault", "the-fuel-system"] as string[],
   stamped: false,
   reduce: false,
+  graduated: true,
+  navigate: vi.fn(),
+  say: vi.fn(),
   perch: vi.fn(async () => {}),
   cheer: vi.fn(),
   arrived: new Map<string, (level: number) => void>(),
@@ -14,7 +17,7 @@ vi.mock("@/bloq", async () => {
   const { forwardRef, useImperativeHandle } = await import("react");
   return { ChainTrail: forwardRef(({ world = "fields", onArrived, onPlay, door }: { world?: string; onArrived: (level: number) => void; onPlay: (level: number) => void; door: ReactNode }, ref) => {
     sandbox.arrived.set(world, onArrived);
-    useImperativeHandle(ref, () => ({ perchAt: sandbox.perch, cheer: sandbox.cheer }));
+    useImperativeHandle(ref, () => ({ perchAt: sandbox.perch, cheer: sandbox.cheer, say: sandbox.say }));
     return <div><button onClick={() => onPlay(2)}>Play {world}</button>{door}</div>;
   }) };
 });
@@ -26,10 +29,10 @@ vi.mock("@/near", () => ({
 }));
 vi.mock("@/near/useChapters", () => ({ SEASON2_CHAPTERS: ["chapter-ownership", "chapter-transactions", "chapter-defi"] }));
 vi.mock("@/game/useGame", () => ({ IS_MOCK: false, useGame: () => ({
-  accountId: "sandbox.testnet", learner: { completed: sandbox.completed, level: 2, gold: "100", items: [] },
+  accountId: "sandbox.testnet", learner: { completed: sandbox.completed, graduated: sandbox.graduated, level: 2, gold: "100", items: [] },
   passport: null, refresh: async () => {},
 }) }));
-vi.mock("@tanstack/react-router", () => ({ Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a> }));
+vi.mock("@tanstack/react-router", () => ({ useNavigate: () => sandbox.navigate, Link: ({ children, to, className }: { children: ReactNode; to: string; className?: string }) => <a className={className} href={to}>{children}</a> }));
 vi.mock("framer-motion", () => ({ useReducedMotion: () => sandbox.reduce, AnimatePresence: ({ children }: { children: ReactNode }) => children }));
 vi.mock("@/components/PhoneShell", () => ({ PhoneShell: ({ children }: { children: ReactNode }) => children, GameHeader: () => null }));
 vi.mock("@/components/RequireAccount", () => ({ RequireAccount: ({ children }: { children: ReactNode }) => children }));
@@ -47,6 +50,7 @@ const advance = async (ms: number) => { await act(async () => { await vi.advance
 beforeEach(() => {
   vi.useFakeTimers(); sandbox.completed = ["the-vault", "the-fuel-system"];
   sandbox.stamped = false; sandbox.reduce = false;
+  sandbox.graduated = true; sandbox.navigate.mockClear(); sandbox.say.mockClear();
   sandbox.perch.mockClear(); sandbox.cheer.mockClear(); sandbox.arrived.clear(); localStorage.clear();
 });
 afterEach(() => { cleanup(); vi.useRealTimers(); });
@@ -81,7 +85,8 @@ describe("map celebration timing in a sandbox", () => {
     expect(sandbox.perch).toHaveBeenCalledExactlyOnceWith(expect.any(Object), expect.any(String), true, true);
   });
 
-  it("cheers only after arrival and the full 2600ms stamp moment", async () => {
+  it.each([false, true])("cheers after 2600ms then reveals after the specified delay (reduced: %s)", async (reduce) => {
+    sandbox.reduce = reduce;
     sandbox.completed.push("smart-agreements", "chapter-ownership", "chapter-transactions");
     const view = render(<MapPage />);
     fireEvent.click(screen.getByText("Play city"));
@@ -91,11 +96,16 @@ describe("map celebration timing in a sandbox", () => {
     expect(sandbox.cheer).not.toHaveBeenCalled();
     expect(screen.queryByRole("link", { name: "See your Passport" })).toBeNull();
     fireEvent.click(screen.getByText("Close quiz")); await advance(450);
-    act(() => sandbox.arrived.get("city")?.(3));
+    if (!reduce) act(() => sandbox.arrived.get("city")?.(3));
     await advance(2599); expect(sandbox.cheer).not.toHaveBeenCalled();
     expect(screen.queryByRole("link", { name: "See your Passport" })).toBeNull();
     await advance(1); expect(sandbox.cheer).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("link", { name: "See your Passport" })).toBeInTheDocument();
+    expect(sandbox.navigate).not.toHaveBeenCalled();
+    await advance((reduce ? 900 : 2600) - 1);
+    expect(sandbox.navigate).not.toHaveBeenCalled();
+    await advance(1);
+    expect(sandbox.navigate).toHaveBeenCalledExactlyOnceWith({ to: "/season-2" });
   });
 
   it("does not replay the stamp moment on an already-stamped page", async () => {
@@ -103,7 +113,30 @@ describe("map celebration timing in a sandbox", () => {
     render(<MapPage />);
     expect(screen.getByRole("link", { name: "See your Passport" })).toBeInTheDocument();
     act(() => sandbox.arrived.get("city")?.(3));
-    await advance(4000);
+    await advance(8000);
     expect(sandbox.cheer).not.toHaveBeenCalled();
+    expect(sandbox.navigate).not.toHaveBeenCalled();
+  });
+
+  it("does not perch or play Season 2 before graduation, even with older chapters and stored Start", async () => {
+    sandbox.graduated = false;
+    sandbox.completed.push("smart-agreements", "chapter-ownership");
+    localStorage.setItem("bloqvia:s2:sandbox.testnet", "1");
+    render(<MapPage />);
+    await advance(1000);
+    expect(sandbox.perch).not.toHaveBeenCalled();
+    act(() => sandbox.arrived.get("fields")?.(3));
+    expect(sandbox.say).toHaveBeenLastCalledWith("Graduate in my shop first. Your sealed Passport opens Season 2.");
+    fireEvent.click(screen.getByText("Play city"));
+    expect(screen.queryByText("Close quiz")).toBeNull();
+    expect(sandbox.say).toHaveBeenCalledTimes(2);
+  });
+
+  it("preserves access for an existing Season 2 stamp even without graduation", async () => {
+    sandbox.graduated = false; sandbox.stamped = true;
+    sandbox.completed.push("smart-agreements", "chapter-ownership");
+    render(<MapPage />);
+    fireEvent.click(screen.getByText("Play city"));
+    expect(screen.getByText("Close quiz")).toBeInTheDocument();
   });
 });

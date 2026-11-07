@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, useReducedMotion } from "framer-motion";
 import { ChainTrail, type ChainTrailHandle, type TrailStop } from "@/bloq";
 import { useChapters, useFinalBlock, SEASON2_CHAPTERS, season2Done } from "@/near";
@@ -27,9 +27,10 @@ const S2_POSTS = ["NFTs · NEP-171", "signed · NEP-366", "pricing.rs · the cur
 const S2_TITLES = ["Digital Ownership", "Transactions", "Decentralised Finance"] as const;
 const OFFICER = { hat: "captain", prop: "passport", label: "Bloq the officer, in the Passport office" } as const;
 const ASK = "Ready for Season 2? Press Start and I'll jump in!";
+const GRADUATE_FIRST = "Graduate in my shop first. Your sealed Passport opens Season 2.";
 
-function SeasonCard({ season, icon, progress, ready, locked = false, action, cardRef }: { season: 1 | 2; icon: ReactNode; progress?: number; ready: boolean; locked?: boolean; action?: ReactNode; cardRef?: RefObject<HTMLDivElement | null> }) {
-  return <div ref={cardRef} id={season === 2 ? "season-2" : undefined} className={`scard season-${season}${ready ? " open" : ""}${locked ? " locked" : ""}`}>
+function SeasonCard({ season, icon, progress, ready, locked = false, action, cardRef, onTap }: { season: 1 | 2; icon: ReactNode; progress?: number; ready: boolean; locked?: boolean; action?: ReactNode; cardRef?: RefObject<HTMLDivElement | null>; onTap?: () => void }) {
+  return <div ref={cardRef} id={season === 2 ? "season-2" : undefined} onClick={(e) => { if (e.target instanceof Element && !e.target.closest("a,button")) onTap?.(); }} className={`scard season-${season}${ready ? " open" : ""}${locked ? " locked" : ""}`}>
     <span className="g-ico" aria-hidden="true">{icon}</span>
     <div className="g-txt"><span className="eb">Season {season} · {season === 1 ? "The Block Fields" : "Network City"}{progress !== undefined && <span className="text-lavender"> · {progress}/3</span>}</span>
       <b><span className="season-wide">{season === 1 ? "The Vault · The Fuel System · Smart Agreements" : "Digital ownership · Transactions · Decentralised finance"}</span><span className="season-narrow">{season === 1 ? "Vault · Fuel · Agreements" : "Ownership · Tx · DeFi"}</span></b></div>{action}
@@ -48,6 +49,7 @@ type Held = { gold: number; items: [string, string][] };
 
 function MapInner() {
   const game = useGame();
+  const navigate = useNavigate();
   const reduce = useReducedMotion();
   const [open, setOpen] = useState<string | null>(null);
   const [held, setHeld] = useState<Held | null>(null);
@@ -64,6 +66,8 @@ function MapInner() {
   const completed = learner?.completed ?? [];
   const { foundingDone, chaptersDone, s1Done } = seasonProgress(completed);
   const stamped = season2Done(game.passport);
+  const graduated = !!learner?.graduated;
+  const s2Open = (s1Done && graduated) || stamped;
   const level = heldLevel ?? learner?.level ?? 0;
   const [trailLevel, setTrailLevel] = useState(foundingDone.length); // what the trail shows
   const [s2Level, setS2Level] = useState(chaptersDone);
@@ -71,7 +75,7 @@ function MapInner() {
   const [starting, setStarting] = useState(false);
   const startingRef = useRef(false);
   const [curtain, setCurtain] = useState(false);
-  const started = chaptersDone > 0 || stamped || storedStart;
+  const started = (graduated && (chaptersDone > 0 || storedStart)) || stamped;
   const [arrivedOffice, setArrivedOffice] = useState(false);
   const [moment, setMoment] = useState(false);
   const [stampWaitExpired, setStampWaitExpired] = useState(false);
@@ -103,11 +107,11 @@ function MapInner() {
     return { x: Math.max(Math.min((gapL + b.left) / 2, b.left - 46), gapL + 16), y: r.top };
   };
   useEffect(() => {
-    if (!(trailLevel >= 3 && !started && !pendingS1.current) || !startReady.current) return;
+    if (!(trailLevel >= 3 && s2Open && !started && !pendingS1.current) || !startReady.current) return;
     const perch = async () => { const target = seat(); if (target) { await trail.current?.perchAt(target, ASK, true, true); seated.current = true; } };
     const timer = setTimeout(perch, 450);
     return () => clearTimeout(timer);
-  }, [trailLevel, started, reduce]);
+  }, [trailLevel, s2Open, started, reduce]);
 
   useEffect(() => {
     let resizeTimer: ReturnType<typeof setTimeout>;
@@ -134,16 +138,23 @@ function MapInner() {
   useEffect(() => {
     if (!arrivedOffice || !stamped || !thirdThisVisit.current || celebrated.current) return;
     setMoment(true);
-    const timer = setTimeout(() => { celebrated.current = true; setMoment(false); trail2.current?.cheer("Stamped! Season 2 is on your Passport for good."); }, 2600);
-    return () => clearTimeout(timer);
-  }, [arrivedOffice, stamped]);
+    let revealTimer: ReturnType<typeof setTimeout> | undefined;
+    const timer = setTimeout(() => {
+      celebrated.current = true;
+      setMoment(false);
+      trail2.current?.cheer("Stamped! Season 2 is on your Passport for good.");
+      revealTimer = setTimeout(() => { void navigate({ to: "/season-2" }); }, reduce ? 900 : 2600);
+    }, 2600);
+    return () => { clearTimeout(timer); clearTimeout(revealTimer); };
+  }, [arrivedOffice, stamped, navigate, reduce]);
 
   const arrived1 = (n: number) => {
     if (n !== 3 || started) return;
+    if (!graduated) { pendingS1.current = false; trail.current?.say(GRADUATE_FIRST); return; }
     requestAnimationFrame(() => requestAnimationFrame(async () => { if (!mounted.current) return; const target = seat(); if (target) { await trail.current?.perchAt(target, ASK, false, true); pendingS1.current = false; seated.current = true; } }));
   };
   const startSeason2 = async () => {
-    if (!s1Done || IS_MOCK || startingRef.current) return false;
+    if (!s2Open || IS_MOCK || startingRef.current) return false;
     if (started) return true;
     const target = trail2.current?.entry();
     if (!target) return false;
@@ -163,6 +174,7 @@ function MapInner() {
     return true;
   };
   const playChapter = async (i: number) => {
+    if (!graduated && !stamped) { if (s1Done) trail.current?.say(GRADUATE_FIRST); return; }
     const id = SEASON2_CHAPTERS[i];
     if (!id || IS_MOCK || !s1Done || startingRef.current) return;
     if (started || await startSeason2()) openQuest(id);
@@ -210,26 +222,26 @@ function MapInner() {
 
   return (
     <PhoneShell nav inlineHeader>
-      {/* Phones: header, inventory, cards, heading, trail. Desktop: heading, inventory + pill, trail, cards (2 cols). */}
+      {/* Phones: header, heading, inventory, seasons, community cards. Desktop unchanged. */}
       <div className="flex flex-col dk:grid dk:grid-cols-[minmax(0,1fr)_auto] dk:items-center dk:gap-x-4">
       <GameHeader level={level} className="order-1 dk:order-2 dk:col-start-2 dk:mb-0" />
-      <div className="order-2 dk:order-2 dk:col-start-1 dk:row-start-2">
+      <div className="order-3 mt-4 dk:mt-0 dk:order-2 dk:col-start-1 dk:row-start-2">
         <InventoryBar gold={held?.gold} items={held?.items} />
       </div>
-      <div className="order-3 mt-3 flex flex-col gap-3 dk:order-4 dk:col-span-2 dk:mt-6 dk:grid dk:grid-cols-2 dk:items-stretch dk:gap-4">
+      <div className="order-5 mt-10 flex flex-col gap-3 dk:order-4 dk:col-span-2 dk:mt-6 dk:grid dk:grid-cols-2 dk:items-stretch dk:gap-4">
         <StreakCard />
         <DailyQuestCard onPlay={openQuest} />
       </div>
 
-      <div className="journey-line order-4 dk:order-1 dk:col-span-2 dk:mb-5">
-        <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.18em] text-lime dk:mt-0">Your journey</p>
+      <div className="journey-line order-2 dk:order-1 dk:col-span-2 dk:mb-5">
+        <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-lime dk:mt-0">Your journey</p>
         <h2 className="mt-2 whitespace-nowrap font-display text-2xl font-medium leading-tight tracking-[-0.03em]">
           <span className="dk:hidden">Two seasons. One Passport.</span>
           <span className="hidden dk:inline">Six quests. Two seasons. A Passport that's yours.</span>
         </h2>
       </div>
 
-      <div className="season-map order-5 dk:order-3 dk:col-span-2">
+      <div className="season-map order-4 mt-6 dk:mt-0 dk:order-3 dk:col-span-2">
       <SeasonCard season={1} icon={s1Done ? "✓" : "1"} progress={foundingDone.length} ready />
       <ChainTrail
         ref={trail}
@@ -242,7 +254,8 @@ function MapInner() {
         guideAt={started ? "gone" : "here"}
         curtain={started || curtain}
         hostHello="Hello! The shop's still open. Come and trade any time."
-        intro={!(s1Done && !started)}
+        intro={!(s2Open && !started)}
+        {...(!graduated ? { tip: (l: number) => l >= 3 ? GRADUATE_FIRST : l <= 0 ? `Hi, I'm Bloq. Tap the first block and we'll open ${TRAIL_STOPS[0].title}.` : `Next up: ${TRAIL_STOPS[l]?.title ?? "the next quest"}. Tap the glowing block.` } : {})}
         onArrived={arrived1}
         door={
           <>
@@ -255,10 +268,10 @@ function MapInner() {
           </>
         }
       />
-      <SeasonCard cardRef={card2} season={2} icon={!s1Done ? "🔒" : stamped ? "✓" : "2"} ready={s1Done} locked={!s1Done} {...(started ? { progress: chaptersDone } : {})}
-        {...(s1Done && !started ? { action: <Press disabled={starting || IS_MOCK} onClick={() => void startSeason2()} className="g-btn"><span className="season-wide">Start Season 2 ↓</span><span className="season-narrow">Start ↓</span></Press> } : {})} />
-      <div className="relative">
-      <ChainTrail ref={trail2} world="city" locked={!s1Done || IS_MOCK} level={s2Level} stops={s2Stops} firstNumber={4} host={OFFICER} doorAccount="passport.bloqvia.testnet" className={s1Done ? "mt-4 dk:mt-6" : "dim mt-4 dk:mt-6"}
+      <SeasonCard cardRef={card2} season={2} icon={!s2Open ? "🔒" : stamped ? "✓" : "2"} ready={s2Open} locked={!s2Open} onTap={() => { if (s1Done && !graduated) trail.current?.say(GRADUATE_FIRST); }} {...(started ? { progress: chaptersDone } : {})}
+        {...(s1Done && !graduated ? { action: <Link to="/shop" className="g-btn graduate-first"><span className="season-wide">Graduate first ↑</span><span className="season-narrow">Graduate ↑</span></Link> } : s2Open && !started ? { action: <Press disabled={starting || IS_MOCK} onClick={() => void startSeason2()} className="g-btn"><span className="season-wide">Start Season 2 ↓</span><span className="season-narrow">Start ↓</span></Press> } : {})} />
+      <div className="relative" onPointerDownCapture={(e) => { if (s1Done && !graduated && e.target instanceof Element && e.target.closest(".blk")) trail.current?.say(GRADUATE_FIRST); }}>
+      <ChainTrail ref={trail2} world="city" locked={!s2Open || IS_MOCK} level={s2Level} stops={s2Stops} firstNumber={4} host={OFFICER} doorAccount="passport.bloqvia.testnet" className={s2Open ? "mt-4 dk:mt-6" : "dim mt-4 dk:mt-6"}
         guideAt={started ? "here" : "gone"} intro={started} blockHeight={height}
         tip={(l, st) => l >= 3 ? "Season 2 done! Your Passport has its stamp." : `Welcome to Network City! Chapter 0${l + 4}: ${st[l]?.title}. Tap the glowing block.`}
         onPlay={(i) => void playChapter(i)} onArrived={(n) => { if (n === 3) setArrivedOffice(true); }}

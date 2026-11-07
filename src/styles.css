@@ -419,6 +419,7 @@ html.touch-sb::-webkit-scrollbar { display: none; }
   --season-icon-surface: rgb(212 240 51 / .12);
   --season-caption-surface: rgb(13 22 38 / .85);
   --season-stamp-glow: drop-shadow(0 0 6px rgb(212 240 51 / .35));
+  --season-reveal-stamp-glow: drop-shadow(0 0 8px rgb(212 240 51 / .35));
 }
 .season-map { container-type: inline-size; min-width: 0; }
 .journey-line { container-type: inline-size; min-width: 0; }
@@ -437,6 +438,9 @@ html.touch-sb::-webkit-scrollbar { display: none; }
 .season-map:has(.g-btn) > .bloq-trail-wrap .walker .bloq-say { left: auto; right: 58px; --ox: 100%; }
 .g-btn { flex: none; min-height: 40px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0 14px; background: var(--lime); color: var(--navy); font: 600 12px/1 var(--font-display); animation: lv-pulse 1.8s ease-in-out infinite; cursor: pointer; }
 .g-btn:disabled { opacity: .6; cursor: default; animation: none; }
+.g-btn.graduate-first { background: transparent; color: var(--lime); box-shadow: inset 0 0 0 1.5px var(--lime); animation: none; }
+.season-reveal-stamp { width: 132px; flex: none; transform: rotate(-9deg); color: var(--lime); filter: var(--season-reveal-stamp-glow); }
+.season-chapter-bullet { background: var(--season-city-label); }
 .g-btn:focus-visible { outline: 2px solid var(--ivory); outline-offset: 4px; }
 .season-narrow { display: none; }
 @container (max-width: 479px) {

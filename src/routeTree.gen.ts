@@ -15,6 +15,7 @@ import { Route as CohortRouteImport } from './routes/cohort'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as PassportRouteImport } from './routes/passport'
 import { Route as RevealRouteImport } from './routes/reveal'
+import { Route as Season2RouteImport } from './routes/season-2'
 import { Route as ShopRouteImport } from './routes/shop'
 
 const IndexRoute = IndexRouteImport.update({
@@ -47,6 +48,11 @@ const RevealRoute = RevealRouteImport.update({
   path: '/reveal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Season2Route = Season2RouteImport.update({
+  id: '/season-2',
+  path: '/season-2',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
   path: '/shop',
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/map': typeof MapRoute
   '/passport': typeof PassportRoute
   '/reveal': typeof RevealRoute
+  '/season-2': typeof Season2Route
   '/shop': typeof ShopRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/map': typeof MapRoute
   '/passport': typeof PassportRoute
   '/reveal': typeof RevealRoute
+  '/season-2': typeof Season2Route
   '/shop': typeof ShopRoute
 }
 export interface FileRoutesById {
@@ -79,14 +87,30 @@ export interface FileRoutesById {
   '/map': typeof MapRoute
   '/passport': typeof PassportRoute
   '/reveal': typeof RevealRoute
+  '/season-2': typeof Season2Route
   '/shop': typeof ShopRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/brand' | '/cohort' | '/map' | '/passport' | '/reveal' | '/shop'
+    | '/'
+    | '/brand'
+    | '/cohort'
+    | '/map'
+    | '/passport'
+    | '/reveal'
+    | '/season-2'
+    | '/shop'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/brand' | '/cohort' | '/map' | '/passport' | '/reveal' | '/shop'
+  to:
+    | '/'
+    | '/brand'
+    | '/cohort'
+    | '/map'
+    | '/passport'
+    | '/reveal'
+    | '/season-2'
+    | '/shop'
   id:
     | '__root__'
     | '/'
@@ -95,6 +119,7 @@ export interface FileRouteTypes {
     | '/map'
     | '/passport'
     | '/reveal'
+    | '/season-2'
     | '/shop'
   fileRoutesById: FileRoutesById
 }
@@ -105,6 +130,7 @@ export interface RootRouteChildren {
   MapRoute: typeof MapRoute
   PassportRoute: typeof PassportRoute
   RevealRoute: typeof RevealRoute
+  Season2Route: typeof Season2Route
   ShopRoute: typeof ShopRoute
 }
 
@@ -152,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RevealRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/season-2': {
+      id: '/season-2'
+      path: '/season-2'
+      fullPath: '/season-2'
+      preLoaderRoute: typeof Season2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shop': {
       id: '/shop'
       path: '/shop'
@@ -169,6 +202,7 @@ const rootRouteChildren: RootRouteChildren = {
   MapRoute: MapRoute,
   PassportRoute: PassportRoute,
   RevealRoute: RevealRoute,
+  Season2Route: Season2Route,
   ShopRoute: ShopRoute,
 }
 export const routeTree = rootRouteImport

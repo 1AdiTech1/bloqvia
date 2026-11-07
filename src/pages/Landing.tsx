@@ -785,9 +785,23 @@ const ProgHop = forwardRef<ProgHopHandle, { box: React.RefObject<HTMLDivElement 
 
     place(0, false);
     let raf = 0;
+    let panelTimer: ReturnType<typeof setTimeout> | undefined;
     const onScroll = () => {
       if (raf || !s.started) return;
-      raf = requestAnimationFrame(() => { raf = 0; const i = target(); if (i !== s.at) go(i, true); });
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const i = target();
+        if (i === -1) {
+          if (s.at !== -1 && panelTimer === undefined) panelTimer = setTimeout(() => {
+            panelTimer = undefined;
+            if (target() === -1) go(-1, true);
+          }, 500);
+        } else {
+          clearTimeout(panelTimer);
+          panelTimer = undefined;
+          if (i !== s.at) go(i, true);
+        }
+      });
     };
     const io = new IntersectionObserver((es) => es.forEach((e) => {
       if (e.isIntersecting && !s.started) { s.started = true; go(target(), false); }
@@ -798,6 +812,7 @@ const ProgHop = forwardRef<ProgHopHandle, { box: React.RefObject<HTMLDivElement 
     window.addEventListener("resize", onResize);
     return () => {
       io.disconnect(); clear();
+      clearTimeout(panelTimer);
       if (raf) cancelAnimationFrame(raf);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);

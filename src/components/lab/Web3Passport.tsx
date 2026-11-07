@@ -55,7 +55,6 @@ export function Web3Passport({
   const reduce = useReducedMotion();
   const pathId = useId().replace(/:/g, "");
   const s2 = stamps?.includes("season-2");
-  const inkId = `stamp-ink-${pathId}`;
   const [m1, m2] = passportMrz(holder, level, graduated, stamps);
   const tilt = (e: PointerEvent<HTMLButtonElement>) => {
     if (reduce) return;
@@ -110,7 +109,20 @@ export function Web3Passport({
           )}
         </svg>
         {s2 && (
-          <svg className={cn("stamp", slam && !reduce && "slam")} viewBox="0 0 156 100" aria-hidden="true">
+          <SeasonStamp className={cn("stamp", slam && !reduce && "slam")} />
+        )}
+        <span className="mrz" aria-hidden="true">{m1}<br />{m2}</span>
+        <span className="scan" aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
+/** The same Season 2 ink used on the Passport and completion reveal. */
+export function SeasonStamp({ className }: { className?: string }) {
+  const inkId = `stamp-ink-${useId().replace(/:/g, "")}`;
+  return (
+    <svg className={className} viewBox="0 0 156 100" aria-hidden="true">
             <defs><filter id={inkId} x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="7" result="n" /><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.5 1.45" result="m" /><feComposite in="SourceGraphic" in2="m" operator="in" /></filter></defs>
             <g filter={`url(#${inkId})`} fill="none" stroke="currentColor">
               <rect x="4" y="4" width="148" height="92" rx="14" strokeWidth="3.2" />
@@ -122,11 +134,6 @@ export function Web3Passport({
               </g>
               <path d="M20 68 H136" strokeWidth="1.2" strokeDasharray="3 3" />
             </g>
-          </svg>
-        )}
-        <span className="mrz" aria-hidden="true">{m1}<br />{m2}</span>
-        <span className="scan" aria-hidden="true" />
-      </button>
-    </div>
+    </svg>
   );
 }

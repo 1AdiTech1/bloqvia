@@ -14,3 +14,4 @@
 - Landing v2 styles are plain `lv-*` classes in src/styles.css (@layer components), ported from docs/design/landing-v2; the landing drives Bloq only through the `@/bloq` public API.
 - The Lab reuses the landing `lv-pass` styles through `src/components/lab/Web3Passport.tsx` (Shop ceremony, Passport page); keep one card implementation so both stay in sync.
 - Season progress helpers are display-only; map movement uses the public ChainTrail handles, and Passport stamps come exclusively from the existing game view/completion action.
+- Both season reveals share RevealPage's presentation, key controls and restart action; SeasonStamp is shared with Web3Passport to keep the ink artwork identical.
