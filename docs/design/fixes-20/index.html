@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bloqvia Fixes 20</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="preview.css">
+<style>
+/* One section per bug, in Adi's numbering. Bloqvia tokens; the page is dark like the game. */
+:root {
+  --night: #131f33; --navy: #16243a; --navy-soft: #23344f; --navy-2: #22324c; --ivory: #f6f3ec; --lime: #d4f033; --lime-d: #a6c21a;
+  --lav: #c9b8ec; --lavender: #c9a6f3; --purple: #8b45d9; --muted: #5a6477;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--night); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased; padding: 28px 16px 64px; }
+.wrap { max-width: 1160px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 48px; }
+section, .trail-demo { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.stage { min-width: 0; }
+header h1 { margin: 0; font: 600 26px/1.15 var(--display); letter-spacing: -.02em; }
+header p { margin: 8px 0 0; color: var(--lav); max-width: 72ch; }
+.hd { display: flex; gap: 14px; align-items: baseline; }
+.no { font: 700 13px/1 var(--mono); color: var(--navy); background: var(--lime); border-radius: 8px; padding: 6px 8px; flex: none; }
+.hd h2 { margin: 0; font: 600 19px/1.25 var(--display); letter-spacing: -.01em; }
+.hd p { margin: 4px 0 0; color: var(--lav); font-size: 14.5px; max-width: 80ch; }
+section { display: grid; gap: 18px; }
+.row { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+.col { display: grid; gap: 10px; justify-items: start; }
+.col h3 { margin: 0; font: 600 15px/1.2 var(--display); }
+.col p { margin: 0; font-size: 13.5px; color: var(--lav); max-width: 36ch; }
+.tag { font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--lime); }
+.tag.bad { color: #f5a58b; }
+.btn { border: 0; border-radius: 999px; background: var(--lime); color: var(--navy); font: 600 14px/1 var(--display); padding: 12px 18px; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+.note { font-size: 13.5px; color: var(--lav); max-width: 90ch; margin: 0; }
+.note code, .hd code { font: 500 12.5px var(--mono); color: var(--ivory); background: rgb(246 243 236 / .08); padding: 1px 5px; border-radius: 5px; }
+
+/* 1 · browser tab mocks */
+.tabbar { width: 330px; max-width: 100%; border-radius: 12px; padding: 8px 8px 0; display: flex; align-items: flex-end; gap: 6px; }
+.tabbar.dark { background: #1f1f1f; }
+.tabbar.light { background: #dfe3eb; }
+.tab { display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 12px; border-radius: 10px 10px 0 0; font: 400 12.5px/1 system-ui, sans-serif; white-space: nowrap; min-width: 0; flex: 1; }
+.tabbar.dark .tab { background: #3c3c3c; color: #e8eaed; }
+.tabbar.light .tab { background: #fff; color: #1f1f1f; }
+.tab img { width: 16px; height: 16px; flex: none; }
+.tab span { overflow: hidden; text-overflow: ellipsis; }
+.tab.ghost { flex: 0 0 64px; opacity: .55; }
+.tabbar.dark .tab.ghost { background: transparent; } .tabbar.light .tab.ghost { background: transparent; }
+.zoom { display: flex; gap: 14px; align-items: center; }
+.zoom img { width: 64px; height: 64px; image-rendering: pixelated; border-radius: 4px; }
+.zoom .chk { width: 64px; height: 64px; display: grid; place-items: center; border-radius: 10px; }
+.zoom .chk.d { background: #3c3c3c; } .zoom .chk.l { background: #fff; }
+.zoom .chk img { width: 16px; height: 16px; }
+.opt { border-radius: 18px; padding: 16px; background: var(--navy); display: grid; gap: 14px; justify-items: start; box-shadow: 0 0 0 1px rgb(246 243 236 / .08); }
+.opt.pick { box-shadow: 0 0 0 2px var(--lime); }
+/* phone home screen */
+.home { width: 210px; height: 200px; border-radius: 26px; background: linear-gradient(160deg, #3a4c7a, #6a4b9a 60%, #c27a8a); padding: 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 10px; align-content: start; }
+.app { display: grid; justify-items: center; gap: 5px; font: 500 10.5px/1 system-ui, sans-serif; color: #fff; }
+.app i { width: 50px; height: 50px; border-radius: 12px; background: rgb(255 255 255 / .28); display: block; }
+.app img { width: 50px; height: 50px; border-radius: 12px; display: block; }
+
+/* 2 · the rail */
+.rail { width: 220px; height: 360px; padding: 20px; background: var(--navy); border-radius: 18px; display: flex; flex-direction: column; box-shadow: 0 0 0 1px rgb(246 243 236 / .08); }
+.rail .tabs { display: grid; gap: 6px; }
+.rail .tabs span { height: 40px; border-radius: 14px; display: flex; align-items: center; padding: 0 16px; font: 500 15px/1 var(--display); color: var(--lavender); }
+.rail .tabs span.on { background: var(--lime); color: var(--navy); }
+.rail-card { all: unset; box-sizing: border-box; cursor: pointer; margin-top: auto; display: flex; align-items: center; gap: 12px; border-radius: 16px; background: var(--navy-soft); padding: 20px 12px 12px; text-align: left; width: 100%; }
+.rc-txt { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.rc-txt b { font: 600 15px/1.25 var(--display); color: var(--ivory); }
+.rc-txt small { margin-top: 2px; display: flex; align-items: center; gap: 6px; font: 400 12px/1.25 var(--body); color: var(--lavender); }
+.rc-txt small i { width: 8px; height: 8px; border-radius: 50%; background: var(--lime); flex: none; }
+/* the fix */
+.rail-card.fixed { gap: 10px; padding: 20px 10px 12px; }
+.rail-card.fixed .rc-txt { display: grid; gap: 4px; line-height: 1; }
+.rail-card.fixed .rc-txt b { line-height: 1; }
+.rail-card.fixed .rc-txt small { margin-top: 0; white-space: nowrap; font: 500 11px/1 var(--body); color: rgb(247 244 235 / .7); }
+.rail-card.fixed .rc-txt small i { width: 7px; height: 7px; }
+/* website dock (copied from .lv-dock-btn) */
+.web-dock { all: unset; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 12px 16px 6px 6px; border-radius: 999px; background: var(--navy); color: var(--ivory); box-shadow: 0 0 0 1.5px var(--lime), 0 14px 30px -12px rgb(22 36 58 / .6); }
+.wd-txt { display: grid; gap: 3px; }
+.wd-txt b { font: 600 15px/1 var(--display); }
+.wd-txt small { display: flex; align-items: center; gap: 6px; font: 500 11px/1 var(--body); color: rgb(247 244 235 / .7); }
+.wd-txt small i { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); }
+.dockbg { padding: 30px 26px 22px; border-radius: 18px; background: linear-gradient(160deg, #2b3d5c, var(--navy)); }
+
+/* 3 · trail */
+.trail-demo { display: grid; gap: 14px; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.seg { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--navy-2); }
+.seg button { border: 0; background: transparent; color: var(--lav); font: 600 13.5px/1 var(--display); padding: 10px 14px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ivory); color: var(--navy); }
+.stage { width: 100%; background: radial-gradient(90% 60% at 50% 30%, #2a2f55, #1b2742 70%); border-radius: 22px; padding: 0 16px; display: flex; justify-content: center; overflow: clip; }
+.stage .clip { height: 560px; overflow: clip; }
+.stage .shift { margin-top: -318px; }
+.door-p { margin: 0; font-size: 14px; color: var(--lav); }
+.door-btn { display: inline-block; margin-top: 2px; padding: 12px 20px; border-radius: 999px; background: var(--lime); color: var(--navy); font: 600 15px/1 var(--display); }
+ol.steps { margin: 0; padding-left: 20px; color: var(--lav); font-size: 14px; display: grid; gap: 4px; max-width: 86ch; }
+ol.steps b { color: var(--ivory); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Three fixes before prompt 20</h1>
+    <p>Each section shows today next to the fix. Click the Bloqs to see them react. Say "go" and I'll send items 1 and 2 to Lovable and give you item 3 as a package.</p>
+  </header>
+
+  <!-- 1 -->
+  <section>
+    <div class="hd"><span class="no">1</span><div><h2>Bloqvia logo as the site icon, on desktop and phones</h2>
+      <p>The Lovable heart becomes our three lime blocks. B, the blocks on a navy tile, is my pick: lime alone almost disappears on a light tab and in Safari's light toolbar.</p></div></div>
+    <div class="row">
+      <div class="opt">
+        <span class="tag">A · blocks only</span>
+        <div class="tabbar dark"><div class="tab"><img src="mark.svg" alt=""><span>Your journey — Bloqvia</span></div><div class="tab ghost"><span>+</span></div></div>
+        <div class="tabbar light"><div class="tab"><img src="mark.svg" alt=""><span>Your journey — Bloqvia</span></div><div class="tab ghost"><span>+</span></div></div>
+        <div class="zoom"><span class="chk d"><img src="mark.svg" alt=""></span><span class="chk l"><img src="mark.svg" alt=""></span><img src="mark.svg" alt="the icon at 4×" style="background:#fff;padding:6px"></div>
+      </div>
+      <div class="opt pick">
+        <span class="tag">B · on a navy tile · recommended</span>
+        <div class="tabbar dark"><div class="tab"><img src="favicon.svg" alt=""><span>Your journey — Bloqvia</span></div><div class="tab ghost"><span>+</span></div></div>
+        <div class="tabbar light"><div class="tab"><img src="favicon.svg" alt=""><span>Your journey — Bloqvia</span></div><div class="tab ghost"><span>+</span></div></div>
+        <div class="zoom"><span class="chk d"><img src="favicon.svg" alt=""></span><span class="chk l"><img src="favicon.svg" alt=""></span><img src="favicon.svg" alt="the icon at 4×"></div>
+      </div>
+      <div class="opt">
+        <span class="tag">Phones · Add to Home Screen</span>
+        <div class="home">
+          <span class="app"><i></i>Photos</span><span class="app"><img src="touch.svg" alt="">Bloqvia</span><span class="app"><i></i>Maps</span>
+          <span class="app"><i></i>Notes</span><span class="app"><i></i>Wallet</span><span class="app"><i></i>Music</span>
+        </div>
+        <p class="note" style="max-width:30ch">iPhone and Android need a square, full navy icon (they round the corners themselves), so phones get this one with either choice.</p>
+      </div>
+    </div>
+    <p class="note">The files: <code>favicon.ico</code> (16/32/48), <code>favicon.svg</code>, <code>apple-touch-icon.png</code> (180), <code>icon-192.png</code>/<code>icon-512.png</code> and a small <code>site.webmanifest</code> for Android. I add them to <code>public/</code> in the package. Lovable only changes the icon links in the page head, with <code>?v=2</code> on each so browsers drop the cached Lovable icon.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <div class="hd"><span class="no">2</span><div><h2>Ask Bloq card in the game: two rows, like the website</h2>
+      <p>The rail is 220px wide, so "AI agent · online" wraps under the title and the card has three rows. The fix uses the website dock's text style (11px, never wraps) and 2px tighter spacing, so it fits on one line under "Ask Bloq".</p></div></div>
+    <div class="row">
+      <div class="col"><span class="tag">Website · reference</span><div class="dockbg"><div id="web-dock"></div></div><p>The landing page's dock, unchanged.</p></div>
+      <div class="col"><span class="tag bad">Game · today</span>
+        <div class="rail"><div class="tabs"><span>Home</span><span class="on">Map</span><span>Shop</span></div><div id="rail-today" style="margin-top:auto"></div></div>
+        <p>Three rows: the status line wraps.</p></div>
+      <div class="col"><span class="tag">Game · fixed</span>
+        <div class="rail"><div class="tabs"><span>Home</span><span class="on">Map</span><span>Shop</span></div><div id="rail-fixed" style="margin-top:auto"></div></div>
+        <p>Two rows, same agent, same card.</p></div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <div class="hd"><span class="no">3</span><div><h2>At the shop: Bloq stops beside the merchant, and they cheer together</h2>
+      <p>This is the real map component. Pick <b>Today</b> or <b>Fixed</b>, then press the button to watch the last stretch of the road.</p></div></div>
+    <div id="trail"></div>
+    <ol class="steps">
+      <li><b>He stops before the shop.</b> He walks the road only as far as it stays clear of the arch, the merchant and the name plate.</li>
+      <li><b>He hops down beside the door</b> on a curve out to the left, so he never passes in front of the merchant, and lands on the left side facing him.</li>
+      <li><b>They cheer together:</b> both raise their arms, jump and laugh, with a pop of lime and lavender blocks between them. They jump a second time, then he says "All done! Go on in."</li>
+      <li>Once the shop is open, the merchant always faces the guide. With reduced motion there's no walk or hop: both are just in place.</li>
+    </ol>
+  </section>
+</div>
+<script src="preview.js"></script>
+</body>
+</html>

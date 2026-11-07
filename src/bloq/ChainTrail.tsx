@@ -163,6 +163,10 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
   const [geo, setGeo] = useState<{ len: number; stopLen: number[]; door: Pt } | null>(null);
   const [lamps, setLamps] = useState<Lamp[]>([]);
   const [facing, setFacing] = useState<"left" | "right">("left");
+  // The meeting at the shop: both Bloqs cheer together when the guide arrives (then back to idle / waving).
+  // Once the shop is open the merchant faces left, towards the guide standing beside his door.
+  const [guidePose, setGuidePose] = useState<"idle" | "cheer">("idle");
+  const [merchantPose, setMerchantPose] = useState<"wave" | "cheer">("wave");
   const [line, sayRaw] = useSay();
   const at = useRef(level);            // the stop Bloq is standing at
   const walkingRef = useRef(false);
@@ -214,6 +218,35 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geo, level]);
 
+  // Little lime and lavender blocks that pop out between the two Bloqs.
+  const burst = (x: number, y: number) => {
+    const el = box.current; if (!el || reduced()) return;
+    for (let i = 0; i < 12; i++) {
+      const s = document.createElement("span"), a = -Math.PI / 2 + (i / 11 - 0.5) * 2.6, v = 46 + (i % 3) * 18;
+      s.className = `spark${i % 3 === 1 ? " p" : ""}`;
+      s.style.left = `${x}px`; s.style.top = `${y}px`;
+      el.appendChild(s);
+      s.animate(
+        [{ transform: "translate(-50%,-50%) scale(.4) rotate(0deg)", opacity: 1 },
+         { transform: `translate(calc(-50% + ${Math.cos(a) * v}px), calc(-50% + ${Math.sin(a) * v}px)) scale(1) rotate(${200 + i * 30}deg)`, opacity: 1, offset: 0.6 },
+         { transform: `translate(calc(-50% + ${Math.cos(a) * v * 1.2}px), calc(-50% + ${Math.sin(a) * v * 1.2 + 26}px)) scale(.8) rotate(${320 + i * 30}deg)`, opacity: 0 }],
+        { duration: 900, easing: "cubic-bezier(.2,.7,.4,1)" },
+      ).onfinish = () => s.remove();
+    }
+  };
+
+  // The guide has hopped down beside the shop: he and the merchant turn to each other and cheer together.
+  const cheerTogether = () => {
+    if (!geo) return;
+    const d = geo.door, mid = { x: d.x - 62, y: d.y - 62 };
+    const later = (ms: number, f: () => void) => { timers.current.push(window.setTimeout(f, ms)); };
+    setFacing("right");
+    setGuidePose("cheer"); guide.current?.jump(); guide.current?.setMood("laugh", 1800);
+    later(160, () => { setMerchantPose("cheer"); merchant.current?.jump(); merchant.current?.setMood("laugh", 1800); burst(mid.x, mid.y); });
+    later(900, () => { guide.current?.jump(); merchant.current?.jump(); burst(mid.x, mid.y - 10); });
+    later(1700, () => { setGuidePose("idle"); setMerchantPose("wave"); say(tip(3, stops)); });
+  };
+
   // Bloq stands at his stop; when `level` goes up he walks the road to the new one
   useLayoutEffect(() => {
     if (!geo || walkingRef.current) return;
@@ -229,12 +262,29 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
       requestAnimationFrame(tick);
     });
     const glide = async (a: Pt, b: Pt, ms: number) => { setFacing(b.x >= a.x ? "right" : "left"); await anim(ms, (k) => place(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k)); };
+    // A hop on a curve that swings out to the left and over, so he never passes in front of the arch.
+    const hop = async (a: Pt, b: Pt, ms: number) => {
+      setFacing(b.x >= a.x ? "right" : "left");
+      const c = { x: Math.min(a.x, b.x) - 26, y: Math.min(a.y, b.y) - 64 };
+      await anim(ms, (k) => {
+        const e = 1 - (1 - k) * (1 - k), u = 1 - e; // ease out: quick take-off, soft landing
+        place(u * u * a.x + 2 * u * e * c.x + e * e * b.x, u * u * a.y + 2 * u * e * c.y + e * e * b.y);
+      });
+    };
+    // The shop (arch, merchant and name plate). The guide's body is about 60px wide and 110px tall
+    // above his feet; on the last stretch he walks only as far as the road stays clear of the shop.
+    const clearOfShop = (L: number) => {
+      const p = pointAt(L), d = geo.door, feet = p.y + 8;
+      return p.x + 30 < d.x - 74 || p.x - 30 > d.x + 74 || feet < d.y - 136 || feet - 110 > d.y + 14;
+    };
     (async () => {
       walker.current?.scrollIntoView({ block: "center", behavior: "smooth" });
       await new Promise((r) => timers.current.push(window.setTimeout(r, 500)));
       guide.current?.walking(true);
       for (let i = from + 1; i <= to && !cancelled; i++) {
-        const a = rest(i - 1), L0 = geo.stopLen[i - 1] ?? 0, L1 = geo.stopLen[i] ?? 0, s0 = pointAt(L0);
+        const a = rest(i - 1), L0 = geo.stopLen[i - 1] ?? 0, s0 = pointAt(L0);
+        let L1 = geo.stopLen[i] ?? 0;
+        if (i === 3) while (L1 > L0 && !clearOfShop(L1)) L1 -= 2;
         await glide(a, { x: s0.x, y: s0.y + 8 }, 420);
         // null, not "right": he may arrive at the stop facing left (from the glide), and the first
         // step must turn him to the road's direction or he walks the whole stretch backwards.
@@ -245,15 +295,16 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
           place(p.x, p.y + 8);
         });
         const s1 = pointAt(L1), r = rest(i);
-        await glide({ x: s1.x, y: s1.y + 8 }, r, 420);
+        if (i === 3) { guide.current?.walking(false); await hop({ x: s1.x, y: s1.y + 8 }, r, 620); }
+        else await glide({ x: s1.x, y: s1.y + 8 }, r, 420);
         at.current = i;
       }
       guide.current?.walking(false);
       const r = rest(to); setFacing(r.face); walkingRef.current = false;
       if (cancelled) return;
+      if (to >= 3) { cheerTogether(); return; }
       guide.current?.jump();
       say(tip(to, stops));
-      if (to >= 3) timers.current.push(window.setTimeout(() => { merchant.current?.jump(); merchant.current?.setMood("laugh", 1200); }, 1500));
     })();
     return () => { cancelled = true; walkingRef.current = false; guide.current?.walking(false); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -337,7 +388,7 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
               <span className="plate">{doorAccount}</span>
               <div className="arch">
                 <div className="inside" />
-                <div className="merchant"><Bloq ref={merchant} hat="tophat" prop="cube" pose="wave" label="Bloq the merchant, waving from his shop" /></div>
+                <div className="merchant"><Bloq ref={merchant} hat="tophat" prop="cube" pose={merchantPose} facing={level >= 3 ? "left" : "right"} label="Bloq the merchant, waving from his shop" /></div>
                 <div className="awn" />
                 <div className="leaf"><Lock /></div>
               </div>
@@ -347,7 +398,7 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
         ) : null}
 
         <div ref={walker} className="walker" onClick={() => { guide.current?.jump(); say(tip(at.current, stops)); }}>
-          <Bloq ref={guide} hat="cap" pose="idle" facing={facing} label="Bloq, your guide on the map" />
+          <Bloq ref={guide} hat="cap" pose={guidePose} facing={facing} label="Bloq, your guide on the map" />
           <SpeechBubble text={line} tone="light" />
         </div>
       </div>
