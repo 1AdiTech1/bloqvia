@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from 
 import { Check, ExternalLink, RotateCcw, X } from "lucide-react";
 import { useGame } from "@/game/useGame";
 import { Bloq, SpeechBubble, useSay, talkMs, type BloqHandle, type BloqHat, type BloqProp, type BloqPose } from "@/bloq";
-import { useDailyQuests, type GeneratedBy } from "@/near";
+import { useChapters, SEASON2_CHAPTERS, useDailyQuests, type GeneratedBy } from "@/near";
 import { formatQuestDate } from "./lab/DailyQuestCard";
 import { LESSON_CONTENT, type LessonContent } from "@/game/content";
 import { RewardChip, ItemIcon } from "./GameBits";
@@ -23,6 +23,9 @@ const LOOKS: Record<string, { hat: BloqHat; prop: BloqProp; hello: string }> = {
   "the-vault": { hat: "captain", prop: "key", hello: "Chapter one: keys. Read the idea, then pick one." },
   "the-fuel-system": { hat: "hardhat", prop: "fuel", hello: "Hard hat on. This one's about gas, the fuel of the network." },
   "smart-agreements": { hat: "beret", prop: "scroll", hello: "Last one: smart contracts. The rules are printed on the machine." },
+  "chapter-ownership": { hat: "aviator", prop: "passport", hello: "Chapter four: owning things on chain. Your Passport is the example." },
+  "chapter-transactions": { hat: "agent", prop: "key", hello: "Chapter five: transactions. Who signs, who pays, and why nobody can change it." },
+  "chapter-defi": { hat: "tophat", prop: "coin", hello: "Last one: DeFi. My shop is a tiny market run by code." },
 };
 const DAILY_LOOK = { hat: "bucket" as BloqHat, prop: "bulb" as BloqProp, hello: "Today's quest was written by an AI agent. The chain still checks your answer." };
 const CUBE_COLORS = ["#d4f033", "#b47ff0", "#ffffff"];
@@ -36,9 +39,10 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
   const reduce = useReducedMotion();
   const desktop = useIsDesktop();
   const daily = useDailyQuests().quests.find((q) => q.lesson_id === lessonId);
+  const chapter = useChapters().chapters.find((c) => c.lesson_id === lessonId);
   const index = LESSON_CONTENT.findIndex((l) => l.lesson_id === lessonId);
   const founding = LESSON_CONTENT[index];
-  const lesson: SheetLesson | undefined = daily ?? founding;
+  const lesson: SheetLesson | undefined = daily ?? chapter ?? founding;
   useEffect(() => {
     if (!lesson) onClose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -154,7 +158,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
 
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-lavender-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]">{lesson.topic}</span>
-          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{daily ? `Daily quest · ${formatQuestDate(daily.lesson_id.slice(6))}` : `Chapter ${index + 1}`}</span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{daily ? `Daily quest · ${formatQuestDate(daily.lesson_id.slice(6))}` : chapter ? `Chapter 0${SEASON2_CHAPTERS.findIndex((id) => id === lessonId) + 4}` : `Chapter ${index + 1}`}</span>
         </div>
 
         {!done ? (

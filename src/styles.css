@@ -407,3 +407,60 @@ html.touch-sb::-webkit-scrollbar { display: none; }
 .lv-prog-hop .lv-pass .sealc { transform-box: fill-box; transform-origin: center; transform: scale(0) rotate(-30deg); transition: transform .5s cubic-bezier(.34,1.56,.64,1); }
 .lv-prog-hop .lv-pass.on .sealc { transform: none; }
 @media (prefers-reduced-motion: reduce) { .lv-prog-hop .lv-pass .sealc { transition: none; } }
+
+/* Two seasons: presentation tokens and the approved slim map rows. */
+:root {
+  --season-fields: linear-gradient(90deg, #23344f, #1f2d47);
+  --season-city: linear-gradient(90deg, #23344f, #2c2058);
+  --season-city-label: #e8beff;
+  --season-border: rgb(247 244 235 / .14);
+  --season-locked-border: rgb(201 166 243 / .5);
+  --season-glow: 0 0 22px rgb(212 240 51 / .09);
+  --season-icon-surface: rgb(212 240 51 / .12);
+  --season-caption-surface: rgb(13 22 38 / .85);
+  --season-stamp-glow: drop-shadow(0 0 6px rgb(212 240 51 / .35));
+}
+.season-map { container-type: inline-size; min-width: 0; }
+.scard { display: flex; align-items: center; gap: 12px; padding: 10px 14px; min-width: 0; border: 1.5px solid var(--season-border); border-radius: 1.1rem; background: var(--season-fields); }
+.scard.season-2 { margin-top: 64px; scroll-margin-top: 96px; background: var(--season-city); }
+.scard.open { border-color: var(--lime); box-shadow: var(--season-glow); }
+.scard.locked { border: 1.5px dashed var(--season-locked-border); }
+.g-ico { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--season-icon-surface); color: var(--lime); font: 700 15px/1 var(--font-display); }
+.scard.locked .g-ico { color: var(--lavender); background: var(--navy); }
+.g-txt { flex: 1; min-width: 0; }
+.g-txt .eb { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--lime); font: 600 10.5px/1.5 var(--font-display); letter-spacing: .16em; text-transform: uppercase; }
+.season-2 .eb { color: var(--season-city-label); }
+.g-txt b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 15.5px/1.5 var(--font-display); color: var(--ivory); }
+.scard:has(.g-btn) .g-txt b { width: calc(100% - 76px); }
+.season-map:has(.g-btn) > .bloq-trail-wrap .walker .bloq-say { left: auto; right: 58px; --ox: 100%; }
+.g-btn { flex: none; min-height: 40px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0 14px; background: var(--lime); color: var(--navy); font: 600 12px/1 var(--font-display); animation: lv-pulse 1.8s ease-in-out infinite; cursor: pointer; }
+.g-btn:disabled { opacity: .6; cursor: default; animation: none; }
+.g-btn:focus-visible { outline: 2px solid var(--ivory); outline-offset: 4px; }
+.season-narrow { display: none; }
+@container (max-width: 479px) {
+  .scard { gap: 10px; padding: 10px 12px; }
+  .g-ico { width: 26px; height: 26px; }
+  .g-txt b { font-size: 15px; }
+  .g-txt .eb { font-size: 10px; letter-spacing: .1em; }
+  .season-wide { display: none; }
+  .season-narrow { display: inline; }
+  .g-btn { padding-inline: 12px; }
+}
+.bloq-trail-wrap.dim .bloq-trail { opacity: .55; filter: saturate(.6); }
+.lv-pass .stamp { position: absolute; left: 49%; top: 57%; width: 38%; transform: rotate(-9deg); z-index: 2; mix-blend-mode: screen; color: var(--lime); filter: var(--season-stamp-glow); }
+.lv-pass .stamp.slam { animation: season-slam .7s cubic-bezier(.2,.9,.3,1.2) .35s both; }
+.lv-pass.stamp-shake { animation: season-shake .35s ease-out .72s; }
+@keyframes season-slam { 0% { transform: scale(2.4) rotate(-28deg); opacity: 0; } 60% { transform: scale(.9) rotate(-9deg); opacity: 1; } 80% { transform: scale(1.05) rotate(-9deg); } 100% { transform: scale(1) rotate(-9deg); opacity: 1; } }
+@keyframes season-shake { 0%,100% { translate: 0 0; } 35% { translate: 0 3px; } }
+.season-stamp-moment { position: absolute; bottom: 150px; left: 50%; transform: translateX(-50%); z-index: 20; width: min(300px, 84vw); display: flex; flex-direction: column; align-items: center; gap: 8px; animation: season-moment .45s cubic-bezier(.34,1.4,.64,1) both; }
+.season-stamp-caption { display: block; border-radius: 999px; background: var(--season-caption-surface); color: var(--ivory); padding: 6px 10px; font-size: 12.5px; white-space: nowrap; }
+@keyframes season-moment { from { opacity: 0; transform: translate(-50%,24px) scale(.7); } to { opacity: 1; transform: translate(-50%,0) scale(1); } }
+.passport-seasons { margin-top: 20px; padding: 14px; border-radius: 14px; background: var(--card); color: var(--navy); }
+.passport-seasons > div { display: grid; grid-template-columns: 24px minmax(0,1fr) auto; gap: 8px; align-items: center; padding-block: 8px; }
+.passport-seasons > div + div { border-top: 1px solid var(--border); }
+.passport-seasons b { font: 500 12px/1.4 var(--font-display); }
+.passport-seasons small { max-width: 122px; font: 500 9px/1.5 var(--font-mono); text-align: right; }
+.passport-seasons a { color: var(--navy); text-decoration: underline; text-underline-offset: 3px; }
+.season-dot { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--muted); color: var(--muted-foreground); }
+.season-dot.done { background: var(--lime); color: var(--navy); }
+@media (prefers-reduced-motion: reduce) { .g-btn, .season-stamp-moment, .lv-pass .stamp.slam, .lv-pass.stamp-shake { animation: none; } }

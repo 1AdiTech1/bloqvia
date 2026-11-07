@@ -500,7 +500,7 @@ function Chapters({ onExplore }: { onExplore: () => void }) {
             ))}
           </div>
         </div>
-        <p className="mt-10 text-muted-foreground"><b className="font-display font-medium text-navy">Coming next</b> · Digital ownership · Transactions · Decentralised finance</p>
+        <p className="mt-10 text-muted-foreground"><b className="font-display font-medium text-navy">Continue your journey with</b> Digital ownership · Transactions · Decentralised finance · <button type="button" onClick={onExplore} className="lv-explore inline-flex min-h-11 items-center font-display font-medium">Season 2 on the map ↗</button></p>
       </div>
     </section>
   );

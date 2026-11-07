@@ -14,9 +14,11 @@ const GUILLOCHE = Array.from({ length: 14 }, (_, i) => {
 const pad = (s: string, n = 44) => (s + "<".repeat(n)).slice(0, n);
 
 /** Two MRZ lines built from the account id and level, ending in SEALED when graduated. */
-export function passportMrz(accountId: string, level: number, graduated: boolean): [string, string] {
+export function passportMrz(accountId: string, level: number, graduated: boolean, stamps?: string[]): [string, string] {
   const acct = accountId.toUpperCase().replace(/[^A-Z0-9]+/g, "<");
-  return [pad(`P<BLQ<${acct}`), pad(`NEP171<SOULBOUND<<LVL${level}<<`.padEnd(38, "<") + (graduated ? "SEALED" : ""), 44)];
+  return [pad(`P<BLQ<${acct}`), stamps?.includes("season-2")
+    ? pad(`NEP171<SOULBOUND<<LVL${level}<<`.padEnd(34, "<") + (graduated ? "SEALED" : "<<<<<<") + "<<S2", 44)
+    : pad(`NEP171<SOULBOUND<<LVL${level}<<`.padEnd(38, "<") + (graduated ? "SEALED" : ""), 44)];
 }
 
 export function passportStatus(level: number, graduated: boolean): string {
@@ -36,6 +38,8 @@ export function Web3Passport({
   flat = true,
   onClick,
   className,
+  stamps,
+  slam = false,
 }: {
   holder: string;
   level: number;
@@ -45,10 +49,14 @@ export function Web3Passport({
   flat?: boolean;
   onClick?: () => void;
   className?: string;
+  stamps?: string[];
+  slam?: boolean;
 }) {
   const reduce = useReducedMotion();
   const pathId = useId().replace(/:/g, "");
-  const [m1, m2] = passportMrz(holder, level, graduated);
+  const s2 = stamps?.includes("season-2");
+  const inkId = `stamp-ink-${pathId}`;
+  const [m1, m2] = passportMrz(holder, level, graduated, stamps);
   const tilt = (e: PointerEvent<HTMLButtonElement>) => {
     if (reduce) return;
     const el = e.currentTarget, r = el.getBoundingClientRect();
@@ -63,8 +71,8 @@ export function Web3Passport({
     <div className={cn("lab-pass-wrap", className)}>
       <button
         type="button"
-        className={cn("lv-pass", flat && "flat")}
-        aria-label={`Your Web3 Passport: ${holder}, level ${level} of 3, ${passportStatus(level, graduated)}, soulbound on NEAR testnet`}
+        className={cn("lv-pass", flat && "flat", slam && !reduce && "stamp-shake")}
+        aria-label={`Your Web3 Passport: ${holder}, level ${level} of 3, ${passportStatus(level, graduated)}, soulbound on NEAR testnet${s2 ? ", Season 2 stamp" : ""}`}
         onClick={onClick}
         onPointerMove={tilt}
         onPointerLeave={untilt}
@@ -101,6 +109,21 @@ export function Web3Passport({
             </motion.g>
           )}
         </svg>
+        {s2 && (
+          <svg className={cn("stamp", slam && !reduce && "slam")} viewBox="0 0 156 100" aria-hidden="true">
+            <defs><filter id={inkId} x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="7" result="n" /><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.5 1.45" result="m" /><feComposite in="SourceGraphic" in2="m" operator="in" /></filter></defs>
+            <g filter={`url(#${inkId})`} fill="none" stroke="currentColor">
+              <rect x="4" y="4" width="148" height="92" rx="14" strokeWidth="3.2" />
+              <rect x="10" y="10" width="136" height="80" rx="9" strokeWidth="1.3" />
+              <g fill="currentColor" stroke="none" textAnchor="middle">
+                <text x="78" y="45" fontFamily="Space Grotesk, sans-serif" fontWeight="700" fontSize="24">SEASON 2</text>
+                <text x="78" y="60" fontFamily="JetBrains Mono, monospace" fontWeight="700" fontSize="8.4" letterSpacing="2.2">GOING FURTHER</text>
+                <text x="78" y="82" fontFamily="JetBrains Mono, monospace" fontWeight="500" fontSize="7.2" letterSpacing="1.4">NEAR TESTNET · NEP-171</text>
+              </g>
+              <path d="M20 68 H136" strokeWidth="1.2" strokeDasharray="3 3" />
+            </g>
+          </svg>
+        )}
         <span className="mrz" aria-hidden="true">{m1}<br />{m2}</span>
         <span className="scan" aria-hidden="true" />
       </button>

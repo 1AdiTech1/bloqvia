@@ -12,7 +12,7 @@ export interface LearnerView {
   account_id: string; registered: boolean; completed: string[]; level: number;
   graduated: boolean; gold: string; items: [string, string][];
 }
-export interface PassportView { token_id: string; owner_id: string; level: number; graduated: boolean; }
+export interface PassportView { token_id: string; owner_id: string; level: number; graduated: boolean; stamps: string[]; }
 export interface RelayResult { txHash: string; senderId: string; methods: string[]; }
 
 export interface Game {

@@ -10,6 +10,7 @@ import { GoldSeal } from "@/components/GameBits";
 import { Press, labEase } from "@/components/lab/motion";
 import { Bloq, SpeechBubble, talkMs, useSay, type BloqHandle, type BloqPose } from "@/bloq";
 import { CubeBurst } from "@/components/lab/CubeBurst";
+import { useChapters, SEASON2_CHAPTERS, season2Done } from "@/near";
 
 export function RevealPage() {
   return (
@@ -53,7 +54,11 @@ function ExtLink({ href, children, light = false }: { href: string; children: Re
 function RevealInner() {
   const game = useGame();
   const navigate = useNavigate();
-  const id = game.accountId!;
+  const id = game.accountId ?? "";
+  const s2 = season2Done(game.passport);
+  const { chapters } = useChapters();
+  const completedChapters = SEASON2_CHAPTERS.filter((chapterId) => game.learner?.completed.includes(chapterId));
+  const fallbackTitles = ["Digital Ownership", "Transactions", "Decentralised Finance"];
   const [copied, setCopied] = useState(false);
   const accountUrl = game.explorer.account(id);
   const graduated = game.learner?.graduated;
@@ -64,6 +69,8 @@ function RevealInner() {
     ...LESSON_CONTENT.filter((l) => game.learner?.completed.includes(l.lesson_id)).map((l) => `Quest "${l.title}" — rewards minted to your account`),
     "Your trades with Bloq — settled by his smart contract",
     ...(graduated ? ["Graduation — your Passport was sealed"] : []),
+    ...(completedChapters.length ? [`Chapters ${completedChapters.map((chapterId) => `"${chapters.find((c) => c.lesson_id === chapterId)?.title ?? fallbackTitles[SEASON2_CHAPTERS.indexOf(chapterId)]}"`).join(", ")}: rewards minted to your account`] : []),
+    ...(s2 ? ["Season 2 stamp: added to your Passport by the Passport office"] : []),
   ];
 
   const copy = async () => {
@@ -158,14 +165,12 @@ function RevealInner() {
       </Beat>
 
       <Beat delay={3.6} className="mt-8 flex flex-col items-center text-center">
-        <p className="font-display text-2xl font-medium leading-tight text-ivory">Thanks for playing. Everything you earned is yours.</p>
+        <p className="font-display text-2xl font-medium leading-tight text-ivory">{s2 ? "Both seasons done. Thanks for playing. Everything you earned is yours." : "Season 1 done. Everything you earned is yours."}</p>
         <div className="mt-6 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-center">
-          <Press onClick={() => navigate({ to: "/map" })} className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-lime px-6 font-display font-semibold text-navy shadow-lift">
+          <Press onClick={() => navigate({ to: "/map" })} className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full px-6 font-display font-semibold ${s2 ? "bg-lime text-navy shadow-lift" : "border-[1.5px] border-lavender/40 bg-transparent text-lavender"}`}>
             <ArrowLeft className="h-5 w-5" /> Back to the map
           </Press>
-          <Press onClick={playAgain} className="min-h-[52px] rounded-full border-[1.5px] border-lavender/40 bg-transparent px-6 font-semibold text-lavender">
-            Play again
-          </Press>
+          {s2 ? <Press onClick={playAgain} className="min-h-[52px] rounded-full border-[1.5px] border-lavender/40 bg-transparent px-6 font-semibold text-lavender">Play again</Press> : <Press onClick={() => navigate({ to: "/map", hash: "season-2" })} className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-lime px-6 font-display font-semibold text-navy shadow-lift">Continue your journey →</Press>}
         </div>
       </Beat>
     </>

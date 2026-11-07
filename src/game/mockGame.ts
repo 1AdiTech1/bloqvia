@@ -239,7 +239,7 @@ function build(): Game {
       }
     : null;
   const passport: PassportView | null = id
-    ? { token_id: id, owner_id: id, level, graduated: raw.graduated }
+    ? { token_id: id, owner_id: id, level, graduated: raw.graduated, stamps: [] }
     : null;
   return {
     accountId: id,

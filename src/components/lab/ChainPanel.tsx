@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { NEAR_CONFIG, explorer, useBloqvia, useDailyQuests, useFinalBlock, type TxEntry } from "@/near";
+import { NEAR_CONFIG, explorer, useBloqvia, useChapters, useDailyQuests, useFinalBlock, type TxEntry } from "@/near";
 import { useGame, IS_MOCK } from "@/game/useGame";
 import { LESSON_CONTENT } from "@/game/content";
 import { itemLabel } from "@/components/GameBits";
@@ -71,6 +71,7 @@ function Row({ k, children }: { k: string; children: React.ReactNode }) {
 function TxList({ limit, seeAll }: { limit: number; seeAll: boolean }) {
   const { txLog } = useBloqvia();
   const { quests } = useDailyQuests();
+  const { chapters } = useChapters();
   const reduce = useReducedMotion();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const t = window.setInterval(() => setNow(Date.now()), 30000); return () => window.clearInterval(t); }, []);
@@ -79,7 +80,7 @@ function TxList({ limit, seeAll }: { limit: number; seeAll: boolean }) {
     const n = e.amount ?? 1;
     switch (e.kind) {
       case "quest": {
-        const t = LESSON_CONTENT.find((l) => l.lesson_id === e.ref)?.title ?? quests.find((q) => q.lesson_id === e.ref)?.title ?? e.ref ?? "";
+        const t = LESSON_CONTENT.find((l) => l.lesson_id === e.ref)?.title ?? quests.find((q) => q.lesson_id === e.ref)?.title ?? chapters.find((c) => c.lesson_id === e.ref)?.title ?? e.ref ?? "";
         return `Quest: ${t}`;
       }
       case "sell": return `Sold ${n} ${itemLabel(e.ref ?? "")} to Bloq`;
