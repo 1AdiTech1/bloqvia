@@ -107,11 +107,6 @@ function RevealInner({ season2 = false }: { season2?: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const playAgain = () => {
-    game.signOut();
-    navigate({ to: "/" });
-  };
-
   if (season2 && !s2) return null;
 
   return (
@@ -191,7 +186,7 @@ function RevealInner({ season2 = false }: { season2?: boolean }) {
           <Press onClick={() => navigate({ to: "/map" })} className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full px-6 font-display font-semibold ${s2 ? "bg-lime text-navy shadow-lift" : "border-[1.5px] border-lavender/40 bg-transparent text-lavender"}`}>
             <ArrowLeft className="h-5 w-5" /> Back to the map
           </Press>
-          {s2 ? <Press onClick={playAgain} className="min-h-[52px] rounded-full border-[1.5px] border-lavender/40 bg-transparent px-6 font-semibold text-lavender">{season2 ? "Start again" : "Play again"}</Press> : <Press onClick={() => navigate({ to: "/map", hash: "season-2" })} className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-lime px-6 font-display font-semibold text-navy shadow-lift">Continue your journey →</Press>}
+          {!s2 && <Press onClick={() => navigate({ to: "/map", hash: "season-2" })} className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-lime px-6 font-display font-semibold text-navy shadow-lift">Continue your journey →</Press>}
         </div>
       </Beat>
     </>

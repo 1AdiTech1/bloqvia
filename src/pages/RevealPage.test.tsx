@@ -41,9 +41,10 @@ it("links each completed chapter to its quest transaction, or the account when a
     "https://example.test/ownership", "https://example.test/account", "https://example.test/stamp",
   ]);
 });
-it("starts again by signing out and going home", () => {
+it("offers no reset button, only Back to the map", () => {
   render(<Season2RevealPage />);
-  fireEvent.click(screen.getByRole("button", { name: "Start again" }));
-  expect(sandbox.signOut).toHaveBeenCalledTimes(1);
-  expect(sandbox.navigate).toHaveBeenCalledExactlyOnceWith({ to: "/" });
+  expect(screen.queryByRole("button", { name: /Start again|Play again/ })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: /Back to the map/ }));
+  expect(sandbox.signOut).not.toHaveBeenCalled();
+  expect(sandbox.navigate).toHaveBeenCalledExactlyOnceWith({ to: "/map" });
 });

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Check, ChevronDown, Info, X } from "lucide-react";
 import { useStreak } from "@/near";
 import { LabLoader } from "@/components/LabLoader";
@@ -51,6 +51,20 @@ function StreakInner() {
     document.addEventListener("keydown", key);
     return () => { document.removeEventListener("pointerdown", down); document.removeEventListener("keydown", key); };
   }, [log]);
+  const infoBtn = useRef<HTMLButtonElement>(null);
+  const infoPanel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!info) return;
+    const down = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (infoPanel.current?.contains(t) || infoBtn.current?.contains(t)) return;
+      setInfo(false);
+    };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { setInfo(false); infoBtn.current?.focus(); } };
+    document.addEventListener("pointerdown", down);
+    document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("pointerdown", down); document.removeEventListener("keydown", key); };
+  }, [info]);
   const refreshed = useRef(false);
   const { streak, member } = s;
 
@@ -107,8 +121,10 @@ function StreakInner() {
           <span className="rounded-full bg-lavender/50 px-2.5 py-1 text-xs font-medium">best {streak.best_streak}</span>
           <button
             type="button"
-            onClick={() => setInfo((v) => !v)}
+            ref={infoBtn}
+            onClick={() => { setLog(false); setInfo((v) => !v); }}
             aria-expanded={info}
+            aria-controls="streak-info"
             aria-label="How the streak works"
             className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-navy/5"
           >
@@ -117,21 +133,14 @@ function StreakInner() {
         </div>
       </div>
 
-      <AnimatePresence initial={false}>
-        {info && (
-          <motion.p
-            initial={reduce ? false : { opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={reduce ? { opacity: 0 } : { opacity: 0, height: 0 }}
-            transition={{ duration: reduce ? 0 : 0.3, ease: labEase }}
-            className="mt-3 overflow-hidden rounded-xl bg-lavender/25 p-3 text-sm leading-relaxed"
-          >
+      {info && (
+        <div ref={infoPanel} id="streak-info" role="dialog" aria-label="How the streak works"
+          className="bq-pop absolute left-[10px] right-[10px] top-[72px] z-30 rounded-[18px] bg-card px-4 py-3 text-sm leading-relaxed text-navy shadow-[0_22px_50px_rgb(0_0_0/.35),0_0_0_1px_#e3dccb]">
             Each day the community needs {p.daily_target} check-ins. A day that makes it mints {p.reward_per_checkin} STREAK to everyone who checked
             in; a day that misses burns {p.burn_per_miss} from the treasury and resets the streak. The rule lives in the contract; nobody can change
             it. On testnet a Bloqvia day is {Math.round((p.day_length_seconds / 60) * 10) / 10} minutes so you can watch it happen.
-          </motion.p>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
       <div className="mt-4">
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-navy/10">
@@ -195,7 +204,7 @@ function StreakInner() {
         <button
           ref={logBtn}
           type="button"
-          onClick={() => setLog((v) => !v)}
+          onClick={() => { setInfo(false); setLog((v) => !v); }}
           aria-expanded={log}
           aria-controls="streak-last-days"
           className="flex min-h-11 w-full items-center justify-between text-sm font-medium"

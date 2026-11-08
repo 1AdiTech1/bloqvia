@@ -9,7 +9,7 @@ import { HopBloq, useMedia } from "@/components/brand/HopBloq";
 import { useGame } from "@/game/useGame";
 import { cn } from "@/lib/utils";
 import {
-  BlockSea, Bloq, BloqCoin, BloqviaLogo, FloatingCubes, SpeechBubble, leap, talkMs, useSay,
+  BlockSea, Bloq, BloqCoin, BloqviaLogo, FloatingCubes, SpeechBubble, leap, talkMs, useSay, walkTo,
   type BloqHandle, type BloqHat, type BloqPose, type BloqProp, type FloatingCubesHandle,
 } from "@/bloq";
 
@@ -266,7 +266,7 @@ function Context() {
   const [pose, setPose] = useState<BloqPose>("idle");
   const [facing, setFacing] = useState<"left" | "right">("right");
   const [active, setActive] = useState(-1);
-  const st = useRef({ x: -160, idx: -1, sitting: false, lastUser: 0, walkT: 0, sitT: 0 });
+  const st = useRef({ x: -160, idx: -1, sitting: false, lastUser: 0, walkT: 0, sitT: 0, stroll: null as null | (() => number) });
   const stillRef = useRef(still);
   stillRef.current = still;
   const narrow = useMedia("(max-width: 980px)");
@@ -307,6 +307,7 @@ function Context() {
     s.idx = i;
     setActive(i);
     window.clearTimeout(s.walkT); window.clearTimeout(s.sitT);
+    if (s.stroll) { s.x = s.stroll(); s.stroll = null; } // interrupted: carry on from where he is
     const tr = track.current?.getBoundingClientRect(), w = host.current?.offsetWidth ?? 0, card = cards.current[i];
     if (!tr || !card) return;
     let target: number;
@@ -315,12 +316,13 @@ function Context() {
     const walk = () => {
       const dx = target - s.x;
       if (!moving || Math.abs(dx) < 6) { place(target, 0, 0); sitDown(i); return; }
-      const dur = Math.min(2600, Math.max(500, Math.abs(dx) * 3.2));
       setPose("idle");
       setFacing(dx < 0 ? "left" : "right");
-      bloq.current?.walking(true);
-      place(target, 0, dur);
-      s.walkT = window.setTimeout(() => sitDown(i), dur);
+      bloq.current?.walking(true, true);
+      const el = host.current;
+      if (!el) return;
+      s.stroll = walkTo(el, target, { onArrive: () => { s.stroll = null; sitDown(i); } });
+      s.x = target;
     };
     if (s.sitting && moving) {
       s.sitting = false;
@@ -350,6 +352,7 @@ function Context() {
     return () => {
       io.disconnect(); window.clearInterval(tour); window.clearTimeout(first);
       window.clearTimeout(st.current.walkT); window.clearTimeout(st.current.sitT);
+      st.current.stroll?.();
       window.removeEventListener("resize", onResize);
     };
   }, []);

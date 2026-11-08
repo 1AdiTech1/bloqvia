@@ -470,3 +470,8 @@ html.touch-sb::-webkit-scrollbar { display: none; }
 .season-dot { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--muted); color: var(--muted-foreground); }
 .season-dot.done { background: var(--lime); color: var(--navy); }
 @media (prefers-reduced-motion: reduce) { .g-btn, .season-stamp-moment, .lv-pass .stamp.slam, .lv-pass.stamp-shake { animation: none; } }
+
+/* Passport cards narrower than 300 px (the phone landing's example, the app's card on small phones):
+   the Chain · standard row hides so nothing runs into the code line (prompt 25). */
+.lv-pass { container-type: inline-size; }
+@container (max-width: 299px) { .lv-pass .fields > span:last-child { display: none; } }
