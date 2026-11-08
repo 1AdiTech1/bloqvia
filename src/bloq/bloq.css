@@ -85,6 +85,10 @@
 /* beside him on his left (wide screens only; under 700px it goes above) */
 .bloq-say[data-side="left"][data-narrow="0"] { left: auto; right: 86%; bottom: 52%; --ox: 100%; }
 .bloq-say[data-side="left"][data-narrow="0"]::after { bottom: 18px; left: auto; right: -7px; transform: rotate(-45deg); }
+/* in a row beside him on his right (Passport page, shop): in the flow at every width, tail low on the left edge */
+.bloq-say[data-side="right"] { position: relative; bottom: auto; left: auto; width: auto; max-width: 22rem; transform: none; transform-origin: 0 calc(100% - 25px); }
+.bloq-say[data-side="right"]::after { bottom: 18px; left: -7px; transform: rotate(135deg); }
+.bloq-say[data-side="right"].hide { transform: scale(.5); }
 @media (prefers-reduced-motion: reduce) { .bloq-say { transition: opacity .2s; } }
 
 /* ---------- logo (BloqviaLogo.tsx) ---------- */

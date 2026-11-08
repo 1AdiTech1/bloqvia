@@ -18,7 +18,7 @@
    html.bq-game, html.bq-game body { background: var(--navy); }
    ```
 
-1. **"ASK BLOQ" → "Ask Bloq"** in the Ask Bloq window's title (`src/components/lab/AskBloqSheet.tsx`): remove `uppercase` (and any uppercase tracking) from that heading so it reads "Ask Bloq", as in the rail card and the website chat. All widths.
+1. **The Ask Bloq title loses its capitals** in the Ask Bloq window's title (`src/components/lab/AskBloqSheet.tsx`): remove `uppercase` (and any uppercase tracking) from that heading so it reads "Ask Bloq", as in the rail card and the website chat. All widths.
 
 2. **A white band appears at the bottom when "Last days" opens near the end of the page** (`StreakCard.tsx`, `PhoneShell.tsx`):
    - **The cause:** the popover hangs below the card, past the end of the navy game page, so the page grows. The extra space shows the `body` background, which is the landing's ivory.

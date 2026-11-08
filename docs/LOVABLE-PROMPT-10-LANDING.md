@@ -109,7 +109,7 @@ and pay the gas. Hop on!" Click Bloq or the button → `wobble()`; hover the but
 leave → `rideWave(false)`. On the rider's `bloq:splash` event, burst 12 small 9px cubes (lime / #b47ff0 / white, 1.5px ink
 border, spinning) from the board's tail (`detail.dir > 0` → 12% of his width, else 88%).
 
-**9. Footer**: navy, "BLOQVIA · A friendlier way into Web3." left, lime "Back to top ↑" right.
+**9. Footer**: navy, "Bloqvia · A friendlier way into Web3." left, lime "Back to top ↑" right.
 
 Confirm: every section Bloq wears a different hat (cap2, beanie/captain/hardhat/beret, tophat/detective/aviator, grad, surf,
 astro); bubbles never leave the screen at 360 / 820 / 1366px; nothing in `src/bloq/` or `src/near/` changed.

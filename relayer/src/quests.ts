@@ -72,8 +72,8 @@ export const QUEST_SCHEMA = {
   additionalProperties: false,
   required: ["title", "topic", "concept", "question", "options", "answer", "success", "near_reveal", "explanation"],
   properties: {
-    title: { type: "string", description: "2-4 words, title case, no punctuation" },
-    topic: { type: "string" },
+    title: { type: "string", description: "2-4 words, title case, no punctuation, without the words Bloq or Bloqvia" },
+    topic: { type: "string", description: "Without the words Bloq or Bloqvia" },
     concept: { type: "string", description: "One short paragraph, max 320 characters, one concrete analogy" },
     question: { type: "string", description: "One question, max 160 characters" },
     options: { type: "array", minItems: 3, maxItems: 3, items: { type: "string", description: "max 60 characters" } },
@@ -129,6 +129,9 @@ export function validateQuest(q: unknown): GeneratedQuest {
   };
   const title = str("title", LIMITS.title);
   const topic = str("topic", LIMITS.topic);
+  // Titles and topics are shown in capitals; the name is always written "Bloq" / "Bloqvia", so it stays out of them.
+  if (/bloq/i.test(title)) throw new Error("quest.title must not use the name Bloq (titles are shown in capitals)");
+  if (/bloq/i.test(topic)) throw new Error("quest.topic must not use the name Bloq (topics are shown in capitals)");
   const concept = str("concept", LIMITS.concept);
   const question = str("question", LIMITS.question);
   const success = str("success", LIMITS.success);

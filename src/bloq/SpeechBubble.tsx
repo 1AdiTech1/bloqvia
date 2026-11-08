@@ -3,7 +3,9 @@
  *
  * Put it inside the same positioned box as the <Bloq/> it belongs to. It sits above him (or beside him,
  * on his left, with side="left"), nudges itself sideways so it never leaves the screen, and on screens
- * under 700px a side bubble moves above him. Pair it with useSay() and Bloq's talk():
+ * under 700px a side bubble moves above him. side="right" is the one exception to the box rule: the
+ * bubble is a sibling of Bloq in a row (Bloq first), in the flow, with its tail pointing back at him
+ * (the Passport page and the shop). Pair it with useSay() and Bloq's talk():
  *
  *   const [line, say] = useSay();
  *   say("Gas is the small fee…");            // shows, auto-hides
@@ -30,7 +32,8 @@ export function fitBubble(el: HTMLElement): void {
 export interface SpeechBubbleProps {
   /** null hides it (with a fade); the last text stays while it fades. */
   text: string | null;
-  side?: "above" | "left";
+  /** above him, beside him on his left, or in a row beside him on his right (in the flow, all widths) */
+  side?: "above" | "left" | "right";
   /** dark glass for light sections, light glass for navy sections */
   tone?: "dark" | "light";
   className?: string;
@@ -42,14 +45,14 @@ export function SpeechBubble({ text, side = "above", tone = "dark", className }:
   useEffect(() => { if (text) setShown(text); }, [text]);
   useEffect(() => {
     const el = ref.current;
-    if (!el || !text) return;
+    if (!el || !text || side === "right") return; // in the flow: the row keeps it on screen
     fitBubble(el);
     // Bloq can move while he talks (walking, hopping, floating): keep re-fitting while visible
     const id = window.setInterval(() => fitBubble(el), 350);
     const onResize = () => fitBubble(el);
     window.addEventListener("resize", onResize);
     return () => { window.clearInterval(id); window.removeEventListener("resize", onResize); };
-  }, [text, shown]);
+  }, [text, shown, side]);
   return (
     <p
       ref={ref}

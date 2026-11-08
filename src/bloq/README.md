@@ -7,7 +7,7 @@ The drawing and motion were approved in the design previews (`docs/design/landin
 | Export | What it is |
 | --- | --- |
 | `Bloq` | The character. Props: `hat`, `prop`, `pose`, `outfit`, `facing`, `floating`, `head`, `className`, `label`. Ref (`BloqHandle`): `jump()`, `talk(ms)`, `setMood(m, ms)`, `look(dx, dy)`, `aimAt(el)`, `walking(on)`, `wobble()`, `rideWave(on)`, `element()`. Size it with the wrapper's width (it keeps a 3:4 box). |
-| `SpeechBubble`, `useSay`, `talkMs` | Glass speech bubble that sits above Bloq (or on his left with `side="left"`), stays on screen, `tone="light"` on navy sections. `useSay()` gives `[line, say(text)]`; call `bloq.talk(talkMs(text))` with it. Put the bubble in the same `relative` box as the Bloq. |
+| `SpeechBubble`, `useSay`, `talkMs` | Glass speech bubble that sits above Bloq (or on his left with `side="left"`), stays on screen, `tone="light"` on navy sections. `side="right"`: a sibling after Bloq in a row, in the flow at every width, tail pointing back at him (Passport page, shop). Every line Bloq says in the app uses this bubble. `useSay()` gives `[line, say(text)]`; call `bloq.talk(talkMs(text))` with it. Put the bubble in the same `relative` box as the Bloq. |
 | `FloatingCubes` | Six faded cubes behind the hero Bloq, each with its own random motion; ref `hop()`. Place inside the hero's square stage. |
 | `BlockSea` | The block sea for the surfing Bloq; pass `riderRef` (the Bloq's wrapper) and it lifts him onto the crest each frame. The rider fires a `bloq:splash` DOM event (`detail.dir`) when he hops back onto the board. |
 | `BloqviaLogo` | The logo in motion: blocks drop and stack, the name types itself. Colours `#D4F033 / #A6C21A`, name Space Grotesk 600. |

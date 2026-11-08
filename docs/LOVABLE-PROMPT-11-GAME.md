@@ -112,8 +112,10 @@ Confirm when done:
    - **Walking.** In `close()` (when the quest sheet closes), call `setTrailLevel(foundingDone.length)` after the sheet's exit, about 450ms. Bloq then walks the road to the next block in view. Don't raise `trailLevel` while the sheet is open.
    - The daily quest doesn't move the trail.
    - The shop door opens when `trailLevel >= 3`. Use the same condition the old `shopOpen` used.
+   - **Header ring timing.** Give `PhoneShell` an optional `headerLevel?: number` prop that the header pill shows instead of `passport.level` when it's set. The Map passes its held `level` (the `heldLevel ?? learner.level` it already computes), so the ring ticks up only after the reward flight lands, as the old map card did.
 2. **Bloq in the quest sheet** (`src/components/QuizSheet.tsx`):
    - A `<Bloq />` stands on the sheet's top edge, at the right: 104px wide, `position: absolute; right: 22px; top: 0; transform: translateY(-74%)`.
+   - **Mount him outside the scrolling box.** The sheet panel scrolls (`overflow-y-auto`), and that would clip him. Wrap the panel in a `relative` div with no overflow, put Bloq in that wrapper, and keep the scrolling on the inner panel.
    - Give him a `SpeechBubble` (light tone) on his left, with `side="left"` on wide screens and above him on phones; the component handles that.
    - He wears the chapter's hat and holds its prop, the same as on the landing:
      - The Vault → `captain` + `key`
@@ -151,10 +153,14 @@ Confirm when done:
 
 ## Part C — Shop, Passport, Reveal, Missions
 
+0. **Two fixes from part B** (`src/components/QuizSheet.tsx`):
+   - Remove `key={`bloq-${oops}`}` from Bloq's wrapper. It re-creates Bloq on every wrong answer, so his "oh" face and talking mouth are lost the moment they're set. Shake the wrapper with `useAnimationControls()` instead (`controls.start({ x: [0, -7, 6, -4, 2, 0] })`), so the same Bloq stays mounted.
+   - In `CUBE_COLORS`, use the brand lime `#d4f033` instead of `#C7F36B`.
+
 1. **Shop** (`src/pages/ShopPage.tsx`):
    - **Replace** `BloqCharacter` and its speech card with **the stall**:
      - A navy-2 card (26px radius) with a scalloped awning across its top, in lime and `#8b45d9` stripes, as in the design.
-     - Inside, a two-column row. On the left, `<Bloq hat="tophat" prop="cube" pose="hold" />` at 132px wide. On the right, an ivory speech card ("BLOQ" label, display font, 1.02rem) showing `bloqLine(...)` exactly as today.
+     - Inside, a two-column row. On the left, `<Bloq hat="tophat" prop="cube" pose="hold" />` at 132px wide. On the right, an ivory speech card ("Bloq" label, display font, 1.02rem) showing `bloqLine(...)` exactly as today.
      - Under the row, a purple counter bar.
      - Then a mono line: "Treasury **{bloq.gold}** gold" on the left, "Shop **open**" or "**closed**" on the right (bold in lime).
    - **The merchant reacts to each trade**, after `onTraded(id)`:

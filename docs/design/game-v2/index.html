@@ -1144,7 +1144,7 @@ body.still *, body.still *::before, body.still *::after { animation: none !impor
   $("#copyKey").addEventListener("click", (e) => { e.currentTarget.textContent = "Copied"; setTimeout(() => (e.currentTarget.textContent = "Copy"), 1600); });
   $("#coHost").addEventListener("click", () => { B.co.jump(); say(B.co, $("#coSay"), "Small bounties are paid by the board. Big ones need a DAO vote."); });
 
-  /* ---------- ASK BLOQ (preview answers; in the app they come from NEAR AI Cloud via useAskBloq) ---------- */
+  /* ---------- Ask Bloq (preview answers; in the app they come from NEAR AI Cloud via useAskBloq) ---------- */
   const CHIPS = { cohort: ["How do mission rewards get paid?", "What is a DAO vote?", "Who checks that I qualified?"], passport: ["What does soulbound mean?", "How does my Passport level up?", "Can I sell my Passport?"], reveal: ["Who pays my gas?", "What is the Passport?", "What can I do with my key?"], quiz: ["Explain this another way", "Why does this matter on NEAR?", "Can you tell me the answer?"], shop: ["Why did the price change?", "What is the 2.5% spread?", "Why does the shop close?"], map: ["What is the Passport?", "How does the streak work?", "Who pays my gas?"] };
   const KB = [[/sell my passport|soulbound/i, "Soulbound means it stays with your account: the Passport contract refuses transfers, so nobody can sell it or buy one."],
     [/mission|dao|vote|qualif/i, "Missions are bounties for graduates. The board contract checks on chain that you qualified; small ones it pays itself, bigger ones go to a DAO council vote. Nobody moves money by hand."],

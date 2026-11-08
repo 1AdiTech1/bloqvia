@@ -21,7 +21,7 @@ export const MAX_ANSWER_CHARS = 700;
 export const PER_ASKER_PER_HOUR = 12;
 
 /** What Bloq knows. Keep it factual and short: the model may only use this. */
-export const KNOWLEDGE = `BLOQVIA
+export const KNOWLEDGE = `Bloqvia
 - Bloqvia is a game that teaches Web3 by letting the player play it on NEAR testnet. Everything the player does is a real transaction on NEAR testnet; testnet tokens have no value.
 - Start creates a NEAR account for the player (learner-xxxx.bloqvia.testnet) with a key that can only call the game contract. The player never sees a seed phrase. At the end (the reveal) the app hands over the key and explorer links.
 - Nobody pays gas: the player signs, Bloqvia's relayer pays (NEAR meta-transactions, NEP-366).

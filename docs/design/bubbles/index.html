@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bloq Speech Bubbles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="preview.css">
+<style>
+/* One speech bubble for Bloq on every screen: the Passport page and the shop move to SpeechBubble (side="right"), plus the Bloq/Bloqvia capital-letter fixes. Real Bloq components. */
+:root {
+  --night: #131f33; --navy: #16243a; --navy-soft: #23344f; --navy-2: #22324c; --ivory: #f7f4eb; --lime: #d4f033; --lime-d: #a6c21a;
+  --lav: #c9b8ec; --lavender: #c9a6f3; --lavender-soft: #efe7fb; --purple: #8b45d9; --purple-d: #6630b3; --coral: #f5a58b; --card: #fffdf7; --muted: #ece8dc; --muted-fg: #4f5b6e; --border: #ddd8c9;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: var(--display); --font-sans: var(--body); --font-mono: var(--mono);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--night); }
+body { margin: 0; background: var(--night); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased; padding: 28px 16px 72px; overflow-x: hidden; }
+.wrap { max-width: 1160px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 26px; }
+header h1 { margin: 0; font: 600 26px/1.15 var(--display); letter-spacing: -.02em; }
+header p { margin: 8px 0 0; color: var(--lav); max-width: 86ch; }
+h2.sec { margin: 18px 0 0; font: 600 19px/1.25 var(--display); }
+p.lead { margin: -12px 0 0; color: var(--lav); max-width: 88ch; font-size: 14.5px; }
+p.lead b { color: var(--ivory); font-weight: 600; }
+.demo { display: grid; gap: 14px; min-width: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.seg { display: inline-flex; flex-wrap: wrap; padding: 4px; border-radius: 999px; background: var(--navy-2); box-shadow: 0 8px 20px rgb(0 0 0 / .35); }
+.seg button { border: 0; background: transparent; color: var(--lav); font: 600 13.5px/1 var(--display); padding: 10px 14px; min-height: 40px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ivory); color: var(--navy); }
+.act { border: 0; cursor: pointer; min-height: 40px; padding: 0 16px; border-radius: 999px; background: var(--lime); color: var(--navy); font: 600 13.5px/1 var(--display); }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 18px; align-items: start; }
+.pair.stack { grid-template-columns: minmax(0, 1fr); }
+.col { display: grid; gap: 10px; min-width: 0; justify-items: center; }
+.tag { justify-self: start; font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: #c9a6f3; }
+.tag.new { color: var(--lime); }
+
+/* the app's page behind the game */
+.frame { width: 100%; border-radius: 24px; padding: 22px 20px 26px; min-width: 0; }
+.app { background: radial-gradient(circle at 80% 10%, rgb(185 178 239 / .25), transparent 50%), radial-gradient(circle at 10% 90%, rgb(199 243 107 / .12), transparent 45%), var(--navy); box-shadow: 0 0 0 1px rgb(255 255 255 / .06), 0 24px 50px rgb(0 0 0 / .35); }
+.f-phone { max-width: 390px; }
+.f-pp-desk { max-width: 376px; }
+.f-desk { max-width: 760px; padding: 28px; }
+
+/* reference: the bubble everywhere else */
+.ref { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px; }
+.ref-card { margin: 0; border-radius: 22px; overflow: hidden; display: grid; grid-template-rows: 1fr auto; }
+.ref-card.navy { background: radial-gradient(circle at 80% 10%, rgb(185 178 239 / .22), transparent 55%), var(--navy); }
+.ref-card.ivory { background: var(--lavender-soft); }
+.ref-stage { position: relative; height: 270px; display: flex; align-items: flex-end; justify-content: flex-start; padding: 0 0 18px 22px; }
+.ref-stage.side { justify-content: flex-end; padding: 0 18px 18px 0; }
+.ref-bloq { position: relative; width: 96px; cursor: pointer; }
+.ref-card figcaption { padding: 12px 16px 16px; font-size: 13px; color: var(--lav); background: rgb(0 0 0 / .18); }
+.ref-card.ivory figcaption { color: var(--navy); background: rgb(22 36 58 / .06); }
+
+/* Passport page pieces (styles.css) */
+.passport-seasons { padding: 14px; border-radius: 14px; background: var(--card); color: var(--navy); }
+.passport-seasons > div { display: grid; grid-template-columns: 24px minmax(0,1fr) auto; gap: 8px; align-items: center; padding-block: 8px; }
+.passport-seasons > div + div { border-top: 1px solid var(--border); }
+.passport-seasons b { font: 500 12px/1.4 var(--display); }
+.passport-seasons small { max-width: 122px; font: 500 9px/1.5 var(--mono); text-align: right; }
+.season-dot { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--muted); color: var(--muted-fg); font-size: 12px; }
+.season-dot.done { background: var(--lime); color: var(--navy); }
+.pp-row { margin-top: 32px; display: flex; align-items: flex-end; gap: 12px; }
+.pp-bloq { all: unset; cursor: pointer; width: 120px; flex: none; }
+.pp-say { margin-bottom: 24px; min-width: 0; }
+.explore { margin: 16px 0 0; text-align: center; font-weight: 600; color: var(--lime); font-size: 15px; }
+
+/* today's ivory card (PassportPage / ShopPage) */
+.old-card { border-radius: 18px 18px 18px 14px; background: var(--ivory); color: var(--navy); padding: 14px 16px; }
+.old-lbl { margin: 0 0 6px; font: 600 10.5px/1 var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--muted-fg); }
+.old-ln { margin: 0; font: 500 1.02rem/1.35 var(--display); letter-spacing: -0.01em; }
+.old-ln.fade { animation: fadein .25s ease-out both; }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+.pp-old { margin-bottom: 24px; flex: 1; }
+
+/* Bloq's stall (styles.css .lab-stall) */
+.lab-stall { position: relative; padding: 34px 16px 14px; border-radius: 26px; background: linear-gradient(180deg, var(--navy-2), #1a2740); border: 1px solid rgb(247 244 235 / .12); }
+.lab-stall .awn { position: absolute; left: -1px; right: -1px; top: -1px; height: 26px; border-radius: 26px 26px 0 0; background: repeating-linear-gradient(90deg, var(--lime) 0 16px, var(--purple) 16px 32px);
+  clip-path: polygon(0 0, 100% 0, 100% 60%, 94% 100%, 88% 60%, 82% 100%, 76% 60%, 70% 100%, 64% 60%, 58% 100%, 52% 60%, 46% 100%, 40% 60%, 34% 100%, 28% 60%, 22% 100%, 16% 60%, 10% 100%, 4% 60%, 0 100%); z-index: 3; }
+.lab-stall .srow { display: grid; grid-template-columns: 132px 1fr; align-items: end; gap: 10px; min-height: 170px; }
+@media (max-width: 380px) { .lab-stall .srow { grid-template-columns: 112px 1fr; } }
+.lab-stall .m-btn { all: unset; cursor: pointer; position: relative; width: 100%; align-self: end; }
+.lab-stall .counter { position: relative; margin: -18px -16px 0; height: 26px; background: linear-gradient(var(--purple), var(--purple-d)); border-radius: 6px 6px 0 0; z-index: 3; box-shadow: 0 -2px 0 rgb(255 255 255 / .12) inset; }
+.lab-stall .treasury { display: flex; justify-content: space-between; gap: 10px; margin-top: 12px; font: 500 12px/1.4 var(--mono); color: var(--lavender); }
+.lab-stall .treasury b { color: var(--lime); font-weight: 700; }
+.sh-old { margin-bottom: 26px; align-self: center; }
+.sh-say { margin-bottom: 26px; align-self: center; justify-self: start; }
+
+/* Missions treasury card */
+.treasury-card { border-radius: 1.6rem; border: 1px solid rgb(201 166 243 / .3); background: var(--navy); padding: 20px; color: var(--ivory); box-shadow: 0 20px 44px -18px rgb(22 36 58 / .4); }
+.eb-dao { margin: 0; font: 600 11px/1.5 var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--lavender); }
+.eb-dao.fixed { text-transform: none; letter-spacing: .04em; }
+.dao-id { margin: 4px 0 0; min-height: 44px; display: flex; align-items: center; font: 14px/1.4 var(--mono); color: var(--lime); word-break: break-all; }
+.dao-bal { margin: 0; font: 500 36px/1.1 var(--display); letter-spacing: -.03em; }
+.dao-bal span { font-size: 20px; color: var(--lavender); }
+.dao-line { margin: 12px 0 0; font-size: 14px; }
+
+/* /brand wordmark */
+.wm-row { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+.wm { display: flex; align-items: center; gap: 10px; border-radius: 24px; padding: 24px; }
+.wm span { font: 500 30px/1 var(--display); letter-spacing: -0.04em; }
+.wm.ivory { background: var(--ivory); color: var(--navy); }
+.wm.navy { background: var(--navy); color: var(--ivory); box-shadow: 0 0 0 1px rgb(255 255 255 / .1); }
+
+/* text-only changes */
+.txt { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 16px; }
+.tx { background: var(--navy-2); border-radius: 18px; padding: 16px 18px; min-width: 0; }
+.tx h3 { margin: 0 0 6px; font: 600 15px/1.3 var(--display); }
+.tx p { margin: 6px 0; font-size: 14px; color: var(--lav); }
+.tx ul { margin: 6px 0 0; padding-left: 18px; font-size: 14px; color: var(--lav); display: grid; gap: 6px; }
+.tx b { color: var(--ivory); font-weight: 600; }
+.tx code { font: 12.5px var(--mono); color: var(--ivory); }
+pre { margin: 8px 0; padding: 12px; border-radius: 12px; background: #0f1828; font: 12.5px/1.55 var(--mono); white-space: pre-wrap; word-break: break-word; color: var(--ivory); }
+.del { color: #f5a58b; text-decoration: line-through; }
+.add { color: var(--lime); }
+
+/* audit */
+.audit { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--navy-2); border-radius: 16px; overflow: hidden; }
+.audit th, .audit td { text-align: left; padding: 11px 14px; vertical-align: top; }
+.audit th { font: 600 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--lav); background: rgb(0 0 0 / .2); }
+.audit tr + tr td { border-top: 1px solid rgb(255 255 255 / .07); }
+.audit .ok { color: var(--lime); white-space: nowrap; }
+.audit .fix { color: #f5c08b; }
+.audit .ask { color: var(--lav); }
+@media (max-width: 560px) { .audit .ok { white-space: normal; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="preview.js"></script>
+</body>
+</html>

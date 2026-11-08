@@ -44,6 +44,13 @@ test("bad quests are rejected", () => {
   assert.throws(() => validateQuest({ ...good, question: "" }), /missing/);
 });
 
+test("titles and topics never carry the name, because the app shows them in capitals", () => {
+  assert.throws(() => validateQuest({ ...good, title: "Bloq's Price Rule" }), /quest\.title must not use the name Bloq/);
+  assert.throws(() => validateQuest({ ...good, title: "Inside Bloqvia" }), /quest\.title must not use the name Bloq/);
+  assert.throws(() => validateQuest({ ...good, topic: "How Bloq sets prices" }), /quest\.topic must not use the name Bloq/);
+  assert.match(repairPrompt("quest.title must not use the name Bloq (titles are shown in capitals)"), /fix only that/);
+});
+
 test("the public text never contains the answer and fits the on-chain cap", () => {
   const completion: Completion = {
     id: "chat-1", model: "Qwen/Qwen3.6-35B-A3B-FP8", content: "{}", requestSha256: "a".repeat(64), responseSha256: "b".repeat(64), reasoningChars: 0,
