@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Passport Bubble Fix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="preview.css">
+<style>
+/* Passport page on a 390 x 844 phone before any scroll: Bloq's bubble moves up beside his face so it clears the bottom menu bar. Real Bloq, real SpeechBubble. */
+:root {
+  --night: #131f33; --navy: #16243a; --navy-soft: #23344f; --navy-2: #22324c; --ivory: #f7f4eb; --lime: #d4f033; --lime-d: #a6c21a;
+  --lav: #c9b8ec; --lavender: #c9a6f3; --lavender-soft: #efe7fb; --purple: #8b45d9; --card: #fffdf7; --muted: #ece8dc; --muted-fg: #4f5b6e; --border: #ddd8c9;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: var(--display); --font-sans: var(--body); --font-mono: var(--mono);
+  --app-bg: radial-gradient(circle at 80% 10%, rgb(185 178 239 / .25), transparent 50%), radial-gradient(circle at 10% 90%, rgb(199 243 107 / .12), transparent 45%), var(--navy);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--night); }
+body { margin: 0; background: var(--night); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased; padding: 28px 16px 72px; overflow-x: hidden; }
+.wrap { max-width: 1160px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; overflow-x: clip; padding: 10px; }
+.top h1 { margin: 0; font: 600 26px/1.15 var(--display); letter-spacing: -.02em; }
+.top p { margin: 8px 0 0; color: var(--lav); max-width: 88ch; }
+h2.sec { margin: 18px 0 0; font: 600 19px/1.25 var(--display); }
+p.lead { margin: -12px 0 0; color: var(--lav); font-size: 14.5px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.seg { display: inline-flex; flex-wrap: wrap; padding: 4px; border-radius: 999px; background: var(--navy-2); box-shadow: 0 8px 20px rgb(0 0 0 / .35); }
+.seg button { border: 0; background: transparent; color: var(--lav); font: 600 13.5px/1 var(--display); padding: 10px 14px; min-height: 40px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ivory); color: var(--navy); }
+.act { border: 0; cursor: pointer; min-height: 40px; padding: 0 16px; border-radius: 999px; background: var(--lime); color: var(--navy); font: 600 13.5px/1 var(--display); }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 22px; align-items: start; }
+.pair.desk { grid-template-columns: minmax(0, 1fr); }
+.col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; justify-items: center; min-width: 0; }
+.tag { justify-self: start; font: 600 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: #c9a6f3; }
+.tag.new { color: var(--lime); }
+.note { background: var(--navy-2); border-radius: 16px; padding: 14px 18px; color: var(--lav); font-size: 14px; }
+.note b { color: var(--ivory); }
+.note code { font: 12.5px var(--mono); color: var(--ivory); background: #0f1828; padding: 1px 6px; border-radius: 6px; }
+
+/* the phone, as it opens */
+.phone-screen { position: relative; width: 390px; max-width: 100%; height: 844px; border-radius: 40px; overflow: hidden; background: var(--app-bg); box-shadow: 0 0 0 10px #0b1220, 0 30px 60px rgb(0 0 0 / .5); }
+.ps-scroll { position: absolute; inset: 0; overflow: hidden; padding: 16px 20px 128px; }
+.gh { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.logo { font-size: 30px; line-height: 1; }
+.logo svg { height: 30px !important; width: auto !important; }
+.name-ivory { color: var(--ivory); }
+.ppill { display: flex; align-items: center; gap: 8px; min-height: 44px; flex: none; border-radius: 999px; background: var(--ivory); color: var(--navy); padding: 4px 14px 4px 4px; box-shadow: 0 20px 44px -18px rgb(22 36 58 / .4); }
+.pp-t { display: flex; flex-direction: column; line-height: 1; }
+.pp-t small { font: 600 9px/1 var(--body); letter-spacing: .16em; text-transform: uppercase; color: rgb(22 36 58 / .6); }
+.pp-t b { margin-top: 2px; font: 600 13px/1 var(--display); }
+.desk-screen { width: 760px; max-width: 100%; border-radius: 24px; padding: 28px; background: var(--app-bg); box-shadow: 0 0 0 1px rgb(255 255 255 / .06), 0 24px 50px rgb(0 0 0 / .35); }
+
+/* Passport page (PassportPage.tsx) */
+.eyebrow { margin: 0; font: 600 11px/1.5 var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--lime); }
+.pp-grid { margin-top: 16px; }
+.pp-grid.desk { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+.pp-side { display: flex; flex-direction: column; min-width: 0; }
+.stamps { margin-top: 32px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.pp-grid.desk .stamps { margin-top: 0; }
+.st { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; font: 600 10.5px/1.25 var(--display); text-transform: uppercase; letter-spacing: .1em; color: var(--lavender); }
+.st.done { color: var(--ivory); }
+.disc { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--lime); color: var(--navy); box-shadow: inset 0 0 0 4px rgb(22 36 58 / .12), 0 0 0 3px rgb(212 240 51 / .25); }
+.st:not(.done) .disc { background: transparent; border: 2px dashed rgb(201 166 243 / .4); color: rgb(201 166 243 / .6); box-shadow: none; }
+.passport-seasons { margin-top: 20px; padding: 14px; border-radius: 14px; background: var(--card); color: var(--navy); }
+.passport-seasons > div { display: grid; grid-template-columns: 24px minmax(0,1fr) auto; gap: 8px; align-items: center; padding-block: 8px; }
+.passport-seasons > div + div { border-top: 1px solid var(--border); }
+.passport-seasons b { font: 500 12px/1.4 var(--display); }
+.passport-seasons small { max-width: 122px; font: 500 9px/1.5 var(--mono); text-align: right; }
+.season-dot { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--muted); color: var(--muted-fg); font-size: 12px; }
+.season-dot.done { background: var(--lime); color: var(--navy); }
+.pp-row { margin-top: 32px; display: flex; align-items: flex-end; gap: 12px; }
+.pp-bloq { all: unset; cursor: pointer; width: 120px; flex: none; }
+.w-today { margin-bottom: 24px; min-width: 0; }
+.w-new { margin-top: 12px; min-width: 0; align-self: flex-start; }
+.explore { margin: 16px 0 0; min-height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--lime); }
+
+/* bottom menu bar (PhoneShell BottomNav + AgentDock) */
+.bnav { position: absolute; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; justify-content: center; padding: 0 16px 16px; }
+.bnav-in { display: flex; width: 100%; max-width: 440px; align-items: center; gap: 10px; }
+.pill { display: flex; flex: 1; min-width: 0; justify-content: space-around; border-radius: 999px; border: 1px solid rgb(247 244 235 / .1); background: rgb(35 52 79 / .95); padding: 4px; box-shadow: 0 20px 44px -18px rgb(22 36 58 / .4); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.tab { flex: 1; min-width: 0; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 999px; padding: 6px 0; font: 600 9px/1.2 var(--body); text-transform: uppercase; letter-spacing: .02em; color: var(--lavender); }
+.tab.on { background: var(--lime); color: var(--navy); }
+.dock { position: relative; width: 62px; height: 62px; flex: none; border-radius: 50%; background: var(--navy-soft); display: grid; place-items: center; box-shadow: 0 20px 44px -18px rgb(22 36 58 / .4); }
+.dock i { position: absolute; right: 2px; bottom: 2px; width: 13px; height: 13px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 2px var(--navy); }
+
+/* the Passport card (styles.css .lv-pass) */
+.lab-pass-wrap { position: relative; width: 100%; max-width: 440px; perspective: 900px; }
+.lv-pass { display: block; position: relative; width: 100%; aspect-ratio: 1.5; border-radius: 20px; overflow: hidden;
+  background: radial-gradient(120% 90% at 0% 0%, #2b3d63 0%, transparent 55%), radial-gradient(90% 80% at 100% 100%, #3a2170 0%, transparent 60%), #111c30;
+  border: 1.5px solid rgb(212 240 51 / .55); box-shadow: 0 0 0 4px rgb(255 255 255 / .9), 6px 8px 0 4px rgb(201 166 243 / .45), 0 22px 36px -22px rgb(22 36 58 / .5); color: var(--ivory); font-family: var(--body); }
+.lv-pass .guil { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .22; }
+.lv-pass .holo { position: absolute; inset: -40%; background: linear-gradient(115deg, transparent 30%, rgb(212 240 51 / .28) 40%, rgb(180 127 240 / .38) 47%, rgb(120 220 255 / .28) 54%, rgb(255 255 255 / .18) 58%, transparent 68%); mix-blend-mode: screen; animation: lv-holo 6s ease-in-out infinite; pointer-events: none; }
+.lv-pass .prow { position: absolute; display: flex; align-items: center; gap: 8px; }
+.lv-pass .brandrow { left: 7%; top: 9%; } .lv-pass .brandrow svg { width: 22px; height: 21px; } .lv-pass .brandrow b { font: 600 15px/1 var(--display); letter-spacing: -0.02em; }
+.lv-pass .kind { right: 7%; top: 10%; font: 700 9px/1 var(--mono); letter-spacing: .22em; color: var(--lime); }
+.lv-pass .chipic { position: absolute; left: 7%; top: 25%; width: 13%; aspect-ratio: 1.25; border-radius: 6px; background: linear-gradient(135deg, #f1fb9a, #c9e12e 45%, #93ab12); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .25); }
+.lv-pass .nfc { position: absolute; left: 23%; top: 26%; width: 6%; aspect-ratio: .7; opacity: .7; }
+.lv-pass .fields { position: absolute; left: 7%; right: 33%; top: 43%; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.lv-pass .fields .wide { grid-column: 1 / -1; }
+.lv-pass .fields span { display: grid; gap: 2px; min-width: 0; }
+.lv-pass .fields small { font: 500 8.5px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgb(247 244 235 / .55); }
+.lv-pass .fields i { font: 600 13px/1.15 var(--display); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lv-pass .seal { position: absolute; right: 6%; top: 28%; width: 30%; aspect-ratio: 1; }
+.lv-pass .seal .spinner { transform-origin: 50% 50%; animation: lv-spin 14s linear infinite; }
+.lv-pass .mrz { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 7% 7px; background: rgb(0 0 0 / .28); font: 500 8.4px/1.35 var(--mono); letter-spacing: .12em; color: rgb(247 244 235 / .78); white-space: nowrap; overflow: hidden; }
+.lv-pass .scan { position: absolute; left: 0; right: 0; height: 30%; top: -30%; background: linear-gradient(180deg, transparent, rgb(212 240 51 / .14), transparent); animation: lv-scan 4.5s ease-in-out infinite; pointer-events: none; }
+.lv-pass .stamp { position: absolute; left: 49%; top: 57%; width: 38%; transform: rotate(-9deg); transform-origin: 50% 50%; z-index: 2; mix-blend-mode: screen; filter: drop-shadow(0 0 6px rgb(212 240 51 / .35)); }
+.lv-pass .stamp.slam { animation: slam .7s cubic-bezier(.2,.9,.3,1.2) .35s both; }
+@keyframes slam { 0% { opacity: 0; transform: scale(2.4) rotate(-28deg); } 55% { opacity: 1; transform: scale(.9) rotate(-8deg); } 72% { transform: scale(1.05) rotate(-9.5deg); } 100% { opacity: 1; transform: scale(1) rotate(-9deg); } }
+.lv-pass.shake { animation: shake .35s ease-out .72s both; }
+@keyframes shake { 0%, 100% { transform: none; } 30% { transform: translateY(3px) scale(.99); } 60% { transform: translateY(-1px); } }
+@keyframes lv-holo { 0%,100% { translate: -18% 0; } 50% { translate: 18% 0; } }
+@keyframes lv-scan { 0%, 55% { top: -30%; } 85%, 100% { top: 100%; } }
+@keyframes lv-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .lv-pass .holo, .lv-pass .scan, .lv-pass .spinner, .lv-pass .stamp.slam, .lv-pass.shake, .g-btn { animation: none; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="preview.js"></script>
+</body>
+</html>
