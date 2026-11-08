@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Check, ExternalLink, X } from "lucide-react";
-import { useBounties, claimStatusLabel, views } from "@/near";
+import { useBounties, claimStatusLabel, views, markMissionsSeen } from "@/near";
 import type { Bounty, Claim, DaoProposal, Requirement, Tier } from "@/near";
 import { IS_MOCK, useGame } from "@/game/useGame";
 import { useIsDesktop } from "@/components/lab/useDesktop";
@@ -14,6 +14,8 @@ import { formatQuestDate } from "@/components/lab/DailyQuestCard";
 import { cn } from "@/lib/utils";
 
 export function CohortPage() {
+  const game = useGame();
+  useEffect(() => { markMissionsSeen(game.accountId); }, [game.accountId]);
   return (
     <RequireAccount>
       <PhoneShell nav>

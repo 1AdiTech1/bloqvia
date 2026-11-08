@@ -11,12 +11,12 @@ const fmt = (s: number) => {
   return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
 };
 
-export function StreakCard() {
+export function StreakCard({ highlight = false }: { highlight?: boolean }) {
   if (import.meta.env.VITE_GAME_MODE === "mock") return null;
-  return <StreakInner />;
+  return <StreakInner highlight={highlight} />;
 }
 
-function StreakInner() {
+function StreakInner({ highlight }: { highlight: boolean }) {
   const s = useStreak();
   const reduce = useReducedMotion();
   const [left, setLeft] = useState<number | null>(null);
@@ -106,7 +106,7 @@ function StreakInner() {
   };
 
   return (
-    <section className="relative h-full rounded-[1.6rem] bg-ivory p-5 text-navy shadow-lift">
+    <section className={`relative h-full rounded-[1.6rem] bg-ivory p-5 text-navy shadow-lift${highlight ? " ring-2 ring-lime shadow-[0_0_26px_rgb(212_240_51/.22)]" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-navy/60">Community streak</p>
@@ -170,7 +170,7 @@ function StreakInner() {
           <Press
             onClick={onCheckIn}
             disabled={!member}
-            className="min-h-11 w-full rounded-full bg-lime font-display font-semibold text-navy shadow-lift disabled:opacity-50"
+            className={`min-h-11 w-full rounded-full bg-lime font-display font-semibold text-navy shadow-lift disabled:opacity-50${highlight ? " animate-[bq-pulse_1.8s_ease-in-out_infinite] motion-reduce:animate-none" : ""}`}
           >
             Check in
           </Press>

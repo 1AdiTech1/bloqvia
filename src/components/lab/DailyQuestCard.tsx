@@ -10,12 +10,12 @@ export function formatQuestDate(date: string) {
 }
 
 /** Today's AI-written bonus quest. Never locked; hidden in mock mode or when the feed fails. */
-export function DailyQuestCard({ onPlay }: { onPlay: (lessonId: string) => void }) {
+export function DailyQuestCard({ onPlay, highlight = false }: { onPlay: (lessonId: string) => void; highlight?: boolean }) {
   if (IS_MOCK) return null;
-  return <DailyQuestInner onPlay={onPlay} />;
+  return <DailyQuestInner onPlay={onPlay} highlight={highlight} />;
 }
 
-function DailyQuestInner({ onPlay }: { onPlay: (lessonId: string) => void }) {
+function DailyQuestInner({ onPlay, highlight }: { onPlay: (lessonId: string) => void; highlight: boolean }) {
   const { quests, loading, error } = useDailyQuests();
   const game = useGame();
   if (error) return null;
@@ -31,7 +31,7 @@ function DailyQuestInner({ onPlay }: { onPlay: (lessonId: string) => void }) {
   const tee = q.generated_by.signature?.signature_kind === "provider_tee";
 
   return (
-    <section className="flex h-full flex-col rounded-[1.6rem] border border-ivory/10 bg-navy-soft p-5 text-ivory shadow-lift">
+    <section className={`flex h-full flex-col rounded-[1.6rem] border border-ivory/10 bg-navy-soft p-5 text-ivory shadow-lift${highlight ? " ring-2 ring-lime shadow-[0_0_26px_rgb(212_240_51/.22)]" : ""}`}>
       <div className="flex items-center justify-between gap-2">
         <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-lavender">
           <span aria-hidden="true" className="h-2 w-2 rounded-full bg-lime" />
@@ -51,7 +51,7 @@ function DailyQuestInner({ onPlay }: { onPlay: (lessonId: string) => void }) {
             <Check className="h-5 w-5" strokeWidth={2.5} /> Done — a new one arrives tomorrow
           </p>
         ) : (
-          <Press onClick={() => onPlay(q.lesson_id)} className="min-h-[44px] w-full rounded-full bg-lime py-3 text-base font-semibold text-navy">
+          <Press onClick={() => onPlay(q.lesson_id)} className={`min-h-[44px] w-full rounded-full bg-lime py-3 text-base font-semibold text-navy${highlight ? " animate-[bq-pulse_1.8s_ease-in-out_infinite] motion-reduce:animate-none" : ""}`}>
             Play
           </Press>
         )}

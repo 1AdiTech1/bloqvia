@@ -183,7 +183,7 @@ function RevealInner({ season2 = false }: { season2?: boolean }) {
       <Beat delay={3.6} className="mt-8 flex flex-col items-center text-center">
         <p className="font-display text-2xl font-medium leading-tight text-ivory">{s2 ? "Both seasons done. Thanks for playing. Everything you earned is yours." : "Season 1 done. Everything you earned is yours."}</p>
         <div className="mt-6 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:justify-center">
-          <Press onClick={() => navigate({ to: "/map" })} className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full px-6 font-display font-semibold ${s2 ? "bg-lime text-navy shadow-lift" : "border-[1.5px] border-lavender/40 bg-transparent text-lavender"}`}>
+          <Press onClick={() => navigate(season2 ? { to: "/map", hash: "keep-going" } : { to: "/map" })} className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full px-6 font-display font-semibold ${s2 ? "bg-lime text-navy shadow-lift" : "border-[1.5px] border-lavender/40 bg-transparent text-lavender"}`}>
             <ArrowLeft className="h-5 w-5" /> Back to the map
           </Press>
           {!s2 && <Press onClick={() => navigate({ to: "/map", hash: "season-2" })} className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-lime px-6 font-display font-semibold text-navy shadow-lift">Continue your journey →</Press>}

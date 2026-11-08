@@ -46,5 +46,5 @@ it("offers no reset button, only Back to the map", () => {
   expect(screen.queryByRole("button", { name: /Start again|Play again/ })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: /Back to the map/ }));
   expect(sandbox.signOut).not.toHaveBeenCalled();
-  expect(sandbox.navigate).toHaveBeenCalledExactlyOnceWith({ to: "/map" });
+  expect(sandbox.navigate).toHaveBeenCalledExactlyOnceWith({ to: "/map", hash: "keep-going" });
 });

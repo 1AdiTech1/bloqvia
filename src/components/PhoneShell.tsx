@@ -14,8 +14,8 @@ import { cn } from "@/lib/utils";
  * `chain` shows the panel without the rail (the Reveal). `inlineHeader` lets a page place <GameHeader /> itself.
  */
 export function PhoneShell({
-  children, nav = false, chain = false, headerLevel, inlineHeader = false,
-}: { children: ReactNode; nav?: boolean; chain?: boolean; headerLevel?: number | undefined; inlineHeader?: boolean }) {
+  children, nav = false, chain = false, headerLevel, inlineHeader = false, glow,
+}: { children: ReactNode; nav?: boolean; chain?: boolean; headerLevel?: number | undefined; inlineHeader?: boolean; glow?: string | undefined }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const context = CONTEXT_BY_PATH[path] ?? "map";
   const [asking, setAsking] = useState(false);
@@ -35,7 +35,7 @@ export function PhoneShell({
           nav ? "dk:grid-cols-[220px_minmax(0,1fr)_330px]" : chain ? "dk:grid-cols-[minmax(0,1fr)_330px]" : "",
         )}
       >
-        {nav && <Rail onAsk={ask} asking={asking} />}
+        {nav && <Rail onAsk={ask} asking={asking} glow={glow} />}
         <div className={cn("mx-auto min-h-screen w-full max-w-[480px] px-5 pt-4 dk:max-w-[760px] dk:px-7 dk:pb-12 dk:pt-7", nav ? "pb-32" : "pb-12")}>
           {nav && !inlineHeader && <GameHeader level={headerLevel} />}
           {children}
@@ -54,7 +54,7 @@ export function PhoneShell({
           </div>
         )}
       </div>
-      {nav && <BottomNav onAsk={ask} asking={asking} />}
+      {nav && <BottomNav onAsk={ask} asking={asking} glow={glow} />}
       {nav && !IS_MOCK && (
         <AskBloqSheet
           open={asking}
@@ -100,6 +100,8 @@ const TAB = "tap flex min-w-0 flex-1 flex-col items-center justify-center gap-0.
 const CONTEXT_BY_PATH: Record<string, AskContext> = { "/map": "map", "/shop": "shop", "/cohort": "missions", "/passport": "passport" };
 
 type AskProps = { onAsk: (el: HTMLElement) => void; asking: boolean };
+type NavProps = AskProps & { glow?: string | undefined };
+const GLOW = "text-lime animate-[bq-glow_1.8s_ease-in-out_infinite] motion-reduce:animate-none motion-reduce:shadow-[inset_0_0_0_1.5px_rgb(212_240_51)]";
 
 /** Every 14s while the sheet is closed and the tab visible, the agent peeks out. */
 function usePeek(asking: boolean) {
@@ -115,7 +117,8 @@ function usePeek(asking: boolean) {
   return pod;
 }
 
-function Rail({ onAsk, asking }: AskProps) {
+function Rail({ onAsk, asking, glow }: NavProps) {
+  const path = useRouterState({ select: (s) => s.location.pathname });
   return (
     <aside className="hidden dk:block">
       <div className="sticky top-0 flex h-screen flex-col gap-8 px-5 py-7">
@@ -132,11 +135,12 @@ function Rail({ onAsk, asking }: AskProps) {
             <Link
               key={to}
               to={to}
-              className="flex h-12 items-center gap-3 rounded-[14px] px-4 font-display text-[15px] font-medium text-lavender transition-colors hover:bg-navy-soft hover:text-ivory"
+              className={cn("flex h-12 items-center gap-3 rounded-[14px] px-4 font-display text-[15px] font-medium text-lavender transition-colors hover:bg-navy-soft hover:text-ivory", glow === to && path !== to && GLOW)}
               activeProps={{ className: "!bg-lime !text-navy" }}
             >
               <Icon className="h-5 w-5" />
               {label}
+              {glow === to && path !== to && <span className="rounded-full bg-lime px-1.5 py-0.5 text-[10px] font-semibold leading-none text-navy">new</span>}
             </Link>
           ))}
         </nav>
@@ -168,7 +172,8 @@ function RailAgent({ onAsk, asking }: AskProps) {
   );
 }
 
-function BottomNav({ onAsk, asking }: AskProps) {
+function BottomNav({ onAsk, asking, glow }: NavProps) {
+  const path = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav aria-label="Game" className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-4 dk:hidden">
       <div className="flex w-full max-w-[440px] items-center gap-2.5 max-[359px]:gap-1.5">
@@ -181,9 +186,10 @@ function BottomNav({ onAsk, asking }: AskProps) {
             <Link
               key={to}
               to={to}
-              className={TAB}
+              className={cn(TAB, glow === to && path !== to && cn("relative", GLOW))}
               activeProps={{ className: "bg-lime !text-navy" }}
             >
+              {glow === to && path !== to && <span aria-hidden="true" className="absolute right-2 top-1 h-2 w-2 rounded-full bg-lime" />}
               <Icon className="h-5 w-5" />
               {short ? <><span className="max-[359px]:hidden">{label}</span><span className="min-[360px]:hidden">{short}</span></> : label}
             </Link>

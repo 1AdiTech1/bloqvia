@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, useReducedMotion } from "framer-motion";
-import { ChainTrail, type ChainTrailHandle, type TrailStop } from "@/bloq";
-import { useChapters, useFinalBlock, SEASON2_CHAPTERS, season2Done } from "@/near";
+import { Bloq, ChainTrail, SpeechBubble, leap, talkMs, useSay, type BloqHandle, type BloqPose, type ChainTrailHandle, type TrailStop } from "@/bloq";
+import { useChapters, useFinalBlock, SEASON2_CHAPTERS, season2Done, useAfterSeasons, type AfterStep } from "@/near";
 import { useGame, IS_MOCK } from "@/game/useGame";
 import { LESSON_CONTENT } from "@/game/content";
 import { GameHeader, PhoneShell } from "@/components/PhoneShell";
@@ -15,6 +15,8 @@ import { DailyQuestCard } from "@/components/lab/DailyQuestCard";
 import { buzz, Press } from "@/components/lab/motion";
 import { Web3Passport } from "@/components/lab/Web3Passport";
 import { seasonProgress } from "@/components/lab/seasonProgress";
+import { AfterSeasonsCard } from "@/components/lab/AfterSeasonsCard";
+import { useIsDesktop } from "@/components/lab/useDesktop";
 
 const KINDS = ["vault", "battery", "contract"] as const;
 const POSTS = ["keys · ed25519", "gas · the relayer pays", "core.bloqvia.testnet"] as const;
@@ -90,11 +92,31 @@ function MapInner() {
   const doneCount = useRef(foundingDone.length);
   doneCount.current = foundingDone.length;
 
+  // After Season 2 (prompt 26): Bloq's tour of the daily cards.
+  const after = useAfterSeasons({ accountId: game.accountId, stamped, completed });
+  const desktop = useIsDesktop();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const cardsBox = useRef<HTMLDivElement>(null);
+  const streakBox = useRef<HTMLDivElement>(null);
+  const dailyBox = useRef<HTMLDivElement>(null);
+  const listBox = useRef<HTMLDivElement>(null);
+  const tourHost = useRef<HTMLDivElement>(null);
+  const tourBody = useRef<HTMLDivElement>(null);
+  const tourBloq = useRef<BloqHandle>(null);
+  const tourFlight = useRef<(() => void) | null>(null);
+  const leftCity = useRef(false);
+  const [tourPose, setTourPose] = useState<BloqPose>("sit");
+  const [tourFacing, setTourFacing] = useState<"left" | "right">("right");
+  const [officerIn, setOfficerIn] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [tourLine, sayTourRaw] = useSay();
+
   useEffect(() => {
     mounted.current = true;
     try { setStoredStart(!!game.accountId && localStorage.getItem(`bloqvia:s2:${game.accountId}`) === "1"); } catch { setStoredStart(false); }
     startReady.current = true;
     if (location.hash === "#season-2") requestAnimationFrame(() => card2.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" }));
+    if (location.hash === "#keep-going") requestAnimationFrame(() => cardsBox.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" }));
     return () => { mounted.current = false; timers.current.forEach(clearTimeout); };
   }, [game.accountId, reduce]);
 
@@ -217,21 +239,123 @@ function MapInner() {
     }, reduce ? 0 : 450));
   };
 
+  const touring = after.active && after.ready && !moment && !thirdThisVisit.current;
+  const tourOn = touring && after.tourStarted;
+  const W = desktop ? 100 : 86;
+  const LINE: Record<AfterStep, string> = {
+    streak: "Both seasons done! Now the community needs you: check in today. When enough of us do, everyone who checked in gets STREAK.",
+    daily: "Checked in! Next, today's quest. An AI agent wrote it this morning, and the chain still checks your answer.",
+    missions: desktop
+      ? "One more, just for graduates: Missions. The DAO's board pays testnet NEAR for small tasks. It's in the menu on the left."
+      : "One more, just for graduates: Missions. The DAO's board pays testnet NEAR for small tasks. Tap Missions below.",
+    done: "That's everything for today. Come back tomorrow for a new quest and a new streak day.",
+  };
+  const sayTour = (line: string) => { sayTourRaw(line); tourBloq.current?.talk(talkMs(line)); };
+  const boxFor = (step: AfterStep) => step === "streak" ? streakBox.current : step === "daily" ? dailyBox.current : listBox.current;
+  const spotFor = (step: AfterStep) => {
+    const root = rootRef.current, box = boxFor(step);
+    if (!root || !box) return null;
+    const br = root.getBoundingClientRect(), r = box.getBoundingClientRect();
+    return { x: r.right - br.left - W - 16, y: r.top - br.top - (W * 4) / 3 * 0.75 + 4, w: W };
+  };
+  const placeTour = (step: AfterStep) => {
+    const host = tourHost.current, spot = spotFor(step);
+    if (!host || !spot) return false;
+    host.style.transition = "none";
+    host.style.width = `${spot.w}px`;
+    host.style.transform = `translate(${spot.x}px, ${spot.y}px)`;
+    return true;
+  };
+  const tourAt = useRef<AfterStep | null>(null);
+  const tourApi = useRef({ placeTour, spotFor, sayTour, LINE });
+  tourApi.current = { placeTour, spotFor, sayTour, LINE };
+
+  // He appears sitting on the current step, then jumps (leap) to each next one on the same visit.
+  useEffect(() => {
+    if (!tourOn) { tourAt.current = null; return; }
+    const step = after.next, api = tourApi.current;
+    if (tourAt.current === step) return;
+    const first = tourAt.current === null;
+    tourAt.current = step;
+    if (first || reduce) {
+      tourFlight.current?.(); tourFlight.current = null;
+      requestAnimationFrame(() => { api.placeTour(step); setTourFacing("right"); setTourPose("sit"); });
+      timers.current.push(setTimeout(() => tourApi.current.sayTour(tourApi.current.LINE[step]), 500));
+      return;
+    }
+    const host = tourHost.current, spot = api.spotFor(step);
+    if (!host || !spot) return;
+    tourFlight.current?.();
+    setTourPose("idle");
+    tourFlight.current = leap(host, spot, {
+      body: tourBody.current,
+      onTakeoff: (dir) => { setTourFacing(dir); setTourPose("cheer"); },
+      onLand: () => { tourFlight.current = null; setTourFacing("right"); setTourPose("sit"); tourBloq.current?.setMood("laugh", 900); timers.current.push(setTimeout(() => tourApi.current.sayTour(tourApi.current.LINE[step]), 260)); },
+    });
+  }, [tourOn, after.next, reduce]);
+
+  // Re-place him on resize and when the cards change size, unless he is in the air.
+  useEffect(() => {
+    if (!tourOn) return;
+    const again = () => { if (!tourFlight.current && tourAt.current) tourApi.current.placeTour(tourAt.current); };
+    const ro = typeof ResizeObserver === "function" ? new ResizeObserver(again) : null;
+    if (cardsBox.current) ro?.observe(cardsBox.current);
+    window.addEventListener("resize", again);
+    return () => { ro?.disconnect(); window.removeEventListener("resize", again); };
+  }, [tourOn]);
+  useEffect(() => () => { tourFlight.current?.(); }, []);
+
+  // Leaving Network City, once per account: Season 2's guide jumps onto the first card, the officer goes in.
+  useEffect(() => {
+    if (!touring || after.tourStarted || leftCity.current) return;
+    const timer = setTimeout(async () => {
+      const s = tourApi.current.spotFor(after.next), br = rootRef.current?.getBoundingClientRect();
+      if (!s || !br) return;
+      leftCity.current = true;
+      setLeaving(true);
+      timers.current.push(setTimeout(() => { if (mounted.current) setOfficerIn(true); }, reduce ? 0 : 1400)); // as he takes off
+      await trail2.current?.jumpTo({ x: br.left + s.x + W / 2, y: br.top + s.y + (W * 4) / 3 * 0.75 }, "Both seasons done! Come with me.");
+      if (!mounted.current) return;
+      after.startTour();
+      setLeaving(false);
+    }, 900);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [touring, after.tourStarted]);
+
+  const scrollTo = (el: HTMLDivElement | null) => el?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+
   const shopOpen = trailLevel >= 3;
   const stampPendingMoment = (thirdThisVisit.current || (chaptersDone === 3 && s2Level < 3)) && !celebrated.current;
 
   return (
-    <PhoneShell nav inlineHeader>
+    <PhoneShell nav inlineHeader glow={tourOn && after.next === "missions" ? "/cohort" : undefined}>
       {/* Phones: header, heading, inventory, seasons, community cards. Desktop unchanged. */}
-      <div className="flex flex-col dk:grid dk:grid-cols-[minmax(0,1fr)_auto] dk:items-center dk:gap-x-4">
+      <div ref={rootRef} data-leaving={leaving || undefined} className="relative flex flex-col dk:grid dk:grid-cols-[minmax(0,1fr)_auto] dk:items-center dk:gap-x-4">
+      {tourOn && (
+        <div ref={tourHost} className="absolute left-0 top-0 z-[6]" style={{ width: W }}>
+          <div ref={tourBody} style={{ transformOrigin: "50% 92%" }} onClick={() => sayTour(LINE[after.next])}>
+            <Bloq ref={tourBloq} hat="cap" pose={tourPose} facing={tourFacing} label="Bloq, your guide" className="w-full" />
+          </div>
+          <SpeechBubble text={tourLine} className="hop-say" />
+        </div>
+      )}
       <GameHeader level={level} className="order-1 dk:order-2 dk:col-start-2 dk:mb-0" />
       <div className="order-3 mt-4 dk:mt-0 dk:order-2 dk:col-start-1 dk:row-start-2">
         <InventoryBar gold={held?.gold} items={held?.items} />
       </div>
-      <div className="order-5 mt-10 flex flex-col gap-3 dk:order-4 dk:col-span-2 dk:mt-6 dk:grid dk:grid-cols-2 dk:items-stretch dk:gap-4">
+      {after.active ? (
+        <div id="keep-going" ref={cardsBox} className="order-5 mt-[112px] flex scroll-mt-[120px] flex-col gap-[100px] dk:order-4 dk:col-span-2 dk:mt-[112px] dk:grid dk:grid-cols-2 dk:items-stretch dk:gap-4">
+          <div ref={streakBox} className="min-w-0 empty:hidden"><StreakCard highlight={tourOn && after.next === "streak"} /></div>
+          <div ref={dailyBox} className="min-w-0 empty:hidden"><DailyQuestCard onPlay={openQuest} highlight={tourOn && after.next === "daily"} /></div>
+          <div ref={listBox} className="min-w-0 dk:col-span-2 dk:mt-[84px]"><AfterSeasonsCard after={after} onCheckIn={() => scrollTo(streakBox.current)} onPlay={() => scrollTo(dailyBox.current)} /></div>
+        </div>
+      ) : (
+      <div ref={cardsBox} className="order-5 mt-10 flex flex-col gap-3 dk:order-4 dk:col-span-2 dk:mt-6 dk:grid dk:grid-cols-2 dk:items-stretch dk:gap-4">
         <StreakCard />
         <DailyQuestCard onPlay={openQuest} />
       </div>
+      )}
 
       <div className="journey-line order-2 dk:order-1 dk:col-span-2 dk:mb-5">
         <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-lime dk:mt-0">Your journey</p>
@@ -272,7 +396,8 @@ function MapInner() {
         {...(s1Done && !graduated ? { action: <Link to="/shop" className="g-btn graduate-first"><span className="season-wide">Graduate first ↑</span><span className="season-narrow">Graduate ↑</span></Link> } : s2Open && !started ? { action: <Press disabled={starting || IS_MOCK} onClick={() => void startSeason2()} className="g-btn"><span className="season-wide">Start Season 2 ↓</span><span className="season-narrow">Start ↓</span></Press> } : {})} />
       <div className="relative" onPointerDownCapture={(e) => { if (s1Done && !graduated && e.target instanceof Element && e.target.closest(".blk")) trail.current?.say(GRADUATE_FIRST); }}>
       <ChainTrail ref={trail2} world="city" locked={!s2Open || IS_MOCK} level={s2Level} stops={s2Stops} firstNumber={4} host={OFFICER} doorAccount="passport.bloqvia.testnet" className={s2Open ? "mt-4 dk:mt-6" : "dim mt-4 dk:mt-6"}
-        guideAt={started ? "here" : "gone"} intro={started} blockHeight={height}
+        guideAt={started && !(after.active && after.tourStarted) ? "here" : "gone"} intro={started} blockHeight={height}
+        curtain={after.active && (after.tourStarted || officerIn)} hostHello="Your stamp is safe with me. Come and see your Passport any time."
         tip={(l, st) => l >= 3 ? "Season 2 done! Your Passport has its stamp." : `Welcome to Network City! Chapter 0${l + 4}: ${st[l]?.title}. Tap the glowing block.`}
         onPlay={(i) => void playChapter(i)} onArrived={(n) => { if (n === 3) setArrivedOffice(true); }}
         door={<>{stamped && !moment && !stampPendingMoment ? <><p className="text-sm text-ivory"><span className="text-lime">✓</span> Stamped on NEAR · Season 2</p><Link to="/passport" className="tap inline-flex items-center rounded-full border-[1.5px] border-lime px-6 font-semibold text-lime">See your Passport</Link></> : <p className="text-sm text-lavender">{chaptersDone < 3 ? "Finish Season 2 to get your Passport stamp" : stampWaitExpired && !stampPendingMoment ? "Your stamp is on its way. Check back in a minute." : "Season 2 complete. Here comes your stamp…"}</p>}</>} />

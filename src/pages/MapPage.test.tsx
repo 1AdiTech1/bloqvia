@@ -19,14 +19,17 @@ vi.mock("@/bloq", async () => {
     sandbox.arrived.set(world, onArrived);
     useImperativeHandle(ref, () => ({ perchAt: sandbox.perch, cheer: sandbox.cheer, say: sandbox.say }));
     return <div><button onClick={() => onPlay(2)}>Play {world}</button>{door}</div>;
-  }) };
+  }), Bloq: () => null, SpeechBubble: () => null, leap: () => () => {}, talkMs: () => 0, useSay: () => ["", () => {}] };
 });
 vi.mock("@/near", () => ({
   useFinalBlock: () => 123,
   useChapters: () => ({ chapters: [] }),
   SEASON2_CHAPTERS: ["chapter-ownership", "chapter-transactions", "chapter-defi"],
   season2Done: () => sandbox.stamped,
+  useAfterSeasons: () => ({ active: false, ready: false, next: "streak", streak: { available: false, done: false }, daily: { available: false, done: false, lessonId: null }, missions: { available: true, done: false }, tourStarted: false, startTour: () => {} }),
 }));
+vi.mock("@/components/lab/AfterSeasonsCard", () => ({ AfterSeasonsCard: () => null }));
+vi.mock("@/components/lab/useDesktop", () => ({ useIsDesktop: () => false }));
 vi.mock("@/near/useChapters", () => ({ SEASON2_CHAPTERS: ["chapter-ownership", "chapter-transactions", "chapter-defi"] }));
 vi.mock("@/game/useGame", () => ({ IS_MOCK: false, useGame: () => ({
   accountId: "sandbox.testnet", learner: { completed: sandbox.completed, graduated: sandbox.graduated, level: 2, gold: "100", items: [] },

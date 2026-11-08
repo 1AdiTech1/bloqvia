@@ -461,6 +461,9 @@ html.touch-sb::-webkit-scrollbar { display: none; }
 .season-stamp-moment { position: absolute; bottom: 150px; left: 50%; transform: translateX(-50%); z-index: 20; width: min(300px, 84vw); display: flex; flex-direction: column; align-items: center; gap: 8px; animation: season-moment .45s cubic-bezier(.34,1.4,.64,1) both; }
 .season-stamp-caption { display: block; border-radius: 999px; background: var(--season-caption-surface); color: var(--ivory); padding: 6px 10px; font-size: 12.5px; white-space: nowrap; }
 @keyframes season-moment { from { opacity: 0; transform: translate(-50%,24px) scale(.7); } to { opacity: 1; transform: translate(-50%,0) scale(1); } }
+/* After Season 2 (prompt 26): the button Bloq points at, and the Missions tab. */
+@keyframes bq-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgb(212 240 51 / .6); } 50% { box-shadow: 0 0 0 7px rgb(212 240 51 / 0); } }
+@keyframes bq-glow { 0%, 100% { box-shadow: inset 0 0 0 1.5px rgb(212 240 51), 0 0 0 0 rgb(212 240 51 / .55); } 50% { box-shadow: inset 0 0 0 1.5px rgb(212 240 51), 0 0 0 7px rgb(212 240 51 / 0); } }
 .passport-seasons { margin-top: 20px; padding: 14px; border-radius: 14px; background: var(--card); color: var(--navy); }
 .passport-seasons > div { display: grid; grid-template-columns: 24px minmax(0,1fr) auto; gap: 8px; align-items: center; padding-block: 8px; }
 .passport-seasons > div + div { border-top: 1px solid var(--border); }
