@@ -44,7 +44,7 @@ export function Wordmark({ tone = "navy", size = 24 }: { tone?: Tone; size?: 24 
       <span
         className={`font-display font-medium tracking-[-0.04em] ${size === 40 ? "text-3xl" : "text-lg"} ${tone === "lime" ? "text-ivory" : "text-navy"}`}
       >
-        BLOQVIA
+        Bloqvia
       </span>
     </span>
   );

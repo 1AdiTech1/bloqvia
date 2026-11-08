@@ -7,7 +7,7 @@ import { PhoneShell } from "@/components/PhoneShell";
 import { RequireAccount } from "@/components/RequireAccount";
 import { ItemIcon } from "@/components/GameBits";
 import { Web3Passport } from "@/components/lab/Web3Passport";
-import { Bloq, talkMs, useSay, type BloqHandle } from "@/bloq";
+import { Bloq, SpeechBubble, talkMs, useSay, type BloqHandle } from "@/bloq";
 import { cn } from "@/lib/utils";
 import { SEASON2_CHAPTERS, season2Done } from "@/near";
 
@@ -100,9 +100,8 @@ function PassportInner() {
         <button type="button" onClick={tapCard} aria-label="Bloq" className="w-[120px] shrink-0">
           <Bloq ref={bloq} hat={p.graduated ? "grad" : "aviator"} prop={p.graduated ? "badge" : "passport"} pose="hold" label={p.graduated ? "Bloq in a graduation cap" : "Bloq the aviator"} />
         </button>
-        <div className="mb-6 flex-1 rounded-[18px] rounded-bl-md bg-ivory px-4 py-3.5 text-navy" aria-live="polite">
-          <p className="mb-1.5 font-display text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Bloq</p>
-          <p className="font-display text-[1.02rem] font-medium leading-[1.35]">“{shown}”</p>
+        <div className="mb-6 min-w-0">
+          <SpeechBubble side="right" tone="light" text={shown} />
         </div>
       </div>
 

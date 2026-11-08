@@ -8,7 +8,7 @@ import { PhoneShell } from "@/components/PhoneShell";
 import { RequireAccount } from "@/components/RequireAccount";
 import { bloqLine } from "@/components/Bloq";
 import { ItemIcon, itemLabel } from "@/components/GameBits";
-import { Bloq, talkMs, type BloqHandle, type BloqPose, type BloqProp } from "@/bloq";
+import { Bloq, SpeechBubble, talkMs, type BloqHandle, type BloqPose, type BloqProp } from "@/bloq";
 import { Web3Passport } from "@/components/lab/Web3Passport";
 import { CubeBurst } from "@/components/lab/CubeBurst";
 import { InventoryBar } from "@/components/lab/InventoryBar";
@@ -108,13 +108,8 @@ function ShopInner() {
           <button type="button" onClick={tapMerchant} aria-label="Bloq the merchant, in his top hat" className="relative w-full self-end">
             <Bloq ref={merchant} hat="tophat" prop={prop} pose={pose} label="Bloq the merchant" />
           </button>
-          <div className="mb-[26px] self-center rounded-[18px] rounded-bl-md bg-ivory px-4 py-3.5 text-navy" aria-live="polite">
-            <p className="mb-1.5 font-display text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Bloq</p>
-            <AnimatePresence mode="wait">
-              <motion.p key={line} initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} className="font-display text-[1.02rem] font-medium leading-[1.35] tracking-[-0.01em]">
-                “{line}”
-              </motion.p>
-            </AnimatePresence>
+          <div className="mb-[26px] min-w-0 self-center justify-self-start">
+            <SpeechBubble side="right" tone="light" text={line} />
           </div>
         </div>
         <div className="counter" aria-hidden="true" />

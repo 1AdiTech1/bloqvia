@@ -113,7 +113,7 @@ function Treasury() {
   const threshold = dao ? (Array.isArray(dao.threshold) ? `${dao.threshold[0]} of ${dao.threshold[1]}` : String(dao.threshold)) : "";
   return (
     <section className="rounded-[1.6rem] border border-lavender/30 bg-navy p-5 text-ivory shadow-lift">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-lavender">Bloqvia DAO</p>
+      <p className="text-[11px] font-semibold tracking-[0.04em] text-lavender">Bloqvia DAO</p>
       {dao && (
         <>
           <a href={daoUrl(dao.id)} target="_blank" rel="noreferrer" className="mt-1 inline-flex min-h-11 items-center gap-1 break-all font-mono text-sm text-lime underline-offset-4 hover:underline">
