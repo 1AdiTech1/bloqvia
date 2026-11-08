@@ -14,6 +14,8 @@ export { useAskBloq } from "./useAskBloq";
 export { useFinalBlock, fetchFinalBlockHeight } from "./useFinalBlock";
 export { humanError } from "./errors";
 export { useBounties, unmet as bountyUnmet, statusLabel as claimStatusLabel } from "./useBounties";
+export { useAfterSeasons, markMissionsSeen } from "./useAfterSeasons";
+export type { AfterSeasons, AfterStep, AfterItem } from "./useAfterSeasons";
 export type { BountiesStore, BountiesState, DaoView } from "./useBounties";
 export type { AskBloqState } from "./useAskBloq";
 export type { DailyQuestsStore, DailyQuestsState } from "./useDailyQuests";

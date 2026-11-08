@@ -94,6 +94,21 @@ bloq.answer / bloq.provenance ({ model, chat_id, signature_kind }) / bloq.loadin
 The relayer grounds the model in `relayer/src/ask.ts` `KNOWLEDGE` — when a
 game rule changes, change it there too.
 
+## After Season 2 (what is left today)
+
+```tsx
+const after = useAfterSeasons({ accountId: b.accountId, stamped: season2Done(b.passport), completed: b.learner?.completed ?? [] });   // from "@/near"
+// after.active: the Passport has the Season 2 stamp. after.ready: streak and today's quest loaded.
+// after.next: "streak" | "daily" | "missions" | "done", worked out from the chain
+// (checked_in_today, the newest daily id in completed) and from whether Missions was opened.
+// after.streak / after.daily / after.missions: { available, done }. after.tourStarted / after.startTour().
+markMissionsSeen(b.accountId);   // the Missions page calls this when it opens
+```
+
+Only `tourStarted` and the Missions flag live in the browser (localStorage,
+per account); everything else is read from the chain, so a new Bloqvia day
+brings the streak and the next quest back by itself. Prompt 26 is the UI.
+
 ## Amounts
 
 All token amounts cross the wire as decimal strings (`"100"`). Gold and items

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Streak Info and Curtain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="preview.css">
+<style>
+/* Two fixes on Nov 8 evening: the Community streak's info button (today, a floating panel, the card's back) and the Passport officer going behind his curtain when Bloq leaves Network City. Real Bloq, real ChainTrail. */
+:root {
+  --night: #131f33; --navy: #16243a; --navy-soft: #23344f; --navy-2: #22324c; --ivory: #f7f4eb; --lime: #d4f033; --lime-d: #a6c21a;
+  --lav: #c9b8ec; --lavender: #c9a6f3; --lavender-soft: #efe7fb; --purple: #8b45d9; --purple-d: #6630b3; --card: #fffdf7; --border: #ddd8c9; --muted-fg: #4f5b6e;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: var(--display); --font-sans: var(--body); --font-mono: var(--mono);
+  --app-bg: radial-gradient(circle at 80% 10%, rgb(185 178 239 / .25), transparent 50%), radial-gradient(circle at 10% 90%, rgb(199 243 107 / .12), transparent 45%), var(--navy);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--night); }
+body { margin: 0; background: var(--night); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased; padding: 28px 16px 72px; overflow-x: hidden; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; overflow-x: clip; padding: 10px; }
+.top h1 { margin: 0; font: 600 26px/1.15 var(--display); letter-spacing: -.02em; }
+.top p { margin: 8px 0 0; color: var(--lav); }
+h2.sec { margin: 18px 0 0; font: 600 20px/1.25 var(--display); }
+p.lead { margin: -10px 0 0; color: var(--lav); max-width: 95ch; font-size: 14.5px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.act, .ghost { border: 0; cursor: pointer; min-height: 40px; padding: 0 16px; border-radius: 999px; font: 600 13.5px/1 var(--display); }
+.act { background: var(--lime); color: var(--navy); } .act:disabled { opacity: .7; cursor: default; }
+.ghost { background: transparent; color: var(--lav); box-shadow: inset 0 0 0 1.5px rgb(201 184 236 / .5); }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+.tag { display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 10px; border-radius: 999px; font: 700 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; background: var(--navy-2); color: #c9a6f3; justify-self: start; }
+.tag.new { background: var(--lime); color: var(--navy); }
+.var-head { display: flex; align-items: center; gap: 12px; }
+.var-head h3 { margin: 0; font: 600 17px/1.25 var(--display); }
+.vb { margin: 0; color: var(--lav); font-size: 14px; }
+.infos { display: grid; gap: 30px; }
+.infos > section, .offices > section { display: grid; gap: 10px; min-width: 0; }
+.offices { display: grid; grid-template-columns: auto auto; gap: 30px; align-items: start; justify-content: start; }
+@media (max-width: 1150px) { .offices { grid-template-columns: minmax(0, 1fr); } }
+
+/* the map's centre column */
+.map-col { width: 760px; max-width: 100%; border-radius: 24px; padding: 28px; background: var(--app-bg); box-shadow: 0 0 0 1px rgb(255 255 255 / .06), 0 24px 50px rgb(0 0 0 / .35); }
+.cards2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+@media (max-width: 640px) { .cards2 { grid-template-columns: minmax(0, 1fr); } }
+.streak, .daily { border-radius: 1.6rem; padding: 20px; }
+.streak { position: relative; background: var(--ivory); color: var(--navy); box-shadow: 0 20px 44px -18px rgb(0 0 0 / .4); display: flex; flex-direction: column; }
+.daily { background: var(--navy-soft); border: 1px solid rgb(247 244 235 / .1); display: flex; flex-direction: column; }
+.sc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.sc-tools { display: flex; align-items: center; gap: 4px; }
+.s-eb { margin: 0; font: 600 11px/1.5 var(--body); letter-spacing: .18em; text-transform: uppercase; color: rgb(22 36 58 / .6); }
+.s-num { margin: 4px 0 0; display: flex; align-items: baseline; gap: 8px; font: 500 18px/1 var(--display); }
+.s-num b { font: 600 46px/1 var(--display); }
+.best { padding: 4px 10px; border-radius: 999px; background: rgb(201 166 243 / .5); font: 500 12px/1 var(--body); }
+.info { width: 44px; height: 44px; border: 0; border-radius: 50%; display: grid; place-items: center; background: transparent; color: var(--navy); cursor: pointer; }
+.info:hover, .info.on { background: rgb(22 36 58 / .06); }
+.inline-info { margin: 12px 0 0; border-radius: 12px; background: rgb(201 166 243 / .25); padding: 12px; font-size: 14px; line-height: 1.6; }
+.bar { margin-top: 16px; height: 6px; border-radius: 999px; background: rgb(22 36 58 / .1); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--lime); border-radius: 999px; }
+.s-txt { margin: 8px 0 0; font-size: 14px; }
+.s-sub { margin: 0; font-size: 12px; color: rgb(22 36 58 / .6); }
+.checked { margin-top: 14px; min-height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 999px; border: 2px solid var(--lime); background: rgb(212 240 51 / .2); font: 600 15px/1 var(--display); }
+.hold { margin: 14px 0 0; display: flex; justify-content: space-between; gap: 10px; font-size: 14px; } .hold span { font-size: 12px; font-weight: 600; }
+.lastdays { margin-top: 10px; border-top: 1px solid rgb(22 36 58 / .1); min-height: 44px; display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 500; }
+.info-pop { position: absolute; left: 10px; right: 10px; top: 70px; z-index: 30; border-radius: 18px; background: var(--card); color: var(--navy); padding: 14px 16px; box-shadow: 0 22px 50px rgb(0 0 0 / .35), 0 0 0 1px #e3dccb; font-size: 14px; line-height: 1.6; animation: pop .22s ease-out both; }
+.info-pop p { margin: 0; }
+@keyframes pop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.flip-face { flex: 1; min-height: 0; margin-top: 12px; display: flex; flex-direction: column; gap: 8px; border-radius: 14px; background: rgb(201 166 243 / .22); padding: 14px; overflow: auto; animation: pop .22s ease-out both; }
+.flip-face p { margin: 0; font-size: 14px; line-height: 1.55; }
+.flip-back { margin-top: auto; align-self: flex-start; min-height: 40px; border: 0; background: none; padding: 0; color: var(--navy); font: 600 14px/1 var(--display); cursor: pointer; }
+.d-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.d-eb { margin: 0; display: flex; align-items: center; gap: 8px; font: 600 11px/1.5 var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--lavender); }
+.d-eb i { width: 8px; height: 8px; border-radius: 50%; background: var(--lime); }
+.chip { max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 4px 10px; border-radius: 999px; background: rgb(201 166 243 / .2); color: var(--lavender); font-size: 11px; }
+.d-h { margin: 8px 0 0; font: 500 24px/1 var(--display); text-transform: uppercase; letter-spacing: -.03em; }
+.d-c { margin: 8px 0 0; font-size: 14px; color: rgb(247 244 235 / .8); }
+.rew { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.rew span { padding: 8px 12px; border-radius: 999px; font: 600 13px/1 var(--body); }
+.r1 { background: var(--navy); color: var(--lime); } .r2 { background: var(--lavender-soft); color: var(--navy); }
+.d-play { margin-top: auto; min-height: 46px; display: grid; place-items: center; border-radius: 999px; background: var(--lime); color: var(--navy); font: 600 15px/1 var(--display); }
+.daily .rew { margin-bottom: 16px; }
+.d-by { margin: 12px 0 0; font-size: 12px; color: var(--lavender); }
+
+/* the office road */
+.office { display: grid; gap: 10px; max-width: 100%; }
+.office-col { position: relative; border-radius: 24px; padding: 24px 20px 28px; background: var(--app-bg); box-shadow: 0 0 0 1px rgb(255 255 255 / .06), 0 24px 50px rgb(0 0 0 / .35); container-type: inline-size; }
+.scard { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1.5px solid var(--lime); border-radius: 1.1rem; background: linear-gradient(90deg, #23344f, #2c2058); }
+.g-ico { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 50%; background: rgb(212 240 51 / .12); color: var(--lime); font: 700 15px/1 var(--display); }
+.scard .eb { display: block; color: #e8beff; font: 600 10.5px/1.5 var(--display); letter-spacing: .16em; text-transform: uppercase; }
+.scard b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 15px/1.5 var(--display); }
+.scard > div { min-width: 0; }
+.mt { margin-top: 16px; }
+.door-txt { margin: 0; font-size: 14px; color: var(--ivory); } .door-txt span { color: var(--lime); }
+.door-pill { display: inline-flex; align-items: center; min-height: 40px; padding: 0 20px; border-radius: 999px; color: var(--lime); box-shadow: inset 0 0 0 1.5px var(--lime); font-weight: 600; font-size: 14px; }
+.streak.mini { margin-top: 112px; }
+.b-lime { margin-top: 14px; min-height: 46px; display: grid; place-items: center; border-radius: 999px; background: var(--lime); color: var(--navy); font: 600 15px/1 var(--display); }
+.pulse { animation: lv-pulse 1.8s ease-in-out infinite; }
+@keyframes lv-pulse { 0%,100% { box-shadow: 0 0 0 0 rgb(212 240 51 / .6); } 50% { box-shadow: 0 0 0 7px rgb(212 240 51 / 0); } }
+.tour-host { position: absolute; left: 0; top: 0; z-index: 5; }
+.tour-in { position: relative; animation: pop .25s ease-out both; }
+.bloq-say.hop-say { left: auto; right: 74px; bottom: 34%; max-width: 200px; font-size: 13px; line-height: 1.4; padding: 10px 13px; --ox: 100%; }
+.bloq-say.hop-say::after { bottom: 16px; left: auto; right: -7px; transform: rotate(-45deg); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="preview.js"></script>
+</body>
+</html>

@@ -49,8 +49,8 @@ export interface BloqHandle {
   look(dx: number, dy: number): void;
   /** Point at an element and keep aiming while it moves; null stops and returns to `pose`. */
   aimAt(el: Element | null): void;
-  /** Side view walking cycle on/off (the parent moves the element). */
-  walking(on: boolean): void;
+  /** Side view walking cycle on/off (the parent moves the element). With `follow`, his steps follow how far he really moves (no sliding), and fast trips become a run. */
+  walking(on: boolean, follow?: boolean): void;
   /** Riding pose only: start losing balance now. */
   wobble(): void;
   /** Riding pose only: wave with the free hand. */
@@ -71,7 +71,7 @@ interface Rig {
   jump(): Rig;
   talk(ms?: number): Rig;
   aimAt(el: Element | null): Rig;
-  walking(on: boolean): Rig;
+  walking(on: boolean, follow?: boolean): Rig;
   wobble(): Rig;
   rideWave(on: boolean): Rig;
   destroy(): void;
@@ -114,7 +114,7 @@ export const Bloq = forwardRef<BloqHandle, BloqProps>(function Bloq(
       r.aimAt(el);
       if (!el) r.face(facing).setPose(pose);
     },
-    walking: (on) => { rig.current?.walking(on); if (!on) rig.current?.setPose(pose); },
+    walking: (on, follow) => { rig.current?.walking(on, !!follow); if (!on) rig.current?.setPose(pose); },
     wobble: () => { rig.current?.wobble(); },
     rideWave: (on) => { rig.current?.rideWave(on); },
     element: () => host.current,

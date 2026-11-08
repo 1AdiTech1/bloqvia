@@ -5,6 +5,8 @@ export { SpeechBubble, useSay, talkMs, fitBubble } from "./SpeechBubble";
 export type { SpeechBubbleProps } from "./SpeechBubble";
 export { leap, leapFrames, leapMs } from "./leap";
 export type { LeapSpot, LeapOptions } from "./leap";
+export { walkTo, walkFrames } from "./walk";
+export type { WalkOptions } from "./walk";
 export { BlockSea } from "./BlockSea";
 export { FloatingCubes } from "./FloatingCubes";
 export type { FloatingCubesHandle } from "./FloatingCubes";

@@ -20,6 +20,8 @@ import { humanError } from "./errors";
 export interface StreakState {
   /** false until core reports a streak contract; the card should hide. */
   enabled: boolean;
+  /** true once the first read has finished, with or without a streak contract (so `enabled: false` is final). */
+  loaded: boolean;
   streakId: string | null;
   streak: StreakView | null;
   member: MemberView | null;
@@ -36,7 +38,7 @@ export interface StreakStore extends StreakState {
 
 const SIGNER_KIND = (import.meta.env.VITE_SIGNER_KIND ?? "local-key") as LearnerSigner["kind"];
 
-const INITIAL: StreakState = { enabled: false, streakId: null, streak: null, member: null, busy: false, error: null, lastTx: null };
+const INITIAL: StreakState = { enabled: false, loaded: false, streakId: null, streak: null, member: null, busy: false, error: null, lastTx: null };
 
 let state: StreakState = INITIAL;
 let signer: LearnerSigner | null = null;
@@ -58,7 +60,7 @@ async function refresh(): Promise<void> {
   try {
     const streakId = await views.streakContract();
     if (!streakId) {
-      set({ enabled: false, streakId: null, streak: null, member: null });
+      set({ enabled: false, loaded: true, streakId: null, streak: null, member: null });
       return;
     }
     const accountId = getSigner().accountId();
@@ -66,9 +68,9 @@ async function refresh(): Promise<void> {
       views.streak(streakId),
       accountId ? views.member(accountId, streakId) : Promise.resolve(null),
     ]);
-    set({ enabled: true, streakId, streak, member });
+    set({ enabled: true, loaded: true, streakId, streak, member });
   } catch (e) {
-    set({ error: humanError(e) });
+    set({ loaded: true, error: humanError(e) });
   }
 }
 

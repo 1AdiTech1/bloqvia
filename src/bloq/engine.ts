@@ -400,6 +400,8 @@ const engine = (function () {
   }
 
   const rigs = new Set();
+  // follow gait (walking(true, true)): stride per cycle in body widths, and the speeds (body widths a second) where the run starts and is full
+  const STRIDE_WALK = 0.52, STRIDE_RUN = 0.8, RUN_FROM = 1.2, RUN_FULL = 2.0;
   const still = () => document.body.classList.contains("still") || matchMedia("(prefers-reduced-motion: reduce)").matches;
   let headShape = "block";
 
@@ -496,8 +498,9 @@ const engine = (function () {
     }
     face(d) { this.facing = d; this.flip.classList.toggle("left", d === "left"); return this; }
     look(dx, dy) { this.look_.tx = dx * (this.facing === "left" ? -1 : 1); this.look_.ty = dy; return this; }
-    walking(on) {
+    walking(on, follow = false) {
       this.isWalking = on;
+      this.follow = !!(on && follow); this._lx = null; this.gv = 0; this.run = 0;
       this.setView(on ? "side" : "front");
       if (on) this.setPose("walk");
       return this;
@@ -572,13 +575,25 @@ const engine = (function () {
 
       let bodyY = 0, lean = 0, breath = live ? Math.sin(t * 1.8) * 0.018 : 0, headTilt = live ? Math.sin(t * 1.15) * 2.4 : 0;
       if (this.isWalking && live) {
-        this.walkPhase += dt * (Math.PI * 2 / 0.62);
-        const ph = this.walkPhase, s = Math.sin(ph), cph = Math.cos(ph);
-        a.hl += -26 * s; a.hr += 26 * s;
-        a.kl += 36 * Math.max(0, cph); a.kr += 36 * Math.max(0, -cph);
-        a.s += 26 * s; a.e += 12 * Math.max(0, s);
-        a.bs += -26 * s; a.be += 12 * Math.max(0, -s);
-        bodyY = -6 * Math.abs(cph); lean = -5; headTilt += 2 * Math.sin(ph * 2);
+        let run = 0;
+        if (this.follow) {
+          // walking(true, true): the steps follow the ground. The phase moves with the distance the host really
+          // travels, so his feet never slide, and fast trips blend into a run (longer stride, knees up, arms bent,
+          // more bounce, leaning in). STRIDE_* are body widths per full cycle (two steps).
+          const x = this.host.getBoundingClientRect().left, wpx = this.host.offsetWidth || 100;
+          const dx = this._lx == null ? 0 : Math.abs(x - this._lx); this._lx = x;
+          const v = dt > 0 ? dx / wpx / dt : 0;
+          this.gv += (v - this.gv) * Math.min(1, dt * 8);
+          this.run += (Math.max(0, Math.min(1, (this.gv - RUN_FROM) / (RUN_FULL - RUN_FROM))) - this.run) * Math.min(1, dt * 5);
+          run = this.run;
+          this.walkPhase += (dx / wpx / (STRIDE_WALK + (STRIDE_RUN - STRIDE_WALK) * run)) * Math.PI * 2;
+        } else this.walkPhase += dt * (Math.PI * 2 / 0.62);
+        const ph = this.walkPhase, s = Math.sin(ph), cph = Math.cos(ph), k = 1 + 0.45 * run;
+        a.hl += -26 * k * s; a.hr += 26 * k * s;
+        a.kl += (36 + 44 * run) * Math.max(0, cph); a.kr += (36 + 44 * run) * Math.max(0, -cph);
+        a.s += 26 * k * s; a.e += 12 * Math.max(0, s) + 46 * run;
+        a.bs += -26 * k * s; a.be += 12 * Math.max(0, -s) + 46 * run;
+        bodyY = -6 * (1 + 0.9 * run) * Math.abs(cph); lean = -5 - 7 * run; headTilt += 2 * Math.sin(ph * 2);
       }
       if (this.pose === "wave" && live) { a.e += 26 * Math.sin(t * 7.5); headTilt += 4; }
       if (this.pose === "cheer" && live) { a.s += 8 * Math.sin(t * 9); a.bs -= 8 * Math.sin(t * 9); }

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fixes Nov 8 Evening</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="preview.css">
+<style>
+/* Three fixes from Adi's check on Nov 8 evening: Bloq's walk on the desktop landing (four gaits), the phone landing's Passport card text, and the Season 2 reveal's buttons. Real Bloq. */
+:root {
+  --night: #131f33; --navy: #16243a; --navy-soft: #23344f; --navy-2: #22324c; --ivory: #f7f4eb; --lime: #d4f033; --lime-d: #a6c21a;
+  --lav: #c9b8ec; --lavender: #c9a6f3; --lavender-soft: #efe7fb; --purple: #8b45d9; --purple-d: #6630b3; --card: #fffdf7; --border: #ddd8c9; --muted-ink: #566174; --muted-fg: #4f5b6e;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: var(--display); --font-sans: var(--body); --font-mono: var(--mono);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--night); }
+body { margin: 0; background: var(--night); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased; padding: 28px 16px 72px; overflow-x: hidden; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; overflow-x: clip; padding: 10px; }
+.top h1 { margin: 0; font: 600 26px/1.15 var(--display); letter-spacing: -.02em; }
+.top p { margin: 8px 0 0; color: var(--lav); max-width: 90ch; }
+h2.sec { margin: 22px 0 0; font: 600 20px/1.25 var(--display); }
+p.lead { margin: -10px 0 0; color: var(--lav); max-width: 95ch; font-size: 14.5px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.act, .ghost { border: 0; cursor: pointer; min-height: 40px; padding: 0 16px; border-radius: 999px; font: 600 13.5px/1 var(--display); }
+.act { background: var(--lime); color: var(--navy); }
+.ghost { background: transparent; color: var(--lav); box-shadow: inset 0 0 0 1.5px rgb(201 184 236 / .5); }
+.hint { font-size: 13px; color: var(--lav); }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+.tag { display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 10px; border-radius: 999px; font: 700 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; background: var(--navy-2); color: #c9a6f3; justify-self: start; }
+.tag.new { background: var(--lime); color: var(--navy); }
+.var-head { display: flex; align-items: center; gap: 12px; }
+.var-head h3 { margin: 0; font: 600 17px/1.25 var(--display); }
+.var-body { margin: 0; color: var(--lav); font-size: 14.5px; }
+.note { background: var(--navy-2); border-radius: 16px; padding: 14px 18px; color: var(--lav); font-size: 14px; }
+.note b { color: var(--ivory); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 22px; align-items: start; }
+.pair.stack { grid-template-columns: minmax(0, 1fr); }
+.col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; justify-items: center; min-width: 0; align-content: start; }
+.col > .tag { justify-self: start; }
+
+/* 1 · the context row (Landing.tsx Context, desktop) */
+.walks { display: grid; gap: 34px; }
+.walk { display: grid; gap: 10px; min-width: 0; }
+.ctx-demo { display: grid; gap: 12px; min-width: 0; }
+.ctx-frame { overflow-x: auto; border-radius: 26px; box-shadow: 0 0 0 1px rgb(255 255 255 / .06), 0 24px 50px rgb(0 0 0 / .35); }
+.ctx { width: 1120px; background: var(--lavender-soft); color: var(--navy); padding: 10px 34px 34px; }
+.ctx-track { position: relative; height: 262px; }
+.ctx-host { position: absolute; bottom: -14px; left: 0; z-index: 2; width: 140px; cursor: pointer; }
+.ctx-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.lv-c4 { all: unset; cursor: pointer; box-sizing: border-box; min-height: 210px; background: var(--ivory); border: 1px solid #dccaf4; border-radius: 22px; padding: 26px 24px; display: flex; flex-direction: column; gap: 10px; transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s cubic-bezier(.22,1,.36,1), border-color .3s; }
+.lv-c4.on { transform: translateY(-6px); border-color: var(--purple-d); box-shadow: 0 18px 32px -22px rgb(22 36 58 / .55); }
+.lv-c4 .k { font: 500 14px/1 var(--display); letter-spacing: .06em; color: var(--purple-d); }
+.lv-c4 b { margin-top: 26px; font: 500 1.35rem/1.2 var(--display); letter-spacing: -0.02em; }
+.lv-c4 small { font-size: 15px; color: var(--muted-fg); }
+
+/* 2 · phone landing panel with the example card */
+.cards3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 22px; }
+.cap { margin: 0; font-size: 13.5px; color: var(--lav); max-width: 390px; }
+.cap b { color: var(--ivory); }
+.pp-phone { width: 390px; max-width: 100%; border-radius: 34px; overflow: hidden; background: var(--ivory); color: var(--navy); padding: 26px 20px 22px; box-shadow: 0 0 0 10px #0b1220, 0 30px 60px rgb(0 0 0 / .5); }
+.pp-note { margin: 0; border-left: 4px solid var(--lime); padding-left: 18px; color: var(--muted-ink); font-size: 1.06rem; }
+.pp-panel { position: relative; margin-top: 36px; background: var(--lavender-soft); border-radius: 30px; height: 330px; overflow: hidden; }
+.pp-panel .pring { position: absolute; left: 11%; top: 52%; width: 78%; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid #cfb2f2; }
+.pp-wrap { position: absolute; right: 4%; top: 6%; width: 220px; z-index: 3; }
+.mode-big .pp-wrap { width: 300px; }
+.pp-wrap .lv-pass { transform: translateY(0) scale(1.03); transform-origin: 50% 0; }
+.pp-wrap .lv-pass .fields i { font-size: 11px; }
+.pp-wrap .lv-pass .fields small { font-size: 7.5px; }
+.mode-fit .lv-pass { container-type: inline-size; }
+@container (max-width: 299px) { .lv-pass .fields > span:last-child { display: none; } }
+
+/* 3 · Season 2 reveal end */
+.rv { width: 760px; max-width: 100%; background: radial-gradient(circle at 80% 10%, rgb(185 178 239 / .2), transparent 50%), var(--navy); border-radius: 24px; padding: 28px 34px 34px; box-shadow: 0 0 0 1px rgb(255 255 255 / .06); }
+.rv-phone { width: 390px; padding: 24px 20px 28px; border-radius: 34px; box-shadow: 0 0 0 10px #0b1220, 0 30px 60px rgb(0 0 0 / .5); }
+.rv-eb { margin: 0; font: 600 11px/1 var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--lime); }
+.rv-steps { margin: 20px 0 0; padding: 0 0 0 24px; list-style: none; border-left: 1px solid rgb(201 166 243 / .4); }
+.rv-steps li { position: relative; padding-bottom: 18px; font-weight: 500; }
+.rv-steps .b { position: absolute; left: -31px; top: 4px; width: 14px; height: 14px; border-radius: 4px; background: var(--lime); box-shadow: 0 0 0 4px var(--navy); }
+.rv-steps a { display: block; margin-top: 8px; color: var(--lime); font: 600 14px var(--body); }
+.rv-thanks { margin: 28px 0 0; text-align: center; font: 500 1.5rem/1.2 var(--display); }
+.rv-btns { margin-top: 22px; display: flex; gap: 12px; justify-content: center; }
+.rv-phone .rv-btns { flex-direction: column; }
+.rv-lime, .rv-ghost { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 24px; border-radius: 999px; font: 600 16px/1 var(--display); }
+.rv-lime { background: var(--lime); color: var(--navy); box-shadow: 0 20px 44px -18px rgb(22 36 58 / .4); }
+.rv-ghost { color: var(--lavender); box-shadow: inset 0 0 0 1.5px rgb(201 166 243 / .4); }
+@media (max-width: 760px) { .rv-btns { flex-direction: column; } }
+
+/* the Passport card (styles.css .lv-pass) */
+.lab-pass-wrap { position: relative; width: 100%; max-width: 440px; perspective: 900px; }
+.lv-pass { display: block; position: relative; width: 100%; aspect-ratio: 1.5; border-radius: 20px; overflow: hidden;
+  background: radial-gradient(120% 90% at 0% 0%, #2b3d63 0%, transparent 55%), radial-gradient(90% 80% at 100% 100%, #3a2170 0%, transparent 60%), #111c30;
+  border: 1.5px solid rgb(212 240 51 / .55); box-shadow: 0 0 0 4px rgb(255 255 255 / .9), 6px 8px 0 4px rgb(201 166 243 / .45), 0 22px 36px -22px rgb(22 36 58 / .5); color: var(--ivory); font-family: var(--body); }
+.lv-pass .guil { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .22; }
+.lv-pass .holo { position: absolute; inset: -40%; background: linear-gradient(115deg, transparent 30%, rgb(212 240 51 / .28) 40%, rgb(180 127 240 / .38) 47%, rgb(120 220 255 / .28) 54%, rgb(255 255 255 / .18) 58%, transparent 68%); mix-blend-mode: screen; animation: lv-holo 6s ease-in-out infinite; pointer-events: none; }
+.lv-pass .prow { position: absolute; display: flex; align-items: center; gap: 8px; }
+.lv-pass .brandrow { left: 7%; top: 9%; } .lv-pass .brandrow svg { width: 22px; height: 21px; } .lv-pass .brandrow b { font: 600 15px/1 var(--display); letter-spacing: -0.02em; }
+.lv-pass .kind { right: 7%; top: 10%; font: 700 9px/1 var(--mono); letter-spacing: .22em; color: var(--lime); }
+.lv-pass .chipic { position: absolute; left: 7%; top: 25%; width: 13%; aspect-ratio: 1.25; border-radius: 6px; background: linear-gradient(135deg, #f1fb9a, #c9e12e 45%, #93ab12); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .25); }
+.lv-pass .nfc { position: absolute; left: 23%; top: 26%; width: 6%; aspect-ratio: .7; opacity: .7; }
+.lv-pass .fields { position: absolute; left: 7%; right: 33%; top: 43%; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.lv-pass .fields .wide { grid-column: 1 / -1; }
+.lv-pass .fields span { display: grid; gap: 2px; min-width: 0; }
+.lv-pass .fields small { font: 500 8.5px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgb(247 244 235 / .55); }
+.lv-pass .fields i { font: 600 13px/1.15 var(--display); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lv-pass .seal { position: absolute; right: 6%; top: 28%; width: 30%; aspect-ratio: 1; }
+.lv-pass .seal .spinner { transform-origin: 50% 50%; animation: lv-spin 14s linear infinite; }
+.lv-pass .mrz { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 7% 7px; background: rgb(0 0 0 / .28); font: 500 8.4px/1.35 var(--mono); letter-spacing: .12em; color: rgb(247 244 235 / .78); white-space: nowrap; overflow: hidden; }
+.lv-pass .scan { position: absolute; left: 0; right: 0; height: 30%; top: -30%; background: linear-gradient(180deg, transparent, rgb(212 240 51 / .14), transparent); animation: lv-scan 4.5s ease-in-out infinite; pointer-events: none; }
+.lv-pass .stamp { position: absolute; left: 49%; top: 57%; width: 38%; transform: rotate(-9deg); transform-origin: 50% 50%; z-index: 2; mix-blend-mode: screen; filter: drop-shadow(0 0 6px rgb(212 240 51 / .35)); }
+.lv-pass .stamp.slam { animation: slam .7s cubic-bezier(.2,.9,.3,1.2) .35s both; }
+@keyframes slam { 0% { opacity: 0; transform: scale(2.4) rotate(-28deg); } 55% { opacity: 1; transform: scale(.9) rotate(-8deg); } 72% { transform: scale(1.05) rotate(-9.5deg); } 100% { opacity: 1; transform: scale(1) rotate(-9deg); } }
+.lv-pass.shake { animation: shake .35s ease-out .72s both; }
+@keyframes shake { 0%, 100% { transform: none; } 30% { transform: translateY(3px) scale(.99); } 60% { transform: translateY(-1px); } }
+@keyframes lv-holo { 0%,100% { translate: -18% 0; } 50% { translate: 18% 0; } }
+@keyframes lv-scan { 0%, 55% { top: -30%; } 85%, 100% { top: 100%; } }
+@keyframes lv-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .lv-pass .holo, .lv-pass .scan, .lv-pass .spinner, .lv-pass .stamp.slam, .lv-pass.shake, .g-btn { animation: none; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="preview.js"></script>
+</body>
+</html>
