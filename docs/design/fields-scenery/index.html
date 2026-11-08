@@ -1,0 +1,70 @@
+<title>Block Fields Scenery</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="preview.css">
+<style>
+/* Nov 9: what grows at the foot of the Season 1 map (The Block Fields), like Network City's skyline. C Merkle orchard (faded, Adi's pick), then C as before, A crops, B windmill hills. Roads: F. Real Bloq, real ChainTrail. */
+:root {
+  --night: #131f33; --navy: #16243a; --navy-soft: #23344f; --navy-2: #22324c; --ivory: #f7f4eb; --lime: #d4f033;
+  --lav: #c9b8ec; --lavender: #c9a6f3;
+  --display: "Space Grotesk", system-ui, sans-serif; --body: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  --app-bg: radial-gradient(circle at 80% 10%, rgb(185 178 239 / .25), transparent 50%), radial-gradient(circle at 10% 90%, rgb(199 243 107 / .12), transparent 45%), var(--navy);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--night); }
+body { margin: 0; background: var(--night); color: var(--ivory); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased; padding-block: 28px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); overflow-x: hidden; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--night); }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; overflow-x: clip; }
+.top h1 { margin: 0; font: 600 26px/1.15 var(--display); letter-spacing: -.02em; text-wrap: balance; }
+.var-head h2 { text-wrap: balance; }
+.top p { margin: 8px 0 0; color: var(--lav); max-width: 90ch; }
+.controls { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 0; background: var(--night); }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: var(--navy-2); }
+.seg button { border: 0; cursor: pointer; min-height: 40px; padding: 0 14px; border-radius: 999px; background: transparent; color: var(--lav); font: 600 13px/1 var(--display); }
+.seg button.on { background: var(--lime); color: var(--navy); }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+.var { display: grid; gap: 10px; min-width: 0; padding-top: 14px; border-top: 1px solid rgb(247 244 235 / .08); }
+.var-head { display: flex; align-items: center; gap: 12px; }
+.var-head h2 { margin: 0; font: 600 19px/1.25 var(--display); }
+.tag { display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 10px; border-radius: 999px; font: 700 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; background: var(--navy-2); color: var(--lavender); }
+.tag.new { background: var(--lime); color: var(--navy); }
+.vb { margin: 0; color: var(--lav); font-size: 14px; max-width: 95ch; }
+.frames { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; min-width: 0; }
+.frame { display: grid; gap: 6px; max-width: 100%; min-width: 0; }
+.frame .fl { font: 600 11px/1 var(--mono); letter-spacing: .06em; color: var(--lav); text-transform: uppercase; }
+.frame.wide { flex: 1 1 704px; overflow-x: auto; }
+.fin { border-radius: 22px; padding: 18px 0 8px; background: var(--app-bg); box-shadow: 0 0 0 1px rgb(255 255 255 / .06), 0 24px 50px rgb(0 0 0 / .35); }
+@media (max-width: 640px) { .controls { position: static; } }
+.door-txt { margin: 0; font-size: 14px; color: var(--lavender); }
+
+/* F: stepping stones into the block (as in docs/design/roads) */
+.bloq-trail .step { fill: #3e5682; stroke: #0d1626; stroke-width: 1.5; }
+.bloq-trail .step.on { fill: #d4f033; filter: drop-shadow(0 0 5px rgb(212 240 51 / .6)); }
+/* the foot of the Block Fields (mock only) */
+.bloq-trail .fields-scenery { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 300px; opacity: .85; }
+.fs-crops .ripe { animation: bq-ripe 3.4s ease-in-out infinite; }
+.fs-crops .ripe:nth-of-type(3n) { animation-delay: -1.2s; }
+@keyframes bq-ripe { 50% { opacity: .55; } }
+.fs-crops .silo-led { animation: bq-win 4s ease-in-out infinite; }
+.fs-wind .sails { transform-box: view-box; animation: bq-sails 18s linear infinite; }
+@keyframes bq-sails { to { transform: rotate(360deg); } }
+.fs-orchard .root { filter: drop-shadow(0 0 4px rgb(212 240 51 / .7)); }
+.fs-orchard .leaf { animation: bq-win 5s ease-in-out infinite; }
+/* C faded: drawn like Network City's skyline - dark shapes close to the floor's colour, the hash leaves as small dim lights */
+.bloq-trail .fields-scenery.fs-soft { opacity: .75; }
+.fs-soft .ground { fill: #172236; stroke: rgb(201 166 243 / .07); }
+.fs-soft .mound { fill: #1a2740; stroke: rgb(201 166 243 / .07); }
+.fs-soft .br { stroke: #2a3a58; }
+.fs-soft .mid, .fs-soft .leaf.dark { fill: #22324c; stroke: #16213a; }
+.fs-soft .leaf.lav { fill: rgb(201 166 243 / .22); stroke: #16213a; }
+.fs-soft .leaf.lime, .fs-soft .root { fill: rgb(212 240 51 / .55); stroke: #16213a; filter: none; animation: bq-win 7s ease-in-out infinite; }
+.fs-soft .root { animation-delay: -3s; }
+.fs-soft .post { fill: #22324c; stroke: #16213a; }
+.fs-soft .link { stroke: #2a3a58; }
+@media (prefers-reduced-motion: reduce) { .fs-soft .leaf.lime, .fs-soft .root { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .fs-crops .ripe, .fs-crops .silo-led, .fs-wind .sails, .fs-orchard .leaf { animation: none; } }
+</style>
+<div id="root"></div>
+<script src="preview.js"></script>

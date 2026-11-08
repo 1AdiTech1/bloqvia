@@ -6,6 +6,9 @@
  * travelling along it; three quest blocks drawn as what they teach (a vault, a battery station, a
  * contract machine); Bloq the guide standing at the current stop; Bloq the merchant behind the
  * shop door at the end of the road. Ported from docs/design/game-v2/index.html.
+ * The road runs from the side of one block to the side of the next, fades out before each block and
+ * carries on into it as three stepping stones (docs/design/roads, F). At the foot of the map: an
+ * orchard of Merkle trees in Season 1 (docs/design/fields-scenery, C), a skyline in Season 2.
  *
  *   <ChainTrail
  *     stops={[{ id, title: "The Vault", kind: "vault", post: "keys · ed25519", reward: <ItemIcon id="key-fragment" /> }, …]}
@@ -87,7 +90,12 @@ export interface ChainTrailHandle {
 const HEIGHT = 820;
 const STOP_X = [0.27, 0.73, 0.29, 0.5] as const;
 const STOP_Y = [70, 245, 405, 680] as const;
-const TOWERS: readonly (readonly [number, number, string])[] = [[0.88, 110, "validator"], [0.1, 290, ""], [0.9, 450, "validator"], [0.88, 740, ""]];
+// The foot of the map is the orchard (Season 1) or the skyline (Season 2), so no tower stands down there.
+const TOWERS: readonly (readonly [number, number, string])[] = [[0.88, 110, "validator"], [0.1, 290, ""], [0.9, 450, "validator"]];
+/** The road fades out round each block (an ellipse on its centre, fully gone inside `core` of it); the stepping stones
+ *  carry on into the block: [distance along the road from the block's centre, half-width]. Nov 9, docs/design/roads (F). */
+const FADE = { rx: 124, ry: 86, core: 0.8 } as const;
+const STONES = [[92, 9], [72, 7.5], [54, 6]] as const;
 const MERCHANT = { hat: "tophat", prop: "cube", label: "Bloq the merchant, waving from his shop" } as const satisfies ChainTrailProps["host"];
 const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -97,9 +105,12 @@ function defaultTip(level: number, stops: ChainTrailProps["stops"]): string {
   return "All done! Go on in.";
 }
 
+/** The road leaves each block sideways, level with its foot, and crosses to the side of the next one, then down into the shop.
+ *  It still passes through every block's centre (hidden there by the fade), so the guide's walk and the progress light work as before. */
 function pathD(w: number): string {
-  const x = STOP_X.map((f) => f * w), y = STOP_Y;
-  return `M${x[0]} ${y[0]} C ${x[0]} ${y[0] + 90}, ${x[1]} ${y[1] - 90}, ${x[1]} ${y[1]} S ${x[2]} ${y[2] - 90}, ${x[2]} ${y[2]} S ${x[3]} ${y[3] - 80}, ${x[3]} ${y[3]}`;
+  const [x0, x1, x2, x3] = STOP_X.map((f) => f * w) as [number, number, number, number], [y0, y1, y2, y3] = STOP_Y;
+  const k01 = Math.max(70, (x1 - x0) * 0.55), k12 = Math.max(70, (x1 - x2) * 0.55);
+  return `M${x0} ${y0} C ${x0 + k01} ${y0}, ${x1 - k01} ${y1}, ${x1} ${y1} C ${x1 - k12} ${y1}, ${x2 + k12} ${y2}, ${x2} ${y2} C ${x2 + 120} ${y2}, ${x3} ${y3 - 130}, ${x3} ${y3}`;
 }
 
 /* ---------- the quest blocks: line art on a 100×100 square, mapped onto the cube's three faces ---------- */
@@ -224,6 +235,63 @@ function Skyline() {
   );
 }
 
+/** One Merkle tree: four hash leaves paired up into two, then into the root, on a mound. Dark like the skyline, the leaves dim lights. */
+function MerkleTree({ x, y, s, seed }: { x: number; y: number; s: number; seed: number }) {
+  const root = { x, y: y - 26 * s }, rise = 22 * s;
+  const lv1 = [-1, 1].map((d) => ({ x: x + (d * 30 * s) / 1.6, y: root.y - rise }));
+  const lv2 = lv1.flatMap((p) => [-1, 1].map((d) => ({ x: p.x + (d * 15 * s) / 1.4, y: p.y - rise })));
+  const node = (p: { x: number; y: number }, r: number, fill: string, cls?: string) => (
+    <rect className={cls} x={p.x - r} y={p.y - r} width={r * 2} height={r * 2} rx={r * 0.35} fill={fill} stroke="#16213a" strokeWidth="1" />
+  );
+  const leaf = (i: number) => ((i + seed) % 3 === 0 ? ["rgb(212 240 51 / .55)", "light"] : (i + seed) % 3 === 1 ? ["rgb(201 166 243 / .22)", undefined] : ["#22324c", undefined]) as [string, string | undefined];
+  return (
+    <g>
+      <ellipse cx={x} cy={y + 2} rx={30 * s} ry={9 * s} fill="#1a2740" stroke="rgb(201 166 243 / .07)" strokeWidth="1" />
+      <line x1={x} y1={y} x2={root.x} y2={root.y} stroke="#2a3a58" strokeWidth={3 * s} strokeLinecap="round" />
+      {lv1.map((p, i) => <line key={i} x1={root.x} y1={root.y} x2={p.x} y2={p.y} stroke="#2a3a58" strokeWidth={2 * s} />)}
+      {lv2.map((p, i) => <line key={i} x1={lv1[i >> 1]!.x} y1={lv1[i >> 1]!.y} x2={p.x} y2={p.y} stroke="#2a3a58" strokeWidth={1.4 * s} />)}
+      {lv2.map((p, i) => <g key={i}>{node(p, 5.5 * s, ...leaf(i))}</g>)}
+      {lv1.map((p, i) => <g key={i}>{node(p, 4.5 * s, "#22324c")}</g>)}
+      {node(root, 5 * s, "rgb(212 240 51 / .55)", "light root")}
+    </g>
+  );
+}
+
+/** Season 1 backdrop: an orchard of Merkle trees behind a fence of chain links, fading into the floor at the top and dim
+ *  behind the shop door, so the door's text stays readable. Drawn in pixels across the world (the trail plus 16px each side). */
+function Orchard({ w }: { w: number }) {
+  const id = `bloq-orchard-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const W = w + 32, phone = W < 500, s = phone ? 1.15 : 1.5, fy = 292;
+  const trees: [number, number, number, number][] = phone
+    ? [[0.08, 190, 1, 1], [0.92, 200, 0.95, 0], [0.2, 258, 0.75, 2], [0.8, 262, 0.7, 1]]
+    : [[0.07, 200, 1, 1], [0.2, 160, 0.9, 2], [0.32, 248, 0.7, 0], [0.8, 168, 1, 0], [0.93, 214, 0.85, 2], [0.68, 252, 0.7, 1]];
+  return (
+    <svg className="orchard" viewBox={`0 0 ${W} 300`} preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+      <defs>
+        <linearGradient id={`${id}-v`} x1="0" y1="0" x2="0" y2="1"><stop offset=".02" stopColor="#fff" stopOpacity="0" /><stop offset=".17" stopColor="#fff" /></linearGradient>
+        <radialGradient id={`${id}-c`}><stop offset="0" stopColor="#000" stopOpacity=".62" /><stop offset=".7" stopColor="#000" stopOpacity=".35" /><stop offset="1" stopColor="#000" stopOpacity="0" /></radialGradient>
+        <mask id={`${id}-m`} maskUnits="userSpaceOnUse" x="0" y="0" width={W} height="300">
+          <rect width={W} height="300" fill={`url(#${id}-v)`} />
+          <ellipse cx={W / 2} cy="190" rx={phone ? 125 : 150} ry="130" fill={`url(#${id}-c)`} />
+        </mask>
+      </defs>
+      <g mask={`url(#${id}-m)`}>
+        <path d={`M0 300 L0 ${fy - 40} Q ${W * 0.25} ${fy - 62} ${W * 0.5} ${fy - 44} T ${W} ${fy - 50} L${W} 300 Z`} fill="#172236" stroke="rgb(201 166 243 / .07)" strokeWidth="1.2" />
+        {[...trees].sort((a, b) => a[1] - b[1]).map(([fx, y, k, seed], i) => <MerkleTree key={i} x={W * fx} y={y} s={s * k} seed={seed} />)}
+        {Array.from({ length: Math.floor(W / 30) + 1 }, (_, i) => {
+          const x = 6 + i * 30;
+          return (
+            <g key={i}>
+              <rect x={x - 2.5} y={fy - 18} width="5" height="18" rx="1" fill="#22324c" stroke="#16213a" strokeWidth=".8" />
+              {[0, 1, 2].map((k) => <ellipse key={k} cx={x + 7.5 + k * 7.5} cy={fy - 10} rx="4.6" ry="2.8" fill="none" stroke="#2a3a58" strokeWidth="1.4" />)}
+            </g>
+          );
+        })}
+      </g>
+    </svg>
+  );
+}
+
 /** Season 2's towers: RPC nodes and indexers, a small building with an antenna. */
 function Node() {
   return (
@@ -283,6 +351,7 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
   const peekT = useRef<number | undefined>(undefined);
   // Unique per trail, so two trails on one page (Season 1 and Season 2) each light their own road.
   const maskId = `bloq-trail-lit-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const fadeId = `${maskId}-fade`;
   const at = useRef(level);            // the stop Bloq is standing at
   const walkingRef = useRef(false);
   const timers = useRef<number[]>([]);
@@ -643,9 +712,8 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
       {ticker ? <BlockTicker network={network} blockHeight={blockHeight} /> : null}
       <div ref={box} className="bloq-trail" style={{ height: HEIGHT }}>
         <div className="world" aria-hidden="true">
-          {world === "city" && <Skyline />}
-          {/* the city keeps its lower part for the skyline, so its last tower is left out */}
-          {(world === "city" ? TOWERS.slice(0, 3) : TOWERS).map(([x, y, t], i) => (
+          {world === "city" ? <Skyline /> : w > 0 ? <Orchard w={w} /> : null}
+          {TOWERS.map(([x, y, t], i) => (
             <span key={i} className="tower" style={{ left: `calc(${x * 100}% + ${(0.5 - x) * 32}px)`, top: y + 14 }}>{world === "city" ? <Node /> : <Tower />}{t ? <small>{world === "city" ? (i ? "indexer" : "rpc node") : t}</small> : null}</span>
           ))}
           {Array.from({ length: 9 }, (_, i) => (
@@ -654,13 +722,32 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
         </div>
 
         <svg className="road" viewBox={`0 0 ${w || 360} ${HEIGHT}`} aria-hidden="true">
-          <defs><mask id={maskId} maskUnits="userSpaceOnUse"><path className="p-mask" d={d} style={geo ? { strokeDasharray: geo.len, strokeDashoffset: geo.len - prog } : undefined} /></mask></defs>
-          <path className="p-rim" d={d} /><path className="p-edge" d={d} /><path className="p-base" d={d} /><path className="p-tiles" d={d} />
-          <path className="p-lit" d={d} mask={`url(#${maskId})`} /><path className="p-chain" d={d} />
-          <g>{lamps.map((l, i) => (
-            <g key={i} className={`lamp${l.on ? " on" : ""}`}><line x1={l.x} y1={l.y} x2={l.x} y2={l.y - 9} /><circle className="glow" cx={l.x} cy={l.y - 11} r="7" /><circle className="dot" cx={l.x} cy={l.y - 11} r="3" /></g>
-          ))}</g>
-          <g>{[0, 1, 2].map((i) => <rect key={i} ref={(n) => { txs.current[i] = n; }} className={`tx${i === 1 ? " p" : ""}`} width="8" height="8" rx="1.5" style={{ opacity: 0 }} />)}</g>
+          <defs>
+            <mask id={maskId} maskUnits="userSpaceOnUse"><path className="p-mask" d={d} style={geo ? { strokeDasharray: geo.len, strokeDashoffset: geo.len - prog } : undefined} /></mask>
+            {/* the road (and its lamps and transactions) fades out round each block; where two fades meet they add up */}
+            <radialGradient id={`${fadeId}-g`}><stop offset={FADE.core} stopColor="#000" /><stop offset="1" stopColor="#000" stopOpacity="0" /></radialGradient>
+            <mask id={fadeId} maskUnits="userSpaceOnUse" x={-60} y={-60} width={(w || 360) + 120} height={HEIGHT + 120}>
+              <rect x={-60} y={-60} width={(w || 360) + 120} height={HEIGHT + 120} fill="#fff" />
+              {[0, 1, 2].map((i) => <ellipse key={i} cx={(STOP_X[i] ?? 0) * w} cy={STOP_Y[i] ?? 0} rx={FADE.rx} ry={FADE.ry} fill={`url(#${fadeId}-g)`} />)}
+            </mask>
+          </defs>
+          <g mask={`url(#${fadeId})`}>
+            <path className="p-rim" d={d} /><path className="p-edge" d={d} /><path className="p-base" d={d} /><path className="p-tiles" d={d} />
+            <path className="p-lit" d={d} mask={`url(#${maskId})`} /><path className="p-chain" d={d} />
+            <g>{lamps.map((l, i) => (
+              <g key={i} className={`lamp${l.on ? " on" : ""}`}><line x1={l.x} y1={l.y} x2={l.x} y2={l.y - 9} /><circle className="glow" cx={l.x} cy={l.y - 11} r="7" /><circle className="dot" cx={l.x} cy={l.y - 11} r="3" /></g>
+            ))}</g>
+            <g>{[0, 1, 2].map((i) => <rect key={i} ref={(n) => { txs.current[i] = n; }} className={`tx${i === 1 ? " p" : ""}`} width="8" height="8" rx="1.5" style={{ opacity: 0 }} />)}</g>
+          </g>
+          {/* where the road has faded, three stepping stones carry on into each block, smaller and fainter towards it; lime once reached */}
+          {geo ? <g>{[0, 1, 2].flatMap((i) => [-1, 1].flatMap((side) => {
+            if (i === 0 && side < 0) return []; // the road starts at the first block
+            const L0 = geo.stopLen[i] ?? 0;
+            return STONES.map(([k, r], j) => {
+              const L = L0 + side * k, p = pointAt(L), q = pointAt(L + side), a = (Math.atan2(q.y - p.y, q.x - p.x) * 180) / Math.PI;
+              return <rect key={`${i}${side}${j}`} className={`stone${!locked && L <= prog + 1 ? " on" : ""}`} x={-r} y={-r * 0.62} width={r * 2} height={r * 1.24} rx="2.5" transform={`translate(${p.x} ${p.y}) rotate(${a})`} style={{ opacity: 1 - j * 0.18 }} />;
+            });
+          }))}</g> : null}
           <path ref={refPath} d={d} fill="none" stroke="none" />
         </svg>
 
