@@ -105,6 +105,7 @@ function MapInner() {
   const tourBloq = useRef<BloqHandle>(null);
   const tourFlight = useRef<(() => void) | null>(null);
   const leftCity = useRef(false);
+  const sheetWasOpen = useRef(false);
   const [tourPose, setTourPose] = useState<BloqPose>("sit");
   const [tourFacing, setTourFacing] = useState<"left" | "right">("right");
   const [officerIn, setOfficerIn] = useState(false);
@@ -263,6 +264,7 @@ function MapInner() {
     if (!host || !spot) return false;
     host.style.transition = "none";
     host.style.width = `${spot.w}px`;
+    host.style.visibility = "visible";
     host.style.transform = `translate(${spot.x}px, ${spot.y}px)`;
     return true;
   };
@@ -271,28 +273,36 @@ function MapInner() {
   tourApi.current = { placeTour, spotFor, sayTour, LINE };
 
   // He appears sitting on the current step, then jumps (leap) to each next one on the same visit.
+  // While the quiz sheet is open he waits; 600 ms after it closes (its exit) he jumps (prompt 26b).
   useEffect(() => {
     if (!tourOn) { tourAt.current = null; return; }
+    if (open) { sheetWasOpen.current = true; return; }
     const step = after.next, api = tourApi.current;
-    if (tourAt.current === step) return;
+    if (tourAt.current === step) { sheetWasOpen.current = false; return; }
     const first = tourAt.current === null;
     tourAt.current = step;
     if (first || reduce) {
+      sheetWasOpen.current = false;
       tourFlight.current?.(); tourFlight.current = null;
       requestAnimationFrame(() => { api.placeTour(step); setTourFacing("right"); setTourPose("sit"); });
       timers.current.push(setTimeout(() => tourApi.current.sayTour(tourApi.current.LINE[step]), 500));
       return;
     }
-    const host = tourHost.current, spot = api.spotFor(step);
-    if (!host || !spot) return;
-    tourFlight.current?.();
-    setTourPose("idle");
-    tourFlight.current = leap(host, spot, {
-      body: tourBody.current,
-      onTakeoff: (dir) => { setTourFacing(dir); setTourPose("cheer"); },
-      onLand: () => { tourFlight.current = null; setTourFacing("right"); setTourPose("sit"); tourBloq.current?.setMood("laugh", 900); timers.current.push(setTimeout(() => tourApi.current.sayTour(tourApi.current.LINE[step]), 260)); },
-    });
-  }, [tourOn, after.next, reduce]);
+    const jump = () => {
+      if (!mounted.current || tourAt.current !== step) return;
+      const host = tourHost.current, spot = tourApi.current.spotFor(step);
+      if (!host || !spot) return;
+      tourFlight.current?.();
+      setTourPose("idle");
+      tourFlight.current = leap(host, spot, {
+        body: tourBody.current,
+        onTakeoff: (dir) => { setTourFacing(dir); setTourPose("cheer"); },
+        onLand: () => { tourFlight.current = null; setTourFacing("right"); setTourPose("sit"); tourBloq.current?.setMood("laugh", 900); timers.current.push(setTimeout(() => tourApi.current.sayTour(tourApi.current.LINE[step]), 260)); },
+      });
+    };
+    if (sheetWasOpen.current) { sheetWasOpen.current = false; timers.current.push(setTimeout(jump, 600)); }
+    else jump();
+  }, [tourOn, after.next, reduce, open]);
 
   // Re-place him on resize and when the cards change size, unless he is in the air.
   useEffect(() => {
@@ -300,6 +310,7 @@ function MapInner() {
     const again = () => { if (!tourFlight.current && tourAt.current) tourApi.current.placeTour(tourAt.current); };
     const ro = typeof ResizeObserver === "function" ? new ResizeObserver(again) : null;
     if (cardsBox.current) ro?.observe(cardsBox.current);
+    if (rootRef.current) ro?.observe(rootRef.current);
     window.addEventListener("resize", again);
     return () => { ro?.disconnect(); window.removeEventListener("resize", again); };
   }, [tourOn]);
@@ -333,7 +344,7 @@ function MapInner() {
       {/* Phones: header, heading, inventory, seasons, community cards. Desktop unchanged. */}
       <div ref={rootRef} data-leaving={leaving || undefined} className="relative flex flex-col dk:grid dk:grid-cols-[minmax(0,1fr)_auto] dk:items-center dk:gap-x-4">
       {tourOn && (
-        <div ref={tourHost} className="absolute left-0 top-0 z-[6]" style={{ width: W }}>
+        <div ref={tourHost} className="absolute left-0 top-0 z-[6]" style={{ width: W, visibility: "hidden" }}>
           <div ref={tourBody} style={{ transformOrigin: "50% 92%" }} onClick={() => sayTour(LINE[after.next])}>
             <Bloq ref={tourBloq} hat="cap" pose={tourPose} facing={tourFacing} label="Bloq, your guide" className="w-full" />
           </div>
