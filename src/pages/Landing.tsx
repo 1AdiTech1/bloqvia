@@ -9,7 +9,7 @@ import { HopBloq, useMedia } from "@/components/brand/HopBloq";
 import { useGame } from "@/game/useGame";
 import { cn } from "@/lib/utils";
 import {
-  BlockSea, Bloq, BloqCoin, BloqviaLogo, FloatingCubes, SpeechBubble, talkMs, useSay,
+  BlockSea, Bloq, BloqCoin, BloqviaLogo, FloatingCubes, SpeechBubble, leap, talkMs, useSay,
   type BloqHandle, type BloqHat, type BloqPose, type BloqProp, type FloatingCubesHandle,
 } from "@/bloq";
 
@@ -688,6 +688,9 @@ const PASS_LINE = "Graduate and your Passport is sealed for good. That's the one
 const ProgHop = forwardRef<ProgHopHandle, { box: React.RefObject<HTMLDivElement | null>; onPass: (on: boolean) => void }>(function ProgHop({ box, onPass }, ref) {
   const still = useReducedMotion();
   const host = useRef<HTMLDivElement>(null);
+  const body = useRef<HTMLDivElement>(null);
+  const flight = useRef<(() => void) | null>(null);
+  const [facing, setFacing] = useState<"left" | "right">("right");
   const bloq = useRef<BloqHandle>(null);
   const [line, say] = useSay();
   const [quiet, setQuiet] = useState(false);
@@ -717,23 +720,26 @@ const ProgHop = forwardRef<ProgHopHandle, { box: React.RefObject<HTMLDivElement 
     const panel = () => b.querySelector<HTMLElement>(".lv-panel");
     const clear = () => { s.timers.forEach((t) => window.clearTimeout(t)); s.timers = []; };
     const later = (ms: number, f: () => void) => { s.timers.push(window.setTimeout(f, stillRef.current ? 0 : ms)); };
-    const place = (i: number, animate: boolean) => {
+    const spot = (i: number): { x: number; y: number; w: number } | null => {
       const br = b.getBoundingClientRect();
-      const anim = animate && !stillRef.current;
-      el.style.transition = anim ? "transform .6s cubic-bezier(.34,1.3,.64,1), width .6s cubic-bezier(.34,1.3,.64,1)" : "none";
-      let x: number, y: number, w: number;
       if (i === -1) {
         const pr = panel()?.getBoundingClientRect();
-        if (!pr) return;
-        w = 112; x = pr.left - br.left + 14; y = pr.bottom - br.top - 14 - (w * 4) / 3;
-      } else {
-        const c = cards()[i];
-        if (!c) return;
-        const r = c.getBoundingClientRect();
-        w = 86; x = r.right - br.left - w - 12; y = r.top - br.top - (w * 4) / 3 * 0.75 + 4;
+        if (!pr) return null;
+        const w = 112;
+        return { x: pr.left - br.left + 14, y: pr.bottom - br.top - 14 - (w * 4) / 3, w };
       }
-      el.style.width = `${w}px`;
-      el.style.transform = `translate(${x}px, ${y}px)`;
+      const r = cards()[i]?.getBoundingClientRect();
+      if (!r) return null;
+      const w = 86;
+      return { x: r.right - br.left - w - 12, y: r.top - br.top - (w * 4) / 3 * 0.75 + 4, w };
+    };
+    const place = (i: number, animate: boolean) => {
+      const p = spot(i);
+      if (!p) return;
+      const anim = animate && !stillRef.current;
+      el.style.transition = anim ? "transform .6s cubic-bezier(.34,1.3,.64,1), width .6s cubic-bezier(.34,1.3,.64,1)" : "none";
+      el.style.width = `${p.w}px`;
+      el.style.transform = `translate(${p.x}px, ${p.y}px)`;
     };
     const target = () => {
       const vh = window.innerHeight;
@@ -763,6 +769,9 @@ const ProgHop = forwardRef<ProgHopHandle, { box: React.RefObject<HTMLDivElement 
     };
     const go = (i: number, animate: boolean) => {
       clear();
+      flight.current?.();
+      flight.current = null;
+      setFacing("right");
       const from = s.at;
       s.at = i;
       setInPanel(i === -1);
@@ -774,6 +783,19 @@ const ProgHop = forwardRef<ProgHopHandle, { box: React.RefObject<HTMLDivElement 
         if (p) setProp(p);
         settle(i);
         return;
+      }
+      if (i === -1) {
+        const to = spot(-1);
+        if (to) {
+          setQuiet(true);
+          setPose("idle");
+          flight.current = leap(el, to, {
+            body: body.current,
+            onTakeoff: (dir) => { setFacing(dir); setPose("cheer"); },
+            onLand: () => { flight.current = null; setFacing("right"); settle(-1); },
+          });
+          return;
+        }
       }
       setQuiet(true);
       setPose("idle");
@@ -812,6 +834,7 @@ const ProgHop = forwardRef<ProgHopHandle, { box: React.RefObject<HTMLDivElement 
     window.addEventListener("resize", onResize);
     return () => {
       io.disconnect(); clear();
+      flight.current?.();
       clearTimeout(panelTimer);
       if (raf) cancelAnimationFrame(raf);
       window.removeEventListener("scroll", onScroll);
@@ -824,7 +847,9 @@ const ProgHop = forwardRef<ProgHopHandle, { box: React.RefObject<HTMLDivElement 
   return (
     <div ref={host} className="absolute left-0 top-0 z-[4] w-[86px] cursor-pointer" onClick={() => { bloq.current?.jump(); bloq.current?.setMood("laugh", 900); }}>
       <div className="relative">
-        <Bloq ref={bloq} hat="grad" prop={prop} pose={pose} label="Bloq graduating" className="w-full" />
+        <div ref={body} style={{ transformOrigin: "50% 92%" }}>
+          <Bloq ref={bloq} hat="grad" prop={prop} pose={pose} facing={facing} label="Bloq graduating" className="w-full" />
+        </div>
         <SpeechBubble text={quiet ? null : line} className={inPanel ? "hop-say hop-up" : "hop-say"} />
       </div>
     </div>

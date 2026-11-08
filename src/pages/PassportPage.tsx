@@ -100,7 +100,7 @@ function PassportInner() {
         <button type="button" onClick={tapCard} aria-label="Bloq" className="w-[120px] shrink-0">
           <Bloq ref={bloq} hat={p.graduated ? "grad" : "aviator"} prop={p.graduated ? "badge" : "passport"} pose="hold" label={p.graduated ? "Bloq in a graduation cap" : "Bloq the aviator"} />
         </button>
-        <div className="mb-6 min-w-0">
+        <div className="mt-3 min-w-0 self-start">
           <SpeechBubble side="right" tone="light" text={shown} />
         </div>
       </div>
