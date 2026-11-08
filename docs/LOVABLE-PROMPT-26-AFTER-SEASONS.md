@@ -49,7 +49,9 @@ d. **The tour Bloq**, rendered only while `touring && after.tourStarted`: an abs
 - missions: phones `One more, just for graduates: Missions. The DAO's board pays testnet NEAR for small tasks. Tap Missions below.`; desktop `… It's in the menu on the left.`
 - done: `That's everything for today. Come back tomorrow for a new quest and a new streak day.`
 
-The first time he appears on a visit (and always with reduced motion) he is placed straight on `spotFor(after.next)`, sitting, and says that step's line after 500 ms. When `after.next` changes later on the same visit, he jumps there (`host = tourHost.current`, `spot = spotFor(after.next)`; skip if either is missing):
+Keep the lines in a `const LINE: Record<AfterStep, string>` built from `desktop`.
+
+The first time he appears on a visit (and always with reduced motion) he is placed straight on `spotFor(after.next)`, sitting, and says that step's line after 500 ms. When `after.next` changes later on the same visit, he jumps there (`const step = after.next`, `host = tourHost.current`, `spot = spotFor(step)`; skip if either is missing):
 
 ```tsx
 tourFlight.current?.();
@@ -57,7 +59,7 @@ setTourPose("idle");
 tourFlight.current = leap(host, spot, {
   body: tourBody.current,
   onTakeoff: (dir) => { setTourFacing(dir); setTourPose("cheer"); },
-  onLand: () => { tourFlight.current = null; setTourFacing("right"); setTourPose("sit"); tourBloq.current?.setMood("laugh", 900); window.setTimeout(() => sayTour(LINE[after.next]), 260); },
+  onLand: () => { tourFlight.current = null; setTourFacing("right"); setTourPose("sit"); tourBloq.current?.setMood("laugh", 900); timers.current.push(setTimeout(() => sayTour(LINE[step]), 260)); },
 });
 ```
 
@@ -123,7 +125,7 @@ In `CohortPage`, `useEffect(() => { markMissionsSeen(game.accountId); }, [game.a
 
 ## 7. The Season 2 reveal opens the map at the cards (`src/pages/RevealPage.tsx`)
 
-On the Season 2 reveal (`season2`), "Back to the map" does `navigate({ to: "/map", hash: "keep-going" })`. The Season 1 reveal keeps `navigate({ to: "/map" })`.
+On the Season 2 reveal (`season2`), "Back to the map" does `navigate({ to: "/map", hash: "keep-going" })`. The Season 1 reveal keeps `navigate({ to: "/map" })`. In `src/pages/RevealPage.test.tsx`, the test "offers no reset button, only Back to the map" (prompt 25) then expects `{ to: "/map", hash: "keep-going" }` for the Season 2 reveal; change only that expectation.
 
 ## Confirm when done
 

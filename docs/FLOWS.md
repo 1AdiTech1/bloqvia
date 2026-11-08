@@ -181,7 +181,7 @@ stateDiagram-v2
     end note
 ```
 
-## User flow: Season 2 (built Nov 7)
+## User flow: Season 2 (built Nov 7) and after it (built Nov 8)
 
 ```mermaid
 flowchart TD
@@ -195,7 +195,13 @@ flowchart TD
     F --> G[Chapter 06 Decentralised Finance]
     G --> H[The same transaction stamps the Passport]
     H --> I[Passport office: the stamp moment,<br/>Stamped on NEAR, See your Passport]
-    I --> J[The Season 2 reveal: what happened on chain,<br/>Back to the map or Start again]
+    I --> J[The Season 2 reveal: what happened on chain,<br/>Back to the map]
+    J --> L[Bloq leaves Network City,<br/>the officer goes behind his curtain]
+    L --> M[Community streak: check in]
+    M --> N[Today's quest: play]
+    N --> O[Every day on Bloqvia: Missions]
+    O --> P[All done for today.<br/>Back the next Bloqvia day]
+    O -.-> Q[Play again from zero:<br/>copy the key, then a new account]
     E & F & G -.-> K[Each chapter: 50 gold + 1 item,<br/>Passport level unchanged, Ask Bloq inside]
 ```
 
