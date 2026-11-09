@@ -5,7 +5,10 @@
  * on his left, with side="left"), nudges itself sideways so it never leaves the screen, and on screens
  * under 700px a side bubble moves above him. side="right" is the one exception to the box rule: the
  * bubble is a sibling of Bloq in a row (Bloq first), in the flow, with its tail pointing back at him
- * (the Passport page and the shop). Pair it with useSay() and Bloq's talk():
+ * (the Passport page and the shop). Rule (Nov 9): the tail is always at Bloq's head. A tail on the bubble's bottom
+ * edge slides along it to sit under his head, wherever the bubble is placed (nudged on screen, or moved to his left
+ * by a page's CSS); a tail on the side (side="left", the hop bubbles) already points at him. Pair it with useSay()
+ * and Bloq's talk():
  *
  *   const [line, say] = useSay();
  *   say("Gas is the small fee…");            // shows, auto-hides
@@ -14,7 +17,8 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 
-/** Keep a bubble on screen: measure in place, shift by --dx; the tail keeps pointing at Bloq. */
+/** Keep a bubble on screen and its tail at Bloq's head: measure in place, shift by --dx (at once, no slide, so the
+ *  bubble and its tail never disagree); a tail on the bottom edge goes under his head (--tx, data-tail="head"). */
 export function fitBubble(el: HTMLElement): void {
   el.style.setProperty("--dx", "0px");
   const vw = document.documentElement.clientWidth;
@@ -27,6 +31,14 @@ export function fitBubble(el: HTMLElement): void {
   if (right > vw - m) dx = vw - m - right;
   if (left + dx < m) dx = m - left;
   el.style.setProperty("--dx", `${Math.round(dx)}px`);
+  // Bottom-edge tail (the bubble sits above him): under his head. His head is the middle of his drawing (.bq-host),
+  // or of the box he stands in. The tail stays clear of the bubble's rounded corners.
+  if (parseFloat(getComputedStyle(el, "::after").bottom) < 0) {
+    const r = (host.querySelector(".bq-host") ?? host).getBoundingClientRect();
+    const tx = Math.max(14, Math.min(el.offsetWidth - 28, r.left + r.width / 2 - (left + dx) - 7));
+    el.style.setProperty("--tx", `${Math.round(tx)}px`);
+    el.dataset["tail"] = "head";
+  } else delete el.dataset["tail"];
 }
 
 export interface SpeechBubbleProps {

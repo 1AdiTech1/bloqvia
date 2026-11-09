@@ -47,6 +47,13 @@ function clip(s: string): string {
   return s.length <= MAX ? s : `${s.slice(0, MAX - 1).trimEnd()}…`;
 }
 
+/** The contract's refusal of a wrong quiz option ("Wrong answer", from core's complete_lesson), as the player sees it.
+ *  The quiz shows a wrong answer itself (Bloq's line, the crossed-out option, the hint), so the top message skips it
+ *  while a quiz is open (prompt 27e). */
+export function isWrongAnswer(message: string | null | undefined): boolean {
+  return !!message && /^wrong answer\.?$/i.test(message.trim());
+}
+
 export function humanError(e: unknown): string {
   const raw = e instanceof Error ? e.message : typeof e === "string" ? e : JSON.stringify(e ?? "");
   for (const [re, say] of RULES) {
