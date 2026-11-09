@@ -497,7 +497,7 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
     };
     const roadDir = (L: number): Pt => { const p = pointAt(Math.max(0, L - 6)), q = pointAt(Math.min(geo.len, L + 6)), n = Math.hypot(q.x - p.x, q.y - p.y) || 1; return { x: (q.x - p.x) / n, y: (q.y - p.y) / n }; };
     const unit = (a: Pt, b: Pt): Pt => { const n = Math.hypot(b.x - a.x, b.y - a.y) || 1; return { x: (b.x - a.x) / n, y: (b.y - a.y) / n }; };
-    const walkPath = async (pts: Pt[]) => {
+    const walkPath = async (pts: Pt[], goal?: Pt) => {
       if (pts.length < 2) return;
       const acc = [0];
       for (let j = 1; j < pts.length; j++) acc.push(acc[j - 1]! + Math.hypot(pts[j]!.x - pts[j - 1]!.x, pts[j]!.y - pts[j - 1]!.y));
@@ -508,9 +508,18 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
         return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
       };
       // Facing: from where he'll be 28px further on, and only when he's moving sideways by more than 6px over that
-      // distance, so a nearly vertical stretch of road doesn't make him flip back and forth.
+      // distance, so a nearly vertical stretch of road doesn't make him flip back and forth. On a phone the road runs
+      // steeply down the screen, so that near look is often undecided; then he faces the block he is walking to
+      // (`goal`), as he will when he stands beside it, so he never walks a whole stretch turned away from where he
+      // is going (Phase 3 QA, Nov 9: on a phone he walked down to The Fuel System looking the other way).
       let face: "left" | "right" | null = null;
-      const look = (d: number) => { const p = at(d), q = at(Math.min(total, d + 28)), dx = q.x - p.x; return Math.abs(dx) > 6 ? (dx > 0 ? "right" : "left") : null; };
+      const look = (d: number) => {
+        const p = at(d), q = at(Math.min(total, d + 28)), dx = q.x - p.x;
+        if (Math.abs(dx) > 6) return dx > 0 ? "right" : "left";
+        if (!goal) return null;
+        const gx = goal.x - p.x;
+        return Math.abs(gx) > 12 ? (gx > 0 ? "right" : "left") : null;
+      };
       face = look(0) ?? (pts[pts.length - 1]!.x >= pts[0]!.x ? "right" : "left"); setFacing(face);
       // A pace, not a constant speed (docs/MOTION-RULES.md 1, 5). He speeds up over the first 90 px and slows down over
       // the last 110, slows on tight bends (by how much the road turns over 16 px) and to 45% where he turns round,
@@ -582,7 +591,7 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
           // … and off it, round to his spot beside the next block (or the shop's door).
           hermite(j1, r, { x: t1.x * d1 * 0.5, y: t1.y * d1 * 0.5 }, { x: 0, y: d1 * 0.7 }, path);
         }
-        await walkPath(path);
+        await walkPath(path, i < 3 ? blockAt(i) : geo.door);
         at.current = i;
       }
       guide.current?.walking(false);
