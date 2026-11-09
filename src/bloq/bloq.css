@@ -1,6 +1,6 @@
 /* Bloq rig v2 — the script drives joints every frame; CSS only switches parts and runs the glow. */
 .bq-host { position: relative; }
-.bq-flip { transition: transform .45s cubic-bezier(.34,1.56,.64,1); transform-origin: 50% 100%; }
+.bq-flip { transform-origin: 50% 100%; } /* the mirror flips at once; the rig plays the turn (engine face()) */
 .bq-flip.left { transform: scaleX(-1); }
 .bq { display: block; width: 100%; height: auto; overflow: visible; }
 .bq * { transform-box: view-box; }
@@ -46,6 +46,7 @@
 .bq-seat { fill: rgb(22 36 58 / .3); opacity: 0; transition: opacity .3s; }
 .bq.sitting .bq-seat { opacity: 1; }
 .bq[data-mood="talk"] .bq-m-talk { opacity: 1; }
+.bq[data-mood="closed"] .bq-m-closed { opacity: 1; } /* talking: m, b, p and pauses */
 .bq.side .v-side { display: inline; }
 .bq.side .v-front { display: none; }
 .bq-squint { display: none; }

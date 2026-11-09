@@ -43,7 +43,8 @@ export interface BloqProps {
 export interface BloqHandle {
   jump(): void;
   /** Mouth moves for ms milliseconds (use while a speech bubble shows). */
-  talk(ms?: number): void;
+  /** Mouth moves for ms; with the line's text it follows the words (shapes, pauses, nods, brows, a gesture). */
+  talk(ms?: number, text?: string): void;
   setMood(mood: BloqMood, ms?: number): void;
   /** -1..1 each: where his eyes look. */
   look(dx: number, dy: number): void;
@@ -69,7 +70,7 @@ interface Rig {
   face(d: string): Rig;
   look(dx: number, dy: number): Rig;
   jump(): Rig;
-  talk(ms?: number): Rig;
+  talk(ms?: number, text?: string): Rig;
   aimAt(el: Element | null): Rig;
   walking(on: boolean, follow?: boolean): Rig;
   wobble(): Rig;
@@ -106,7 +107,7 @@ export const Bloq = forwardRef<BloqHandle, BloqProps>(function Bloq(
 
   useImperativeHandle(ref, () => ({
     jump: () => { rig.current?.jump(); },
-    talk: (ms) => { rig.current?.talk(ms); },
+    talk: (ms, text) => { rig.current?.talk(ms, text); },
     setMood: (m, ms) => { rig.current?.setMood(m, ms); },
     look: (dx, dy) => { rig.current?.look(dx, dy); },
     aimAt: (el) => {

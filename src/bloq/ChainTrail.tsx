@@ -360,7 +360,7 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
   const walkingRef = useRef(false);
   const timers = useRef<number[]>([]);
 
-  const say = useCallback((text: string) => { sayRaw(text); guide.current?.talk(talkMs(text)); }, [sayRaw]);
+  const say = useCallback((text: string) => { sayRaw(text); guide.current?.talk(talkMs(text), text); }, [sayRaw]);
   const cheerRef = useRef<(line?: string) => void>(() => {});
   const jumpRef = useRef<ChainTrailHandle["jumpTo"]>(async () => {});
   const entryRef = useRef<ChainTrailHandle["entry"]>(() => null);
@@ -511,8 +511,30 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
       let face: "left" | "right" | null = null;
       const look = (d: number) => { const p = at(d), q = at(Math.min(total, d + 28)), dx = q.x - p.x; return Math.abs(dx) > 6 ? (dx > 0 ? "right" : "left") : null; };
       face = look(0) ?? (pts[pts.length - 1]!.x >= pts[0]!.x ? "right" : "left"); setFacing(face);
-      await anim(Math.max(600, total * 7.5), (k) => {
-        const d = total * k, f = look(d);
+      // A pace, not a constant speed (docs/MOTION-RULES.md 1, 5). He speeds up over the first 90 px and slows down over
+      // the last 110, slows on tight bends (by how much the road turns over 16 px) and to 45% where he turns round,
+      // and his steps follow the ground (walking(true, true)), so his feet don't slide. Full pace .16 px/ms.
+      const V = 0.16, ACC = Math.min(90, total / 3), DEC = Math.min(110, total / 3);
+      const turns: number[] = [];
+      { let f0 = look(0); for (let d = 0; d <= total; d += 4) { const f1 = look(d); if (f1 && f0 && f1 !== f0) turns.push(d); if (f1) f0 = f1; } }
+      const bend = (d: number) => {
+        const p = at(Math.max(0, d - 8)), q = at(d), r = at(Math.min(total, d + 8));
+        const a1 = Math.atan2(q.y - p.y, q.x - p.x), a2 = Math.atan2(r.y - q.y, r.x - q.x);
+        let da = Math.abs(a2 - a1); if (da > Math.PI) da = 2 * Math.PI - da;
+        return 1 - 0.4 * Math.min(1, da / 0.6);
+      };
+      const speed = (d: number) => {
+        const a = Math.min(1, d / ACC), b = Math.min(1, (total - d) / DEC);
+        let v = V * Math.max(0.12, Math.min(Math.sin((a * Math.PI) / 2), Math.sin((b * Math.PI) / 2))) * bend(d);
+        for (const tp of turns) { const u = Math.abs(d - tp) / 40; if (u < 1) v *= 0.45 + 0.55 * u; }
+        return v;
+      };
+      const STEP = 2, ts = [0];
+      for (let d = STEP; d < total + STEP; d += STEP) ts.push(ts[ts.length - 1]! + STEP / speed(Math.min(total, d) - STEP / 2));
+      const T = ts[ts.length - 1]!;
+      await anim(Math.max(600, T), (k) => {
+        const tm = k * T; let j = 1; while (j < ts.length - 1 && ts[j]! < tm) j++;
+        const d = Math.min(total, (j - 1 + (tm - ts[j - 1]!) / Math.max(1e-6, ts[j]! - ts[j - 1]!)) * STEP), f = look(d);
         if (f && f !== face) { face = f; setFacing(f); }
         const p = at(d); place(p.x, p.y);
       });
@@ -524,9 +546,10 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
     };
     (async () => {
       // The camera stays on him: still while he is in the middle of the screen, gliding after him near the edges.
+      // The camera stays on him: still while he is in the middle of the screen, gliding after him near the edges.
       if (walker.current) cam = followCamera(walker.current);
       await new Promise((r) => timers.current.push(window.setTimeout(r, 250)));
-      guide.current?.walking(true);
+      guide.current?.walking(true, true);
       for (let i = from + 1; i <= to && !cancelled; i++) {
         const a = rest(i - 1);
         const end = geo.stopLen[i] ?? 0;
@@ -563,12 +586,14 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
       }
       guide.current?.walking(false);
       const stopCam = cam; if (stopCam) timers.current.push(window.setTimeout(stopCam, 700)); // let it settle
-      const r = rest(to); setFacing(r.face); walkingRef.current = false;
+      walkingRef.current = false;
       if (cancelled) return;
+      // he settles (the stop takes 400 ms), turns to his resting side, then hops and speaks
+      await new Promise((r) => timers.current.push(window.setTimeout(r, 400)));
+      if (cancelled) return;
+      const r = rest(to); setFacing(r.face);
       if (to >= 3) { cheerTogether(); timers.current.push(window.setTimeout(() => arrivedRef.current?.(to), 2300)); return; }
-      guide.current?.jump();
-      say(tip(to, stops));
-      arrivedRef.current?.(to);
+      timers.current.push(window.setTimeout(() => { guide.current?.jump(); say(tip(to, stops)); arrivedRef.current?.(to); }, 320));
     })();
     return () => { cancelled = true; walkingRef.current = false; guide.current?.walking(false); cam?.(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -591,7 +616,7 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
     if (!reduced()) {
       // Take-off and landing both on screen: centre the middle of the jump while he says his line.
       window.scrollBy({ top: (r.top + a.y + to.y) / 2 - window.innerHeight * 0.5, behavior: "smooth" });
-      setFacing(b.x >= a.x ? "right" : "left"); say(line); guide.current?.talk(talkMs(line));
+      setFacing(b.x >= a.x ? "right" : "left"); say(line); // say() moves his mouth with the line
       await wait(1400);
       // He stays seated while he talks, and stands up as he takes off.
       if (wasPerched) setGuidePose("idle");
@@ -681,7 +706,7 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
   const peekOut = (ms: number) => {
     if (!curtain || !open) return;
     window.clearTimeout(peekT.current);
-    if (!peek) { hostSayRaw(hostHello); merchant.current?.talk(talkMs(hostHello)); timers.current.push(window.setTimeout(() => { merchant.current?.jump(); merchant.current?.setMood("laugh", 1200); }, 380)); }
+    if (!peek) { hostSayRaw(hostHello); merchant.current?.talk(talkMs(hostHello), hostHello); timers.current.push(window.setTimeout(() => { merchant.current?.jump(); merchant.current?.setMood("laugh", 1200); }, 380)); }
     setPeek(true);
     peekT.current = window.setTimeout(() => setPeek(false), ms);
   };
