@@ -1,8 +1,9 @@
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useMotionOff } from "@/bloq";
 
 /** Three blocks assembling into the Bloqvia mark, looped. */
 export function LabLoader({ label, tone = "lime", size = 48 }: { label?: string; tone?: "lime" | "navy"; size?: number }) {
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const fill = tone === "lime" ? "fill-lime" : "fill-navy";
   const blocks = [
     { y: 3, w: 22, from: -18 },

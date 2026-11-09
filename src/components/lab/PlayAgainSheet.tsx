@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useMotionOff } from "@/bloq";
+import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "@tanstack/react-router";
 import { Copy, X } from "lucide-react";
 import { useGame } from "@/game/useGame";
@@ -15,7 +16,7 @@ export function PlayAgainSheet({ open, onClose }: { open: boolean; onClose: () =
 function PlayAgainPanel({ onClose }: { onClose: () => void }) {
   const game = useGame();
   const navigate = useNavigate();
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const desktop = useIsDesktop();
   const sheet = useSheetDrag(onClose, !desktop);
   const [copied, setCopied] = useState(false);

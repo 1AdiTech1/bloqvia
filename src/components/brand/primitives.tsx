@@ -1,5 +1,6 @@
 import { forwardRef, useRef, type ComponentProps, type ReactNode } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { useMotionOff } from "@/bloq";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -7,7 +8,7 @@ export const ease = [0.22, 1, 0.36, 1] as const;
 
 /** Scroll-triggered fade-up. */
 export function Reveal({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   return (
     <motion.div
       className={className}
@@ -61,7 +62,7 @@ export function Display({
   accent?: number;
   className?: string;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   return (
     <Tag className={cn("font-display font-medium uppercase tracking-[-0.045em]", sizes[size], className)}>
       {lines.map((l, i) => (
@@ -132,7 +133,7 @@ export function Illustration({
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const back = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [30, -30]);
   const front = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [70, -70]);

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { AnimatePresence, useReducedMotion } from "framer-motion";
-import { Bloq, ChainTrail, SpeechBubble, leap, talkMs, useSay, type BloqHandle, type BloqPose, type ChainTrailHandle, type TrailStop } from "@/bloq";
+import { AnimatePresence } from "framer-motion";
+import { Bloq, ChainTrail, SpeechBubble, leap, talkMs, useSay, walkTo, type BloqHandle, type BloqPose, type ChainTrailHandle, type TrailStop, useMotionOff } from "@/bloq";
 import { useChapters, useFinalBlock, SEASON2_CHAPTERS, season2Done, useAfterSeasons, type AfterStep } from "@/near";
 import { useGame, IS_MOCK } from "@/game/useGame";
 import { LESSON_CONTENT } from "@/game/content";
@@ -52,7 +53,7 @@ type Held = { gold: number; items: [string, string][] };
 function MapInner() {
   const game = useGame();
   const navigate = useNavigate();
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const [open, setOpen] = useState<string | null>(null);
   const [held, setHeld] = useState<Held | null>(null);
   const [heldLevel, setHeldLevel] = useState<number | null>(null);
@@ -106,6 +107,9 @@ function MapInner() {
   const tourFlight = useRef<(() => void) | null>(null);
   const leftCity = useRef(false);
   const sheetWasOpen = useRef(false);
+  const [bag, setBag] = useState(false);
+  const [bagBox, setBagBox] = useState<{ left: number; width: number }>();
+  const invBox = useRef<HTMLDivElement>(null);
   const [tourPose, setTourPose] = useState<BloqPose>("sit");
   const [tourFacing, setTourFacing] = useState<"left" | "right">("right");
   const [officerIn, setOfficerIn] = useState(false);
@@ -221,10 +225,12 @@ function MapInner() {
     timers.current.push(setTimeout(() => setHeldLevel(null), reduce ? 0 : 750));
     timers.current.push(setTimeout(() => setSaved(true), reduce ? 0 : 1450));
   };
+  const showBag = (on: boolean) => { if (on) { const r = invBox.current?.getBoundingClientRect(); if (r) setBagBox({ left: r.left, width: r.width }); } setBag(on); };
   const close = () => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
     setHeld(null);
+    setBag(false);
     setHeldLevel(null);
     setOpen(null);
     if (open === SEASON2_CHAPTERS[2] && chapterCount.current === 3 && s2Level < 3) thirdThisVisit.current = true;
@@ -279,7 +285,8 @@ function MapInner() {
     if (open) { sheetWasOpen.current = true; return; }
     const step = after.next, api = tourApi.current;
     if (tourAt.current === step) { sheetWasOpen.current = false; return; }
-    const first = tourAt.current === null;
+    const prevStep = tourAt.current;
+    const first = prevStep === null;
     tourAt.current = step;
     if (first || reduce) {
       sheetWasOpen.current = false;
@@ -293,6 +300,38 @@ function MapInner() {
       const host = tourHost.current, spot = tourApi.current.spotFor(step);
       if (!host || !spot) return;
       tourFlight.current?.();
+      // Desktop, the next card is beside this one (streak → Today's quest): he stands up, walks along the cards'
+      // top edges and sits down (prompt 27, docs/design/morning-fixes, section 2). Otherwise he jumps, as before.
+      const from = prevStep ? tourApi.current.spotFor(prevStep) : null;
+      if (desktop && from && Math.abs(from.y - spot.y) < 8) {
+        const lift = (W * 4) / 3 * 0.22 + 4; // from sitting on the edge to standing on it
+        const upFrom = from.y - lift, up = spot.y - lift;
+        let stopWalk: (() => number) | null = null;
+        setTourPose("idle");
+        host.animate([{ transform: `translate(${from.x}px, ${from.y}px)` }, { transform: `translate(${from.x}px, ${upFrom}px)` }], { duration: 260, easing: "cubic-bezier(.3,.7,.4,1)" });
+        host.style.transform = `translate(${from.x}px, ${upFrom}px)`;
+        const t = window.setTimeout(() => {
+          setTourFacing(spot.x >= from.x ? "right" : "left");
+          tourBloq.current?.walking(true, true);
+          stopWalk = walkTo(host, spot.x, {
+            y: up,
+            run: false,
+            onArrive: () => {
+              stopWalk = null;
+              tourFlight.current = null;
+              tourBloq.current?.walking(false);
+              host.animate([{ transform: `translate(${spot.x}px, ${up}px)` }, { transform: `translate(${spot.x}px, ${spot.y}px)` }], { duration: 300, easing: "cubic-bezier(.5,0,.6,1.3)" });
+              host.style.transform = `translate(${spot.x}px, ${spot.y}px)`;
+              setTourFacing("right");
+              setTourPose("sit");
+              tourBloq.current?.setMood("laugh", 900);
+              timers.current.push(setTimeout(() => tourApi.current.sayTour(tourApi.current.LINE[step]), 260));
+            },
+          });
+        }, 280);
+        tourFlight.current = () => { window.clearTimeout(t); stopWalk?.(); tourBloq.current?.walking(false); };
+        return;
+      }
       setTourPose("idle");
       tourFlight.current = leap(host, spot, {
         body: tourBody.current,
@@ -352,7 +391,7 @@ function MapInner() {
         </div>
       )}
       <GameHeader level={level} className="order-1 dk:order-2 dk:col-start-2 dk:mb-0" />
-      <div className="order-3 mt-4 dk:mt-0 dk:order-2 dk:col-start-1 dk:row-start-2">
+      <div ref={invBox} className="order-3 mt-4 dk:mt-0 dk:order-2 dk:col-start-1 dk:row-start-2">
         <InventoryBar gold={held?.gold} items={held?.items} />
       </div>
       {after.active ? (
@@ -418,7 +457,13 @@ function MapInner() {
       </div>
 
       <AnimatePresence>
-        {open && <QuizSheet key={open} lessonId={open} onClose={close} onLanded={landed} saved={saved} />}
+        {open && <QuizSheet key={open} lessonId={open} onClose={close} onLanded={landed} saved={saved} onBag={showBag} />}
+        {typeof document !== "undefined" && createPortal(
+          <div data-bag="" aria-hidden="true" className={bag ? "bag-dock in" : "bag-dock"} style={bagBox}>
+            <InventoryBar gold={held?.gold} items={held?.items} />
+          </div>,
+          document.body,
+        )}
       </AnimatePresence>
     </PhoneShell>
   );

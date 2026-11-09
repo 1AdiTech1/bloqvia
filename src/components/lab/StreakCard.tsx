@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useMotionOff } from "@/bloq";
+import { motion } from "framer-motion";
 import { Check, ChevronDown, Info, X } from "lucide-react";
 import { useStreak } from "@/near";
 import { LabLoader } from "@/components/LabLoader";
@@ -18,7 +19,7 @@ export function StreakCard({ highlight = false }: { highlight?: boolean }) {
 
 function StreakInner({ highlight }: { highlight: boolean }) {
   const s = useStreak();
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const [left, setLeft] = useState<number | null>(null);
   const [info, setInfo] = useState(false);
   const [log, setLog] = useState(false);

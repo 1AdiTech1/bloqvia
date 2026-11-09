@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { useGame } from "@/game/useGame";
 import { CTA, ease } from "./primitives";
 import { BloqMark } from "@/components/Logo";
-import { Bloq, type BloqHandle, type BloqPose } from "@/bloq";
+import { Bloq, type BloqHandle, type BloqPose, useMotionOff } from "@/bloq";
 import { LabLoader } from "@/components/LabLoader";
 
 /** App-held key sign-in sheet: calls start() then goes to /map. */
 export function SignInSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const game = useGame();
   const navigate = useNavigate();
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const button = useRef<HTMLButtonElement>(null);
   const returning = !!game.accountId;
 

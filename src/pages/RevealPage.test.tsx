@@ -23,7 +23,7 @@ vi.mock("@/near", () => ({
 }));
 vi.mock("@/components/PhoneShell", () => ({ PhoneShell: ({ children }: { children: ReactNode }) => children }));
 vi.mock("@/components/RequireAccount", () => ({ RequireAccount: ({ children }: { children: ReactNode }) => children }));
-vi.mock("@/bloq", () => ({ Bloq: () => null, SpeechBubble: () => null, useSay: () => [null, () => {}], talkMs: () => 0 }));
+vi.mock("@/bloq", () => ({ Bloq: () => null, SpeechBubble: () => null, useSay: () => [null, () => {}], talkMs: () => 0, useMotionOff: () => false }));
 vi.mock("@/components/lab/Web3Passport", () => ({ Web3Passport: () => null, SeasonStamp: () => null }));
 
 import { Season2RevealPage } from "./RevealPage";

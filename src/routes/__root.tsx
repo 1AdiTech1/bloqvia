@@ -13,6 +13,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppChrome } from "@/components/AppChrome";
+import { MotionConfig } from "framer-motion";
+import { useMotionRoot } from "@/bloq";
 
 function NotFoundComponent() {
   return (
@@ -152,12 +154,15 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const off = useMotionRoot(); // the Motion switch (prompt 27)
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <AppChrome />
+      <MotionConfig reducedMotion={off ? "always" : "never"}>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <AppChrome />
+      </MotionConfig>
     </QueryClientProvider>
   );
 }

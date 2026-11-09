@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useReducedMotion } from "framer-motion";
 import { Copy, Check } from "lucide-react";
-import { AgentPod, talkMs, type AgentPodHandle } from "@/bloq";
+import { AgentPod, talkMs, type AgentPodHandle, useMotionOff } from "@/bloq";
 import { useAskBloq } from "@/near";
 import { verifyUrl } from "@/components/lab/useDesktop";
 
@@ -43,7 +42,7 @@ function CopyId({ id }: { id: string }) {
 }
 
 export function AskDock() {
-  const still = !!useReducedMotion();
+  const still = !!useMotionOff();
   const bloq = useAskBloq();
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([{ id: 0, who: "bot", text: GREETING, typed: true }]);

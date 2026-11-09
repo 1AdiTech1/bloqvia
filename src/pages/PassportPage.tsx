@@ -1,13 +1,13 @@
 import { useEffect, useRef } from "react";
 import { ExternalLink, Lock } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useGame } from "@/game/useGame";
 import { LESSON_CONTENT } from "@/game/content";
 import { PhoneShell } from "@/components/PhoneShell";
 import { RequireAccount } from "@/components/RequireAccount";
 import { ItemIcon } from "@/components/GameBits";
 import { Web3Passport } from "@/components/lab/Web3Passport";
-import { Bloq, SpeechBubble, talkMs, useSay, type BloqHandle } from "@/bloq";
+import { Bloq, SpeechBubble, talkMs, useSay, type BloqHandle, useMotionOff } from "@/bloq";
 import { cn } from "@/lib/utils";
 import { SEASON2_CHAPTERS, season2Done } from "@/near";
 
@@ -33,7 +33,7 @@ function restLine(level: number, graduated: boolean): string {
 
 function PassportInner() {
   const game = useGame();
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const p = game.passport;
   const completed = game.learner?.completed ?? [];
   const bloq = useRef<BloqHandle>(null);

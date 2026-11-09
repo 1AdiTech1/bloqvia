@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
 import { Check, ExternalLink, RotateCcw, X } from "lucide-react";
 import { useGame } from "@/game/useGame";
-import { Bloq, SpeechBubble, useSay, talkMs, type BloqHandle, type BloqHat, type BloqProp, type BloqPose } from "@/bloq";
+import { Bloq, SpeechBubble, useSay, talkMs, type BloqHandle, type BloqHat, type BloqProp, type BloqPose, useMotionOff } from "@/bloq";
 import { useChapters, SEASON2_CHAPTERS, useDailyQuests, type GeneratedBy } from "@/near";
 import { formatQuestDate } from "./lab/DailyQuestCard";
 import { LESSON_CONTENT, type LessonContent } from "@/game/content";
@@ -34,9 +34,9 @@ const CUBE_COLORS = ["#d4f033", "#b47ff0", "#ffffff"];
  * Quiz bottom sheet. On success the reward chips fly to the inventory bar,
  * then `onLanded` lets the map release the held numbers; `saved` arrives last.
  */
-export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: string; onClose: () => void; onLanded: () => void; saved: boolean }) {
+export function QuizSheet({ lessonId, onClose, onLanded, saved, onBag }: { lessonId: string; onClose: () => void; onLanded: () => void; saved: boolean; onBag?: (show: boolean) => void }) {
   const game = useGame();
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const desktop = useIsDesktop();
   const daily = useDailyQuests().quests.find((q) => q.lesson_id === lessonId);
   const chapter = useChapters().chapters.find((c) => c.lesson_id === lessonId);
@@ -62,6 +62,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
   const [burst, setBurst] = useState(0);
   const look = daily ? DAILY_LOOK : LOOKS[lessonId] ?? DAILY_LOOK;
   const sheet = useSheetDrag(onClose, !desktop);
+  const sheetPanel = sheet.ref;
   const say = (t: string) => { sayLine(t); bloq.current?.talk(talkMs(t)); };
 
   useEffect(() => {
@@ -98,24 +99,33 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved }: { lessonId: st
     }
   };
 
-  // Rewards land: chips fly to the inventory bar, then hand over to the map.
+  // Rewards land (prompt 27): the screen stays where the player is. If the inventory bar is in view above the sheet,
+  // the chips fly into it; otherwise the bag (the map's copy of the bar, [data-bag]) slides down from the top,
+  // the chips fly into it, and it slides away.
   useEffect(() => {
     if (!done || !lesson) return;
-    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
     const ids = ["gold", lesson.reward_item];
+    const onPage = (id: string) => Array.from(document.querySelectorAll<HTMLElement>(`[data-inv="${id}"]`)).find((el) => !el.closest("[data-bag]"));
+    const bar = onPage("gold")?.getBoundingClientRect();
+    const sheetTop = sheetPanel.current?.getBoundingClientRect().top ?? window.innerHeight;
+    const inView = !!bar && bar.top >= 0 && bar.bottom <= Math.min(window.innerHeight, sheetTop);
+    const bag = !inView && !!onBag;
+    if (bag) onBag?.(true);
+    const target = (id: string) => (bag ? document.querySelector<HTMLElement>(`[data-bag] [data-inv="${id}"]`) : onPage(id));
     const t1 = setTimeout(() => {
       const fl = ids
         .map((id) => {
           const r = bloqBox.current?.getBoundingClientRect();
           const from = r ? new DOMRect(r.left + r.width * 0.45 - 18, r.top + r.height * 0.35 - 18, 36, 36) : document.querySelector(`[data-chip="${id}"]`)?.getBoundingClientRect();
-          const to = document.querySelector(`[data-inv="${id}"]`)?.getBoundingClientRect();
+          const to = target(id)?.getBoundingClientRect();
           return from && to ? { id, from, to } : null;
         })
         .filter((f): f is Flight => !!f);
       if (!reduce) setFlights(fl);
-    }, reduce ? 0 : 350);
-    const t2 = setTimeout(() => { setFlights([]); onLanded(); setPose("thumbs"); }, reduce ? 50 : 1100);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    }, reduce ? 0 : bag ? 420 : 350); // with the bag: once it has slid down (0.4 s)
+    const t2 = setTimeout(() => { setFlights([]); onLanded(); setPose("thumbs"); }, reduce ? 50 : bag ? 1220 : 1100);
+    const t3 = bag ? setTimeout(() => onBag?.(false), reduce ? 2000 : 3100) : undefined;
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); if (bag) onBag?.(false); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done]);
 

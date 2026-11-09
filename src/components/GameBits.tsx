@@ -1,6 +1,6 @@
-import { BloqCoin } from "@/bloq";
+import { BloqCoin, useMotionOff } from "@/bloq";
 import { forwardRef } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { BatteryCharging, FileCheck2, KeyRound } from "lucide-react";
 import { ITEM_NAMES } from "@/game/content";
 import { cn } from "@/lib/utils";
@@ -49,7 +49,7 @@ RewardChip.displayName = "RewardChip";
 
 /** Passport progress ring, 0–3. `tone` is the surface it sits on. */
 export function LevelRing({ level, graduated, size = 72, tone = "ivory" }: { level: number; graduated: boolean; size?: number; tone?: "ivory" | "navy" }) {
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const r = (size - 10) / 2;
   const c = 2 * Math.PI * r;
   const pct = Math.min(level, 3) / 3;

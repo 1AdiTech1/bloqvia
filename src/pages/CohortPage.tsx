@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Check, ExternalLink, X } from "lucide-react";
 import { useBounties, claimStatusLabel, views, markMissionsSeen } from "@/near";
 import type { Bounty, Claim, DaoProposal, Requirement, Tier } from "@/near";
 import { IS_MOCK, useGame } from "@/game/useGame";
 import { useIsDesktop } from "@/components/lab/useDesktop";
-import { Bloq, SpeechBubble, talkMs, useSay, type BloqHandle } from "@/bloq";
+import { Bloq, SpeechBubble, talkMs, useSay, type BloqHandle, useMotionOff } from "@/bloq";
 import { PhoneShell } from "@/components/PhoneShell";
 import { RequireAccount } from "@/components/RequireAccount";
 import { LabLoader } from "@/components/LabLoader";
@@ -148,7 +148,7 @@ function requirementText(r: Requirement): string {
 
 function BountyCard({ bounty, index }: { bounty: Bounty; index: number }) {
   const b = useBounties();
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const [mine, setMine] = useState(false);
   const [txUrl, setTxUrl] = useState<string | null>(null);
   const claim = b.claimFor(bounty.id);

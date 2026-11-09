@@ -1,17 +1,16 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useReducedMotion } from "framer-motion";
 import { KeyRound, BatteryCharging, FileCheck2, type LucideIcon } from "lucide-react";
 import { SignInSheet } from "@/components/brand/SignInSheet";
 import { AskDock } from "@/components/brand/AskDock";
+import { MotionSwitch } from "@/components/brand/MotionSwitch";
 import { HopBloq, useMedia } from "@/components/brand/HopBloq";
 import { useGame } from "@/game/useGame";
 import { cn } from "@/lib/utils";
 import {
   BlockSea, Bloq, BloqCoin, BloqviaLogo, FloatingCubes, SpeechBubble, leap, talkMs, useSay, walkTo,
-  type BloqHandle, type BloqHat, type BloqPose, type BloqProp, type FloatingCubesHandle,
-} from "@/bloq";
+  type BloqHandle, type BloqHat, type BloqPose, type BloqProp, type FloatingCubesHandle, useMotionOff } from "@/bloq";
 
 /** Little lime bars (spark) or lavender dots (puff) flying out of a Bloq. Host must be positioned. */
 function burst(host: HTMLElement | null, kind: "spark" | "puff", n: number, still: boolean | null) {
@@ -77,6 +76,7 @@ export function LandingPage() {
       {anchor && <StartedPopover anchor={anchor} onClose={() => setAnchor(null)} />}
       <SignInSheet open={open} onClose={close} />
       {!open && <AskDock />}
+      {!open && <MotionSwitch />}
     </div>
   );
 }
@@ -116,7 +116,7 @@ const SECTION = "relative py-[clamp(72px,9vw,116px)]";
 /* ---------------- Hero (with the header) ---------------- */
 
 function Hero({ onStart, onHeaderStart }: { onStart: () => void; onHeaderStart: (e: React.MouseEvent<HTMLElement>) => void }) {
-  const still = useReducedMotion();
+  const still = useMotionOff();
   const game = useGame();
   const navigate = useNavigate();
   const hero = useRef<BloqHandle>(null);
@@ -256,7 +256,7 @@ const ctxCards = [
 ];
 
 function Context() {
-  const still = useReducedMotion();
+  const still = useMotionOff();
   const section = useRef<HTMLElement>(null);
   const track = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null);
@@ -422,7 +422,7 @@ function useIntro(section: React.RefObject<HTMLElement | null>, speak: (t: strin
 interface PerchCard { key: string; hat: BloqHat; prop: BloqProp; say: string }
 
 function usePerch(start: { hat: BloqHat; prop: BloqProp }, intro: string) {
-  const still = useReducedMotion();
+  const still = useMotionOff();
   const section = useRef<HTMLElement>(null);
   const host = useRef<HTMLDivElement>(null);
   const bloq = useRef<BloqHandle>(null);
@@ -571,7 +571,7 @@ const GUILLOCHE = Array.from({ length: 14 }, (_, i) => {
 });
 
 function Progress() {
-  const still = useReducedMotion();
+  const still = useMotionOff();
   const section = useRef<HTMLElement>(null);
   const host = useRef<HTMLDivElement>(null);
   const bloq = useRef<BloqHandle>(null);
@@ -689,7 +689,7 @@ const PASS_LINE = "Graduate and your Passport is sealed for good. That's the one
 
 /** Below 960px: one Bloq seated on the reward card in view, then jumping into the Passport panel. */
 const ProgHop = forwardRef<ProgHopHandle, { box: React.RefObject<HTMLDivElement | null>; onPass: (on: boolean) => void }>(function ProgHop({ box, onPass }, ref) {
-  const still = useReducedMotion();
+  const still = useMotionOff();
   const host = useRef<HTMLDivElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const flight = useRef<(() => void) | null>(null);
@@ -864,7 +864,7 @@ const ProgHop = forwardRef<ProgHopHandle, { box: React.RefObject<HTMLDivElement 
 const SPLASH_COLORS = ["var(--lime)", "#b47ff0", "#ffffff"];
 
 function Ready({ onStart }: { onStart: (e?: React.MouseEvent<HTMLElement>) => void }) {
-  const still = useReducedMotion();
+  const still = useMotionOff();
   const section = useRef<HTMLElement>(null);
   const rider = useRef<HTMLDivElement>(null);
   const bloq = useRef<BloqHandle>(null);

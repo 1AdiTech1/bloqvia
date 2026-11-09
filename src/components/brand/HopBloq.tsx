@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useReducedMotion } from "framer-motion";
-import { Bloq, SpeechBubble, useSay, talkMs, type BloqHandle, type BloqHat, type BloqProp, type BloqPose } from "@/bloq";
+import { Bloq, SpeechBubble, useSay, talkMs, type BloqHandle, type BloqHat, type BloqProp, type BloqPose, useMotionOff } from "@/bloq";
 
 /** True while the media query matches (false during SSR and the first paint). */
 export function useMedia(query: string) {
@@ -23,7 +22,7 @@ export type HopLook = { hat: BloqHat; prop?: BloqProp };
  * Render inside the cards' positioned container; cards carry `data-hop` and `data-say`.
  */
 export function HopBloq({ base, looks, onActive, tone = "dark", label }: { base: HopLook; looks?: HopLook[]; onActive?: (i: number) => void; tone?: "dark" | "light"; label: string }) {
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const host = useRef<HTMLDivElement>(null);
   const bloq = useRef<BloqHandle>(null);
   const [line, say] = useSay();

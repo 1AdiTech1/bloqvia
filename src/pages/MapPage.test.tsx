@@ -19,7 +19,7 @@ vi.mock("@/bloq", async () => {
     sandbox.arrived.set(world, onArrived);
     useImperativeHandle(ref, () => ({ perchAt: sandbox.perch, cheer: sandbox.cheer, say: sandbox.say }));
     return <div><button onClick={() => onPlay(2)}>Play {world}</button>{door}</div>;
-  }), Bloq: () => null, SpeechBubble: () => null, leap: () => () => {}, talkMs: () => 0, useSay: () => ["", () => {}] };
+  }), Bloq: () => null, SpeechBubble: () => null, leap: () => () => {}, walkTo: () => () => 0, useMotionOff: () => sandbox.reduce, talkMs: () => 0, useSay: () => ["", () => {}] };
 });
 vi.mock("@/near", () => ({
   useFinalBlock: () => 123,
@@ -36,7 +36,7 @@ vi.mock("@/game/useGame", () => ({ IS_MOCK: false, useGame: () => ({
   passport: null, refresh: async () => {},
 }) }));
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => sandbox.navigate, Link: ({ children, to, className }: { children: ReactNode; to: string; className?: string }) => <a className={className} href={to}>{children}</a> }));
-vi.mock("framer-motion", () => ({ useReducedMotion: () => sandbox.reduce, AnimatePresence: ({ children }: { children: ReactNode }) => children }));
+vi.mock("framer-motion", () => ({ AnimatePresence: ({ children }: { children: ReactNode }) => children }));
 vi.mock("@/components/PhoneShell", () => ({ PhoneShell: ({ children }: { children: ReactNode }) => children, GameHeader: () => null }));
 vi.mock("@/components/RequireAccount", () => ({ RequireAccount: ({ children }: { children: ReactNode }) => children }));
 vi.mock("@/components/QuizSheet", () => ({ QuizSheet: ({ onClose }: { onClose: () => void }) => <button onClick={onClose}>Close quiz</button> }));

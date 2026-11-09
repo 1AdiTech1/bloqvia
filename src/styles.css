@@ -478,3 +478,15 @@ html.touch-sb::-webkit-scrollbar { display: none; }
    the Chain · standard row hides so nothing runs into the code line (prompt 25). */
 .lv-pass { container-type: inline-size; }
 @container (max-width: 299px) { .lv-pass .fields > span:last-child { display: none; } }
+
+/* The bag slides down after a quiz when the inventory bar is off screen (prompt 27, docs/design/morning-fixes, 1B). */
+.bag-dock { position: fixed; z-index: 55; top: env(safe-area-inset-top, 0px); pointer-events: none; visibility: hidden; transform: translateY(-110%); transition: transform .4s cubic-bezier(.22,1,.36,1), visibility 0s linear .4s; }
+.bag-dock.in { visibility: visible; transform: translateY(10px); transition: transform .4s cubic-bezier(.22,1,.36,1), visibility 0s; }
+.bag-dock > div { background: #1d2c47; box-shadow: 0 0 0 1.5px rgb(212 240 51 / .6), 0 16px 30px rgb(0 0 0 / .5); }
+
+/* The Motion switch, bottom left of the landing (prompt 27; Maria's .switch in docs/design/landing-v2) */
+.lv-motion { position: fixed; z-index: 41; left: calc(12px + env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 6px; padding: 6px; border-radius: 999px; background: rgb(255 253 247 / .94); box-shadow: 0 8px 24px -12px rgb(22 36 58 / .5); }
+.lv-motion button { all: unset; position: relative; cursor: pointer; font-family: "Space Grotesk", system-ui, sans-serif; font-weight: 600; font-size: 11px; line-height: 1; text-transform: uppercase; letter-spacing: .1em; padding: 9px 12px; border-radius: 999px; color: #16243a; }
+.lv-motion button::after { content: ""; position: absolute; inset: -8px; }
+.lv-motion button[aria-pressed="true"] { background: #16243a; color: #f7f4eb; }
+.lv-motion button:focus-visible { outline: 2px solid #d4f033; outline-offset: 2px; }

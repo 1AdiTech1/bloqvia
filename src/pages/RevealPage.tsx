@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowLeft, Copy, ExternalLink, KeyRound, ShieldCheck, TriangleAlert, User } from "lucide-react";
 import { useGame } from "@/game/useGame";
 import { LESSON_CONTENT } from "@/game/content";
@@ -8,7 +8,7 @@ import { PhoneShell } from "@/components/PhoneShell";
 import { RequireAccount } from "@/components/RequireAccount";
 import { GoldSeal } from "@/components/GameBits";
 import { Press, labEase } from "@/components/lab/motion";
-import { Bloq, SpeechBubble, talkMs, useSay, type BloqHandle, type BloqPose } from "@/bloq";
+import { Bloq, SpeechBubble, talkMs, useSay, type BloqHandle, type BloqPose, useMotionOff } from "@/bloq";
 import { CubeBurst } from "@/components/lab/CubeBurst";
 import { useBloqvia, useChapters, SEASON2_CHAPTERS, season2Done } from "@/near";
 import { SeasonStamp, Web3Passport } from "@/components/lab/Web3Passport";
@@ -28,7 +28,7 @@ export function Season2RevealPage() {
 }
 
 function Beat({ delay, children, className }: { delay: number; children: ReactNode; className?: string }) {
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   return (
     <motion.div className={className} initial={reduce ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay, ease: labEase }}>
       {children}
@@ -91,7 +91,7 @@ function RevealInner({ season2 = false }: { season2?: boolean }) {
   };
   const preview = game.exportSecretKey();
 
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const det = useRef<BloqHandle>(null);
   const [pose, setPose] = useState<BloqPose>("hold");
   const [burst, setBurst] = useState(false);

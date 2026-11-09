@@ -1,5 +1,6 @@
 import { useId, type PointerEvent } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useMotionOff } from "@/bloq";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const GUILLOCHE = Array.from({ length: 14 }, (_, i) => {
@@ -52,7 +53,7 @@ export function Web3Passport({
   stamps?: string[];
   slam?: boolean;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const pathId = useId().replace(/:/g, "");
   const s2 = stamps?.includes("season-2");
   const [m1, m2] = passportMrz(holder, level, graduated, stamps);

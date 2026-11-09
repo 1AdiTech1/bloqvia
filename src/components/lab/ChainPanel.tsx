@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useMotionOff } from "@/bloq";
+import { AnimatePresence, motion } from "framer-motion";
 import { NEAR_CONFIG, explorer, useBloqvia, useChapters, useDailyQuests, useFinalBlock, type TxEntry } from "@/near";
 import { useGame, IS_MOCK } from "@/game/useGame";
 import { LESSON_CONTENT } from "@/game/content";
@@ -72,7 +73,7 @@ function TxList({ limit, seeAll }: { limit: number; seeAll: boolean }) {
   const { txLog } = useBloqvia();
   const { quests } = useDailyQuests();
   const { chapters } = useChapters();
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const t = window.setInterval(() => setNow(Date.now()), 30000); return () => window.clearInterval(t); }, []);
 

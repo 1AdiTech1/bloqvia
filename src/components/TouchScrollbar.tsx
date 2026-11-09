@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useMotionOff } from "@/bloq";
 
 const isIOS = () =>
   /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -25,13 +26,11 @@ function Indicator() {
   const strip = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [fits, setFits] = useState(true);
-  const [reduce, setReduce] = useState(false);
+  const reduce = useMotionOff();
 
   useEffect(() => {
     const html = document.documentElement;
     html.classList.add("touch-sb");
-    const rm = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduce(rm.matches);
     let hide: ReturnType<typeof setTimeout> | undefined;
     let raf = 0;
 

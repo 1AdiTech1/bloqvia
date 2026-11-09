@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useRef, useState, type ComponentProps } from "react";
-import { motion, useReducedMotion, type HTMLMotionProps } from "framer-motion";
+import { useMotionOff } from "@/bloq";
+import { motion, type HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export const labEase = [0.22, 1, 0.36, 1] as const;
@@ -13,14 +14,14 @@ export function buzz() {
 
 /** Button with a press-down scale of 0.98 (static when reduced motion is on). */
 export const Press = forwardRef<HTMLButtonElement, HTMLMotionProps<"button">>(({ className, ...rest }, ref) => {
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   return <motion.button ref={ref} whileTap={reduce ? {} : { scale: 0.98 }} className={cn("tap", className)} {...rest} />;
 });
 Press.displayName = "Press";
 
 /** Tweens a number towards `value` over `ms`. */
 export function useTween(value: number, ms = 700) {
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const [shown, setShown] = useState(value);
   const from = useRef(value);
   useEffect(() => {

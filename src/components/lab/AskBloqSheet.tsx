@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUp, X } from "lucide-react";
-import { AgentPod, talkMs, type AgentPodHandle } from "@/bloq";
+import { AgentPod, talkMs, type AgentPodHandle, useMotionOff } from "@/bloq";
 import { useAskBloq } from "@/near";
 import { IS_MOCK } from "@/game/useGame";
 import { LabLoader } from "@/components/LabLoader";
@@ -41,7 +41,7 @@ export function AskBloqButton({ label, onClick, className }: { label: string; on
 }
 
 function AskBloqPanel({ onClose, lessonId, context }: Props) {
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const desktop = useIsDesktop();
   const bloq = useAskBloq();
   const [text, setText] = useState("");

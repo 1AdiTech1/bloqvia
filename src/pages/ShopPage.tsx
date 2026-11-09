@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Check, Info, Minus, Plus, TriangleAlert } from "lucide-react";
 import { useGame } from "@/game/useGame";
 import { ITEM_IDS, itemAmount } from "@/game/content";
@@ -8,7 +8,7 @@ import { PhoneShell } from "@/components/PhoneShell";
 import { RequireAccount } from "@/components/RequireAccount";
 import { bloqLine } from "@/components/Bloq";
 import { ItemIcon, itemLabel } from "@/components/GameBits";
-import { Bloq, SpeechBubble, talkMs, type BloqHandle, type BloqPose, type BloqProp } from "@/bloq";
+import { Bloq, SpeechBubble, talkMs, type BloqHandle, type BloqPose, type BloqProp, useMotionOff } from "@/bloq";
 import { Web3Passport } from "@/components/lab/Web3Passport";
 import { CubeBurst } from "@/components/lab/CubeBurst";
 import { InventoryBar } from "@/components/lab/InventoryBar";
@@ -29,7 +29,7 @@ export function ShopPage() {
 function ShopInner() {
   const game = useGame();
   const navigate = useNavigate();
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const bloq = game.bloq!;
   const learner = game.learner!;
   const [lastItem, setLastItem] = useState<string | null>(null);

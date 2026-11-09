@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { motion, useAnimationControls, useReducedMotion } from "framer-motion";
+import { useMotionOff } from "@/bloq";
+import { motion, useAnimationControls } from "framer-motion";
 import { useGame } from "@/game/useGame";
 import { ITEM_IDS, itemAmount } from "@/game/content";
 import { GoldDisc, ItemIcon, itemLabel } from "@/components/GameBits";
@@ -9,7 +10,7 @@ import { cn } from "@/lib/utils";
 /** Chip that springs (scale 1.18, .5s) whenever its value changes. */
 function BumpChip({ value, className, children, ...rest }: { value: number; className: string; children: ReactNode; "data-inv": string; title?: string; "aria-label": string }) {
   const controls = useAnimationControls();
-  const reduce = useReducedMotion();
+  const reduce = useMotionOff();
   const prev = useRef(value);
   useEffect(() => {
     if (prev.current === value) return;
