@@ -458,13 +458,13 @@ function MapInner() {
 
       <AnimatePresence>
         {open && <QuizSheet key={open} lessonId={open} onClose={close} onLanded={landed} saved={saved} onBag={showBag} />}
-        {typeof document !== "undefined" && createPortal(
-          <div data-bag="" aria-hidden="true" className={bag ? "bag-dock in" : "bag-dock"} style={bagBox}>
-            <InventoryBar gold={held?.gold} items={held?.items} />
-          </div>,
-          document.body,
-        )}
       </AnimatePresence>
+      {typeof document !== "undefined" && createPortal(
+        <div data-bag="" aria-hidden="true" className={bag ? "bag-dock in" : "bag-dock"} style={bagBox}>
+          <InventoryBar gold={held?.gold} items={held?.items} />
+        </div>,
+        document.body,
+      )}
     </PhoneShell>
   );
 }
