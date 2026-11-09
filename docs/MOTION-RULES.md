@@ -1,9 +1,7 @@
 # Bloq motion rules (the motion programme, Nov 9)
 
-Status: **Phase 1 shipped** (approved by Adi on Nov 9): the turn, starting and stopping a walk, talking with the words and
-the map road walk are in `src/bloq/`. **Phase 2 is a proposal, waiting for Adi's go**: it runs on a lab-only copy of the
-engine. Watch both in the Motion Lab (`docs/design/motion-lab/`): before → now for Phase 1, now → proposal for Phase 2,
-with slow motion, frame strips, onion skin and scores.
+Status: **Phases 1 and 2 shipped** (approved by Adi on Nov 9), in `src/bloq/`. Watch every changed move before → now in
+the Motion Lab (`docs/design/motion-lab/`), with slow motion, frame strips, onion skin and scores.
 
 The programme:
 
@@ -11,14 +9,14 @@ The programme:
 | --- | --- | --- |
 | 0 | Motion Lab: every move, slowed down, framed and scored | done (`docs/design/motion-lab/`) |
 | 1 | These rules, plus the four moves that hurt most (turn, start/stop, talk, map road) | **shipped Nov 9** |
-| 2 | The rules for every other move in the engine: hops with gravity in three sizes, a keyed walk, three cheers, sit and stand, idle beats, props with weight, the surprise take, the laugh, the wave | **proposal** (`docs/design/motion-lab/proposal.diff`) |
+| 2 | The rules for every other move in the engine: hops with gravity in three sizes, a keyed walk, three cheers, sit and stand, idle beats, props with weight, the surprise take, the laugh, the wave | **shipped Nov 9** (the change as approved: `docs/design/motion-lab/proposal.diff`) |
 | 3 | Vector turnaround sheet (front, ¾, side, back for the body and each hat); turns go through the ¾ view; the light stays top-left | later |
 | 4 | One way to travel on every page (Lovable prompts for the page-side movers) | later |
 | 5 | QA in the lab and on bloqvia.app, phone and desktop, Motion on and off | last |
 
 ## The rules
 
-"shipped" = on the site since Nov 9. "proposal" = played by the Phase 2 proposal in the lab. "phase N" = comes in that phase.
+"shipped" = on the site since Nov 9. "phase N" = comes in that phase.
 
 1. **Nothing moves at one speed** (shipped). Anything that starts or stops eases in and out. Travel speeds up, keeps a
    pace and slows down; he slows on tight bends and where he turns round.
@@ -42,16 +40,16 @@ The programme:
    A nod on stressed words, the brows up through a question, one hand gesture a sentence (a free hand opens palm up;
    holding something, he lifts it toward you), a blink at each full stop.
    *No mouth shape under 70 ms · comma = 2.4 letters, full stop = 4 letters of silence · nod 240 ms, 4° · gesture 620 ms.*
-8. **Gravity in the air** (proposal). Anything in the air follows a gravity arc: fast up, a short hang, fast down. No sine
+8. **Gravity in the air** (shipped). Anything in the air follows a gravity arc: fast up, a short hang, fast down. No sine
    arcs, no constant speed along a curve. Stretch on the way up and down, round at the top.
    *Three hops: small 520 ms, happy 700 ms, big 950 ms · landing squash 15–18% with the knees bending.*
-9. **Keep his volume** (proposal). Squash and stretch keep width × height the same. Stretch only with speed, squash only
+9. **Keep his volume** (shipped). Squash and stretch keep width × height the same. Stretch only with speed, squash only
    on impact. One overshoot, then rest.
    *Stretch ≤ 12% · squash ≤ 18% · width × height within ±4% · overshoot ≤ 6%.*
-10. **Props have weight** (proposal). Light things (key, coin, bulb) follow the hand almost at once; medium ones (scroll,
+10. **Props have weight** (shipped). Light things (key, coin, bulb) follow the hand almost at once; medium ones (scroll,
     passport, fuel cell) ride lower and lag; the cube takes two hands. Each prop has its own grip.
     *Light: 1 frame lag · medium: 6° lower, 2 frames lag · heavy: two hands, 4 frames.*
-11. **Never the same twice** (proposal). Moves he repeats (cheer, hop, peek, idle) pick from two or three versions and
+11. **Never the same twice** (shipped). Moves he repeats (cheer, hop, peek, idle) pick from two or three versions and
     never the same one twice in a row. A waiting Bloq does something small every few seconds.
     *2–3 versions each · an idle beat every 4–8 s · a bigger one after 10 s.*
 12. **Turn round in 3D** (phase 3). A ¾ drawing sits between the front and the side; a turn goes side → ¾ → front → ¾ →
@@ -80,11 +78,11 @@ Code: `src/bloq/engine.ts` (`face`, `walking`, `talk`, follow mode, the closed m
 (`talk(ms, text?)`), `src/bloq/bloq.css` (closed mouth; no transition on `.bq-flip`), `src/bloq/ChainTrail.tsx` (the road
 walk; its lines pass their text; `jumpTo` uses `leap`). The arm fix: `engine.ts` (svg order, the carry pose, the prop's place). Lovable's pages that call `talk(ms)` keep working; passing the text is a later prompt.
 
-## Phase 2, proposal (lab copy of the engine)
+## Phase 2, shipped Nov 9
 
-Average score now → proposal (my estimate):
+Average score before → now (my estimate):
 
-| Move | Now | Proposal | What changes |
+| Move | Before | Now | What changed |
 | --- | --- | --- | --- |
 | Jump on the spot | 2.8 | 3.9 | One gravity for all hops (a parabola): small 520 ms keeps his pose, happy 720 ms cheers (the default), big 950 ms with a tuck. Arms swing back in the crouch, stretch by speed, 12–18% landing squash with the knees and one rebound; volume kept. `jump(kind?)`; a plain `jump()` is the happy one. |
 | Walk cycle | 2.9 | 3.8 | Keyed: a fast drop after each contact, a slow rise to passing, the landing leg gives; arms 60% of the legs and late; head late; heel-toe roll; the hat bounces each step. |
@@ -97,7 +95,7 @@ Average score now → proposal (my estimate):
 | Idle | 4.0 | 4.3 | Every 4–8 s a weight shift or a glance; after 10 s also fixing his hat or a stretch; never the same twice in a row. |
 | Quiz answers | 2.8 | 3.7 | Right: the new hop and a cheer; wrong: the surprise take. Engine only, the quiz page doesn't change. |
 
-The proposal's code, as a diff against today's `src/bloq/` (every change marked `P2:`): `docs/design/motion-lab/proposal.diff`.
-After Adi's go it is ported to `src/bloq/engine.ts` and `Bloq.tsx` (`jump(kind?)`); no page has to change.
+Code: `src/bloq/engine.ts` (hops, walk, cheers, sit/stand, idle beats, props, take, laugh, wave) and `src/bloq/Bloq.tsx`
+(`jump(kind?)`: "small", "happy" (default) or "big"). No page had to change: a plain `jump()` is the happy hop.
 Later, Lovable prompts (Phase 4): the quiz asks for the big hop and stops shaking the whole box; pages pass the line to
-`talk`; every page lowers him onto a seat with the same curve.
+`talk`; taps and arrivals use the small hop; every page lowers him onto a seat with the same curve.

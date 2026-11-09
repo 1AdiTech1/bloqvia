@@ -1,4 +1,8 @@
 // @ts-nocheck — drawing engine ported from the approved previews; the typed surface is Bloq.tsx.
+/* Phase 2 (Nov 9, approved in the Motion Lab): gravity hops in three sizes, a keyed walk (arms 60%, a "down" after each
+   contact, heel-toe roll, the hat bouncing on each step), three cheers that never repeat back to back, sitting down and
+   standing up with a body, idle beats, props with weight (lag, a lower arm, two hands for the cube), a surprise take,
+   a laugh that shakes, and a wave with a loose wrist. docs/MOTION-RULES.md 8–11. */
 /* Motion since Nov 9 (docs/MOTION-RULES.md, approved in the Motion Lab, docs/design/motion-lab/): the rig plays the
    turn (squash-swap, head first, never thinner than 62%), a walk starts with a lean and a dip and stops with a settle,
    steps follow the distance travelled in 2D on the page, and talk(ms, text) moves the mouth with the words (shapes,
@@ -409,6 +413,22 @@ const engine = (function () {
   const rigs = new Set();
   // follow gait (walking(true, true)): stride per cycle in body widths, and the speeds (body widths a second) where the run starts and is full
   const STRIDE_WALK = 0.52, STRIDE_RUN = 0.8, RUN_FROM = 1.2, RUN_FULL = 2.0;
+  // hops on the spot, with one gravity for all three: crouch c, flight f (a parabola h units high), landing l (s)
+  const HOPS = {
+    small: { c: 0.09, f: 0.3, l: 0.13, h: 40, sq: 0.12 },
+    happy: { c: 0.12, f: 0.42, l: 0.18, h: 80, sq: 0.16 },
+    big:   { c: 0.16, f: 0.54, l: 0.25, h: 130, sq: 0.18, tuck: true },
+  };
+  Object.values(HOPS).forEach((h) => (h.total = h.c + h.f + h.l));
+  // how heavy each prop is: 0 light (follows the hand), 1 medium (lower, lags), 2 heavy (two hands)
+  const PROP_W = { key: 0, coin: 0, bulb: 0, star: 0, chip: 0, thumb: 0, badge: 0, magnifier: 0, scroll: 1, passport: 1, fuel: 1, cube: 2 };
+  /** angles (this rig's convention) for a two-bone arm from S reaching P; bend = +1 or -1 picks the elbow side. */
+  function ik(S, P, l1, l2, bend) {
+    const dx = P[0] - S[0], dy = P[1] - S[1], d = Math.max(1, Math.min(Math.hypot(dx, dy), l1 + l2 - 0.5)), base = Math.atan2(-dx, dy) / RAD;
+    const A = Math.acos(Math.max(-1, Math.min(1, (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d)))) / RAD;
+    const B = Math.acos(Math.max(-1, Math.min(1, (l1 * l1 + l2 * l2 - d * d) / (2 * l1 * l2)))) / RAD;
+    return [base + bend * A, -bend * (180 - B)];
+  }
   const still = () => document.body.classList.contains("still") || matchMedia("(prefers-reduced-motion: reduce)").matches;
   let headShape = "block";
 
@@ -498,6 +518,10 @@ const engine = (function () {
       this.t = Math.random() * 10; this.walkPhase = 0; this.blinkAt = 1 + Math.random() * 3; this.blink = 0;
       this.jumpT = -1; this.turnT = -1; this.sitT = -1; this.view = "front";
       this.faceT = -1; this.startT = -1; this.stopT = -1; this.amp = 0; this.talkPlan_ = null; this.talkT = 0; this._box = null;
+      // Phase 2 state
+      this.hop = null; this._cheerV = null; this._cheerT = 0; this.standT = -1; this.takeT = -1; this._handLag = 0; this._two = 0;
+      this.idle = { next: 4 + Math.random() * 4, beat: null, last: null, for: 0 };
+      this.pl = { a: 0, v: 0, y: 0, yv: 0, lx: null, ly: null };
       this.hat = null; this.prop = null;
       this.setHat(opts.hat || "cap", false);
       this.setProp(opts.prop || null, false);
@@ -516,10 +540,13 @@ const engine = (function () {
     setPose(p, snap = false) {
       if (!POSES[p]) p = "idle";
       if (p !== "walk" && p !== "idle") this._skipStride();
+      // a cheer never twice the same in a row; leaving a seat plays the stand-up
+      if (p === "cheer" && this.pose !== "cheer") { const vs = ["v", "pump", "shimmy"].filter((x) => x !== this._cheerV); this._cheerV = vs[Math.floor(Math.random() * vs.length)]; this._cheerT = 0; }
+      if (this.pose === "sit" && p !== "sit" && !snap && !still()) this.standT = 0;
       this.pose = p; this.target = POSES[p];
-      // Walking with something in hand (Nov 9): the elbow bends and holds it up in front of him (both hands for the
-      // cube), so the arm never hangs through it; the springs carry him smoothly from holding to carrying and back.
-      if (p === "walk" && this.prop) this.target = { ...POSES.walk, s: -26, e: -81, ...(this.prop === "cube" ? { bs: -26, be: -81 } : {}) };
+      // walking with something in hand: the elbow bends and holds it up in front of him (both hands for the cube),
+      // so the arm never hangs through it; the springs carry him smoothly from holding to carrying and back
+      if (p === "walk" && this.prop) this.target = { ...POSES.walk, s: -26, e: -81, ...((PROP_W[this.prop] ?? 0) === 2 ? { bs: -26, be: -81 } : {}) };
       this.el.classList.toggle("pointing", p === "point");
       if (p === "sit" && !this.el.classList.contains("sitting") && !still()) this.sitT = 0;
       this.el.classList.toggle("sitting", p === "sit");
@@ -533,6 +560,7 @@ const engine = (function () {
     }
     setMood(m, ms) {
       clearTimeout(this._moodT);
+      if (m === "o" && this.el.dataset.mood !== "o" && !still()) this.takeT = 0; // the surprise take
       this.el.dataset.mood = m;
       this.brow.ty = m === "o" ? -7 : m === "laugh" ? -4 : 0;
       if (ms) this._moodT = setTimeout(() => this.setMood("smile"), ms);
@@ -611,11 +639,17 @@ const engine = (function () {
     _skipStride() {
       if (this.stopT >= 0 && this.stopT < 0.5) { this.stopT = 0.5; this.amp = 0; this.setView("front"); this.hatLag.v += 140; }
     }
-    jump() {
+    /** a hop on the spot with gravity. "small" keeps his pose (a tap, an arrival), "happy" (the default) cheers,
+        "big" is a celebration with a tuck. */
+    jump(kind = "happy") {
       if (still()) return this;
       this._skipStride();
-      this._before = this.pose === "cheer" ? "idle" : this.pose;
-      this.setPose(this.outfit === "surf" ? "boardwave" : "cheer").setMood("laugh", 1100);
+      const K = HOPS[kind] || HOPS.happy;
+      if (kind !== "small") {
+        if (this.jumpT < 0) this._before = this.pose === "cheer" ? "idle" : this.pose;
+        this.setPose(this.outfit === "surf" ? "boardwave" : "cheer").setMood("laugh", Math.round(K.total * 1000) + 350);
+      } else this.setMood("laugh", 600);
+      this.hop = { k: K, kind: HOPS[kind] ? kind : "happy" };
       this.jumpT = 0;
       return this;
     }
@@ -664,7 +698,30 @@ const engine = (function () {
       this.blinkAt -= dt;
       if (this.blinkAt <= 0) { this.blink = 0.14; this.blinkAt = 2.2 + Math.random() * 3.4; if (Math.random() < 0.22) this.blinkAt = 0.32; }
       this.blink = Math.max(0, this.blink - dt);
-      if (this.jumpT >= 0) { this.jumpT += dt / 0.78; if (this.jumpT >= 1) { this.jumpT = -1; this.setPose(this._before || "idle"); } }
+      if (this.jumpT >= 0) { this.jumpT += dt / (this.hop ? this.hop.k.total : 0.78); if (this.jumpT >= 1) { this.jumpT = -1; if (!this.hop || this.hop.kind !== "small") this.setPose(this._before || "idle"); } }
+      // Phase 2 timers
+      this._cheerT += dt;
+      if (this.standT >= 0) { this.standT += dt / 0.45; if (this.standT >= 1) this.standT = -1; }
+      if (this.takeT >= 0) { this.takeT += dt / 0.5; if (this.takeT >= 1) this.takeT = -1; }
+      // idle beats: every 4–8 s something small (a weight shift, a glance); after 10 s also a bigger one (the hat, a stretch)
+      const I = this.idle;
+      const calm = (this.pose === "idle" || this.pose === "hold") && !this.isWalking && this.jumpT < 0 && this.faceT < 0 && this.talkLeft <= 0 && !this.aimEl && !this.el.classList.contains("floaty");
+      if (calm) {
+        I.for += dt;
+        if (I.beat) {
+          I.beat.t += dt / I.beat.d;
+          if (I.beat.kind === "glance") this.look_.tx = I.beat.t > 0.12 && I.beat.t < 0.72 ? I.beat.dir * 0.9 : I.beat.tx0;
+          if (I.beat.t >= 1) { if (I.beat.kind === "glance") this.look_.tx = I.beat.tx0; I.beat = null; I.next = 4 + Math.random() * 4; }
+        } else if ((I.next -= dt) <= 0) {
+          const pool = ["shift", "glance"]; if (I.for > 10 && this.pose === "idle") pool.push("hat", "stretch");
+          const ks = pool.filter((x) => x !== I.last), kind = ks[Math.floor(Math.random() * ks.length)];
+          I.beat = { kind, t: 0, d: { shift: 1.3, glance: 1.5, hat: 1.7, stretch: 1.5 }[kind], dir: Math.random() < 0.5 ? -1 : 1, tx0: this.look_.tx };
+          I.last = kind; if (kind === "hat" || kind === "stretch") I.for = 0;
+        }
+      } else {
+        if (I.beat) { if (I.beat.kind === "glance") this.look_.tx = I.beat.tx0; I.beat = null; }
+        I.for = 0; I.next = Math.max(I.next, 2.5);
+      }
       if (this.turnT >= 0) { this.turnT += dt / 0.22; if (this.turnT >= 1) this.turnT = -1; }
       // turn, start and stop of a walk
       if (this.faceT >= 0) { this.faceT += dt / 0.3; if (this.faceT >= 1) this.faceT = -1; }
@@ -678,7 +735,7 @@ const engine = (function () {
         if (was < 0.5 && this.stopT >= 0.5) { this.setView("front"); this.hatLag.v += 140; this.hatLag.vy += 1; }
         if (this.stopT >= 1) { this.stopT = -1; this.isWalking = false; }
       }
-      if (this.sitT >= 0) { this.sitT += dt / 0.45; if (this.sitT >= 1) this.sitT = -1; }
+      if (this.sitT >= 0) { this.sitT += dt / 0.65; if (this.sitT >= 1) this.sitT = -1; } // .65 s: get ready, land, settle
       if (this.talkLeft > 0) {
         this.talkLeft -= dt;
         const P = this.talkPlan_;
@@ -705,6 +762,7 @@ const engine = (function () {
         if (this.startT >= 0) { this.startT = -1; this.setView("side"); }
         if (this.stopT >= 0) { this.stopT = -1; this.isWalking = false; this.setView("front"); }
         this.amp = this.isWalking ? 1 : 0;
+        this.standT = -1; this.takeT = -1; this.idle.beat = null; this.pl.a = 0; this.pl.y = 0;
       }
       this.t += dt;
       const t = this.t, a = { ...this.cur }, r = this.r, side = this.view === "side", J = RIG[this.view];
@@ -712,6 +770,7 @@ const engine = (function () {
 
       let bodyY = 0, lean = 0, breath = live ? Math.sin(t * 1.8) * 0.018 : 0, headTilt = live ? Math.sin(t * 1.15) * 2.4 : 0;
       // the stride's size (0..1): grows after the start's dip, dies out at the stop
+      this._rollL = 0; this._rollR = 0;
       if (this.isWalking && live) {
         if (this.startT >= 0) this.amp = this.startT < 0.35 ? 0 : 1 - Math.pow(1 - (this.startT - 0.35) / 0.65, 3);
         else if (this.stopT >= 0) this.amp = this.stopT < 0.5 ? 1 - ease(this.stopT / 0.5) : 0;
@@ -736,11 +795,23 @@ const engine = (function () {
         } else this.walkPhase += dt * (Math.PI * 2 / 0.62);
         const ph = this.walkPhase, s = Math.sin(ph), cph = Math.cos(ph), k = (1 + 0.45 * run) * this.amp, am = this.amp;
         a.hl += -26 * k * s; a.hr += 26 * k * s;
-        a.kl += (36 + 44 * run) * am * Math.max(0, cph); a.kr += (36 + 44 * run) * am * Math.max(0, -cph);
-        a.s += 26 * k * s; a.e += (12 * Math.max(0, s) + 46 * run) * am;
-        if (this.prop) { a.s -= 0.7 * 26 * k * s; if (this.prop === "cube") a.bs += 0.7 * 26 * k * s; } // the carrying arm swings 30%
-        a.bs += -26 * k * s; a.be += (12 * Math.max(0, -s) + 46 * run) * am;
-        bodyY = -6 * (1 + 0.9 * run) * Math.abs(cph) * am; lean = (-5 - 7 * run) * am; headTilt += 2 * Math.sin(ph * 2) * am;
+        // a keyed walk. The swinging leg folds through the passing pose; the leg that just landed gives a little
+        // ("down", just after each contact); arms swing 60% of the legs, a moment late; the body drops fast after each
+        // contact and rises slowly to the passing pose; the head follows late; heel first, toe off; the hat bounces.
+        const down = Math.pow(Math.max(0, -Math.cos(2 * ph - 0.6)), 2);
+        a.kl += (36 + 44 * run) * am * Math.max(0, cph) + 10 * am * down * (s > 0 ? 1 : 0);
+        a.kr += (36 + 44 * run) * am * Math.max(0, -cph) + 10 * am * down * (s < 0 ? 1 : 0);
+        const sa = Math.sin(ph - 0.3);
+        a.s += 16 * k * sa; a.e += (10 * Math.max(0, sa) + 46 * run) * am;
+        a.bs += -16 * k * sa; a.be += (10 * Math.max(0, -sa) + 46 * run) * am;
+        // carrying something (the carry pose, set in setPose): the arm that holds it swings only 30%
+        if (this.prop) { a.s += -0.7 * 16 * k * sa; if ((PROP_W[this.prop] ?? 0) === 2) a.bs += 0.7 * 16 * k * sa; }
+        bodyY = -6 * (1 + 0.9 * run) * Math.pow(Math.abs(Math.cos(ph - 0.25)), 1.6) * am + 2.2 * down * am;
+        lean = (-5 - 7 * run) * am; headTilt += 2.4 * Math.sin(ph * 2 - 0.9) * am;
+        this._rollL = am * (-14 * Math.pow(Math.max(0, s), 6) + 16 * Math.pow(Math.max(0, -s), 4));
+        this._rollR = am * (-14 * Math.pow(Math.max(0, -s), 6) + 16 * Math.pow(Math.max(0, s), 4));
+        const step = Math.floor((ph - Math.PI / 2) / Math.PI);
+        if (step !== this._step_) { if (this._step_ != null) this.hatLag.vy += 0.7 * am; this._step_ = step; }
         // start: lean back and dip, then push into the first step; stop: rock back and soak it up
         if (this.startT >= 0) {
           const q = this.startT;
@@ -754,7 +825,9 @@ const engine = (function () {
           a.s += 8 * pulse(q); a.bs -= 8 * pulse(q);
         }
       }
-      if (this.pose === "wave" && live) { a.e += 26 * Math.sin(t * 7.5); headTilt += 4; }
+      // the wave: the shoulder joins in, the hand flops behind the forearm, he leans into it
+      if (this.pose === "wave" && live) { a.s += 7 * Math.sin(t * 7.5 - 0.5); a.e += 26 * Math.sin(t * 7.5); this._handLag = 16 * Math.sin(t * 7.5 - 1.1); lean += 2; headTilt += 4; }
+      else this._handLag = 0;
       // talking with the body: a nod on each stressed word, one beat gesture a sentence
       if (this.talkPlan_ && this.talkLeft > 0 && live && this.pose !== "sit") {
         const P = this.talkPlan_, tt = this.talkT;
@@ -764,7 +837,13 @@ const engine = (function () {
         const busy = this.prop && (this.pose === "hold" || this.pose === "present" || this.pose === "point" || this.pose === "thumbs");
         if (busy) { a.s -= 18 * g; a.e -= 16 * g; } else { a.s -= 38 * g; a.e -= 58 * g; }
       }
-      if (this.pose === "cheer" && live) { a.s += 8 * Math.sin(t * 9); a.bs -= 8 * Math.sin(t * 9); }
+      // three cheers (never the same twice in a row): V arms that flutter, a fist pump, a shimmy
+      if (this.pose === "cheer" && live) {
+        const v = this._cheerV || "v", env = ease(Math.min(1, this._cheerT / 0.2));
+        if (v === "v") { a.s += 8 * Math.sin(t * 9); a.bs -= 8 * Math.sin(t * 9); }
+        else if (v === "pump") { const pm = Math.max(0, Math.sin(t * 10)); a.s += env * (-14 + 26 * pm); a.e += env * (-40 + 36 * pm); a.bs += env * -90; a.be += env * -110; bodyY += 2 * pm * env; headTilt += 3 * pm * env; }
+        else { const w = Math.sin(t * 8); a.s += 20 * w * env; a.bs += 20 * w * env; lean += 4 * w * env; headTilt -= 3 * w * env; bodyY += 1.5 * Math.abs(w) * env; }
+      }
       if (this.pose === "boardwave" && live) { a.be += 24 * Math.sin(t * 7.5); headTilt -= 3; }
       this._rideTilt = 0;
       if (this.pose === "ride" && live) {
@@ -814,28 +893,79 @@ const engine = (function () {
         a.kl += 10 * Math.sin(t * 0.9); a.kr += 10 * Math.sin(t * 0.9 + 1.4); a.hl += 6 * Math.sin(t * 0.7);
         headTilt += 3 * Math.sin(t * 0.6);
       } else this._spaceRot = 0;
+      this._sitSq = 0;
       if (this.pose === "sit" && live) {
-        a.kl += 12 * Math.sin(t * 3.1); a.kr += 12 * Math.sin(t * 3.1 + 1.7);   // happy kicking
+        // kicks that come and go (a slow swell with rests, a little change of pace)
+        const sw = Math.max(0, Math.sin(t * 0.55) * 0.7 + Math.sin(t * 1.37 + 1) * 0.45 + 0.15), kp = t * 3.1 + 0.5 * Math.sin(t * 0.4);
+        a.kl += 14 * Math.min(1, sw) * Math.sin(kp); a.kr += 14 * Math.min(1, sw) * Math.sin(kp + 1.7);
         lean = 2.5 + Math.sin(t * 1.3) * 1.5;                                    // sways while he sits
         if (this.talkLeft > 0) { a.s = -78 + 12 * Math.sin(t * 5.2); a.e = -40 + 9 * Math.sin(t * 4.1); lean = -3; headTilt += 3 * Math.sin(t * 2.6); }
-        if (this.sitT >= 0) {                                                      // land: bottom squashes, settles
-          const q = this.sitT; bodyY += 7 * Math.sin(Math.PI * Math.min(1, q * 1.6)) * (1 - q);
+        if (this.sitT >= 0) {
+          // get ready (glance down at the seat, hands reach back, a lean), land (the bottom squashes, one soft
+          // bounce), settle (a little wiggle)
+          const q = this.sitT, rd = pulse(Math.min(1, q / 0.42));
+          a.s += 34 * rd; a.bs += 34 * rd; lean += 4 * rd;
+          if (q < 0.32) this.look_.ty = 0.9; else if (this.look_.ty === 0.9) this.look_.ty = 0;
+          const l_ = q > 0.3 ? (q - 0.3) / 0.7 : 0, imp = q > 0.3 ? Math.exp(-l_ * 4.5) * Math.cos(l_ * 9) : 0;
+          bodyY += 6 * Math.max(-0.3, imp); if (q > 0.6) lean += 2.5 * Math.sin(l_ * 12) * (1 - l_);
           a.kl -= 20 * (1 - q); a.kr += 20 * (1 - q);
+          this._sitSq = 0.1 * Math.max(-0.3, imp);
         }
       }
+      // standing up: lean forward over the feet, hands push on the edge, rise with a stretch, settle
+      this._standSt = 0;
+      if (this.standT >= 0 && live) {
+        const q = this.standT;
+        lean -= 9 * pulse(Math.min(1, q / 0.6)); a.s += 30 * pulse(Math.min(1, q / 0.5)); a.bs += 30 * pulse(Math.min(1, q / 0.5));
+        this._standSt = 0.05 * pulse((q - 0.35) / 0.5) - 0.025 * pulse((q - 0.78) / 0.22);
+      }
+      // the surprise take (mood "o"): head and body pull back, eyes go wide; the laugh shakes him a little
+      this._eyeWide = 1;
+      if (this.takeT >= 0 && live) {
+        const q = this.takeT, e = q < 0.25 ? ease(q / 0.25) : 1 - ease((q - 0.25) / 0.75);
+        headTilt -= 7 * e; bodyY -= 3 * e; lean += 2.5 * e; this._eyeWide = 1 + 0.22 * e; a.s += 10 * e; a.bs -= 10 * e;
+      }
+      if (this.el.dataset.mood === "laugh" && live && this.jumpT < 0) { bodyY += 1.6 * Math.abs(Math.sin(t * 13)); headTilt -= 2; }
+      // idle beats
+      this._idleSt = 0;
+      const IB = this.idle.beat;
+      if (IB && live) {
+        const e = pulse(IB.t);
+        if (IB.kind === "shift") { lean += 2.5 * IB.dir * e; a.hl += 5 * IB.dir * e; a.hr += 5 * IB.dir * e; bodyY += 1.2 * e; headTilt -= 1.5 * IB.dir * e; }
+        else if (IB.kind === "glance") headTilt += 2 * IB.dir * e;
+        else if (IB.kind === "hat") { const g = Math.min(1, e * 1.6); a.s += (-150 - a.s) * g; a.e += (-75 - a.e) * g; if (IB.t > 0.42 && IB.t < 0.47) this.hatLag.v += 40; }
+        else { a.s += (-150 - a.s) * e; a.e += (-10 - a.e) * e; a.bs += (150 - a.bs) * e; a.be += (10 - a.be) * e; bodyY -= 3 * e; this._idleSt = 0.04 * e; }
+      }
+      // props have weight: medium and heavy ones pull the arm down
+      const wgt = PROP_W[this.prop] ?? 0, holding = this.prop && (this.pose === "hold" || this.pose === "present");
+      if (holding && wgt) { a.s += 6 * wgt; a.e += 4 * wgt; }
       if (floaty && live) { bodyY = -10 - 9 * Math.sin(t * 2.1); a.kl += 14 + 6 * Math.sin(t * 2.1 + 1); a.kr += 22 + 6 * Math.sin(t * 2.1); a.hl += -6; a.hr += 2; }
       else if (live && !this.isWalking) bodyY += Math.sin(t * 1.8) * -2;
 
       let sx = 1, sy = 1;
-      if (this.jumpT >= 0) {
-        const j = this.jumpT;
-        if (j < 0.16) { const q = j / 0.16; bodyY += 8 * q; sx = 1 + 0.08 * q; sy = 1 - 0.09 * q; a.kl += 30 * q; a.kr += 30 * q; }
-        else if (j < 0.82) { const q = (j - 0.16) / 0.66; bodyY += 8 - 92 * Math.sin(Math.PI * q) - 8 * q; sx = 0.95; sy = 1.06; a.kl += 40 * Math.sin(Math.PI * q); a.kr += 46 * Math.sin(Math.PI * q); a.hl -= 14 * Math.sin(Math.PI * q); a.hr -= 10 * Math.sin(Math.PI * q); }
-        else { const q = (j - 0.82) / 0.18; bodyY += 6 * (1 - q); sx = 1 + 0.07 * (1 - q); sy = 1 - 0.08 * (1 - q); a.kl += 24 * (1 - q); a.kr += 24 * (1 - q); }
+      // the hop. Crouch with the arms swinging back; fly a parabola (gravity), stretched by speed, round at the top,
+      // legs tucked (big: a real tuck); land with a squash the knees soak up and one small rebound. Volume kept.
+      if (this.jumpT >= 0 && this.hop) {
+        const H = this.hop.k, tt = this.jumpT * H.total, sz = H.h / 80;
+        if (tt < H.c) {
+          const q = ease(tt / H.c); bodyY += 10 * q; sy = 1 - 0.08 * q; sx = 1 / sy; a.kl += 34 * q; a.kr += 34 * q; a.s += 22 * q; a.bs += 22 * q; lean += 3 * q;
+        } else if (tt < H.c + H.f) {
+          const u = (tt - H.c) / H.f, v = 1 - 2 * u;
+          bodyY += 10 * Math.max(0, 1 - u * 6) - H.h * 4 * u * (1 - u);
+          sy = 1 + Math.min(0.12, 0.1 * Math.abs(v) * Math.min(1.3, sz)); sx = 1 / sy;
+          const tuck = H.tuck ? pulse(u) : 0.35 * pulse(u);
+          a.kl += 50 * tuck; a.kr += 56 * tuck; a.hl -= 20 * tuck; a.hr -= 14 * tuck;
+          if (this.hop.kind === "small") { a.s -= 10 * pulse(u); a.bs -= 10 * pulse(u); }
+        } else {
+          const q = (tt - H.c - H.f) / H.l, imp = Math.exp(-q * 5) * Math.cos(q * 7.5);
+          sy = 1 - H.sq * Math.max(-0.25, imp); sx = 1 / sy; bodyY += 9 * Math.max(0, imp) * Math.min(1.3, sz);
+          a.kl += 30 * Math.max(0, imp); a.kr += 30 * Math.max(0, imp);
+        }
       }
       // turning between views: a quick squash, like a head turn in a cartoon
       if (this.turnT >= 0) sx *= 1 - 0.16 * Math.sin(Math.PI * this.turnT);
-      if (this.pose === "sit" && this.sitT >= 0) { const q = this.sitT; sy *= 1 - 0.07 * Math.sin(Math.PI * q) ; sx *= 1 + 0.05 * Math.sin(Math.PI * q); }
+      // squash and stretch that keep his volume: sitting down, standing up, the idle stretch
+      { const st = -this._sitSq + this._standSt + this._idleSt; if (st) { sy *= 1 + st; sx /= 1 + st; } }
       // the turn. |scale x| along it: a 3% widen (anticipation), squash in to 62%, swap, out with overshoot.
       let headRel = 1;
       if (this.faceT >= 0) {
@@ -866,15 +996,19 @@ const engine = (function () {
       // in the side view the backpack bounces a little behind the step
       r.pack.setAttribute("transform", side && live ? `translate(${f(-2 + Math.sin(this.walkPhase * 2 + 0.6) * 1.5)} ${f(Math.sin(this.walkPhase * 2 + 0.9) * 2.5)})` : "");
 
-      [["legL", "shoeL", J.hipL, a.hl, a.kl], ["legR", "shoeR", J.hipR, a.hr, a.kr]].forEach(([ln, sn, H, ha, ka]) => {
+      [["legL", "shoeL", J.hipL, a.hl, a.kl, this._rollL], ["legR", "shoeR", J.hipR, a.hr, a.kr, this._rollR]].forEach(([ln, sn, H, ha, ka, roll]) => {
         const K = add(H, dir(ha), 34 * a.tl), A = add(K, dir(ha + ka), 33);
         r[ln].setAttribute("d", limb(H, K, A));
-        r[sn].setAttribute("transform", `translate(${f(A[0])} ${f(A[1])}) rotate(${f((ha + ka) * 0.55)})`);
+        r[sn].setAttribute("transform", `translate(${f(A[0])} ${f(A[1])}) rotate(${f((ha + ka) * 0.55 + (side ? roll : 0))})`); // heel-toe roll
         // sitting: each dangling shoe casts a soft shadow on the card face behind it
         const sh = r[ln === "legL" ? "footShL" : "footShR"];
         sh.setAttribute("cx", f(A[0] + (ln === "legL" ? -6 : 8))); sh.setAttribute("cy", f(A[1] + 30));
       });
 
+      const SF = T(J.shF), EF = add(SF, dir(a.s), 46), WF = add(EF, dir(a.s + a.e), 44);
+      // a heavy prop (the cube) takes two hands: the back hand reaches under it (front view)
+      this._two += ((holding && wgt === 2 && !side ? 1 : 0) - this._two) * Math.min(1, dt * 8);
+      if (this._two > 0.01) { const [ib, ie] = ik(T(J.shB), [WF[0] - 24, WF[1] - 24], 44, 42, 1); a.bs += (ib - a.bs) * this._two; a.be += (ie - a.be) * this._two; }
       const SB = T(J.shB), EB = add(SB, dir(a.bs), 44), WB = add(EB, dir(a.bs + a.be), 42);
       const bArm = side ? "armBS" : "armB", bHand = side ? "handBS" : "handB";
       r[bArm].setAttribute("d", limb(SB, EB, WB));
@@ -884,10 +1018,10 @@ const engine = (function () {
       const hRot = headTilt + this.look_.x * 6 + lean;
       r.head.setAttribute("transform", `translate(${f(neck[0] - 154)} ${f(neck[1] - 200)}) rotate(${f(hRot)} 154 200)` + (headRel !== 1 ? ` translate(154 0) scale(${headRel.toFixed(3)} 1) translate(-154 0)` : ""));
       r.eyes.setAttribute("transform", `translate(${f(this.look_.x * 5)} ${f(this.look_.y * 4)})`);
-      const bs = this.blink > 0 ? 0.1 : 1;
-      r.eyeL.setAttribute("transform", `translate(0 126) scale(1 ${bs}) translate(0 -126)`);
-      r.eyeR.setAttribute("transform", `translate(0 126) scale(1 ${bs}) translate(0 -126)`);
-      r.eyeS.setAttribute("transform", `translate(${f(this.look_.x * 2)} ${f(this.look_.y * 3 + 125)}) scale(1 ${bs}) translate(0 -125)`);
+      const bs = this.blink > 0 ? 0.1 : 1, ew = this._eyeWide || 1, ewS = ew.toFixed(3), ehS = (bs * ew).toFixed(3); // wide eyes on a take
+      r.eyeL.setAttribute("transform", `translate(136 126) scale(${ewS} ${ehS}) translate(-136 -126)`);
+      r.eyeR.setAttribute("transform", `translate(172.5 126) scale(${ewS} ${ehS}) translate(-172.5 -126)`);
+      r.eyeS.setAttribute("transform", `translate(${f(this.look_.x * 2 + 198)} ${f(this.look_.y * 3 + 125)}) scale(${ewS} ${ehS}) translate(-198 -125)`);
       r.brows.setAttribute("transform", `translate(${f(this.look_.x * 3)} ${f(this.brow.y + this.look_.y * 2)})`);
       r.browS.setAttribute("transform", `translate(0 ${f(this.brow.y)})`);
 
@@ -900,15 +1034,24 @@ const engine = (function () {
       const [hx, hy] = this.headShape === "round" ? [0, 0] : side ? [-6, -3] : [6, -3];
       r.hats.setAttribute("transform", `translate(${hx} ${f(hy + Math.min(4, hl_.y))}) rotate(${f(hl_.a - hRot)} 152 96)`);
 
-      const SF = T(J.shF), EF = add(SF, dir(a.s), 46), WF = add(EF, dir(a.s + a.e), 44);
       r.armF.setAttribute("d", limb(SF, EF, WF));
-      r.handF.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1])}) rotate(${f(a.s + a.e)})`);
+      r.handF.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1])}) rotate(${f(a.s + a.e + this._handLag)})`);
       const sway = live ? Math.sin(t * 2.3) * 4 : 0;
-      // The arm is drawn behind the prop and the hand over it (svg order: armF, up, handF). The prop sits beyond the
-      // hand, never along the forearm: held up as drawn while the forearm points up, out in front when it's level,
-      // hanging from the hand when the arm hangs down.
+      // the prop trails the hand like a weight on a spring (light: quick and small; heavy: slow and wide)
+      const P_ = this.pl;
+      if (live && this.prop && dt > 0) {
+        const hy = WF[1] + bodyY, vx = P_.lx == null ? 0 : (WF[0] - P_.lx) / dt, vy = P_.ly == null ? 0 : (hy - P_.ly) / dt; P_.lx = WF[0]; P_.ly = hy;
+        const K = [320, 170, 100][wgt], C = [24, 17, 13][wgt], G = [0.03, 0.06, 0.09][wgt];
+        P_.v += (K * (-G * vx - P_.a) - C * P_.v) * dt; P_.a += P_.v * dt;
+        P_.yv += (K * (-G * 0.25 * vy - P_.y) - C * P_.yv) * dt; P_.y += P_.yv * dt;
+      } else { P_.a = 0; P_.y = 0; P_.lx = null; P_.ly = null; }
+      const swing = Math.max(-25, Math.min(25, P_.a)), drop = Math.max(-6, Math.min(6, P_.y));
+      // the arm is drawn behind the prop and the hand over it (svg order: armF, up, handF). The prop sits beyond the
+      // hand, never along the forearm: held up as drawn while the forearm points up, out in
+      // front when it's level, hanging from the hand when the arm hangs down
       const u_ = dir(a.s + a.e), kk = Math.max(0, Math.min(1, (u_[1] + 0.2) / 0.6)), hk = kk * kk * (3 - 2 * kk);
-      r.up.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1])}) rotate(${f(sway)}) translate(${f(hk * u_[0] * 40)} ${f(hk * (u_[1] * 40 + 68))}) scale(1.55)`);
+      const ox = hk * u_[0] * 40, oy = hk * (u_[1] * 40 + 68);
+      r.up.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1] + drop)}) rotate(${f(sway * (wgt === 2 ? 0.4 : 1) + swing)}) translate(${f(ox)} ${f(oy)}) scale(1.55)`);
     }
   }
 

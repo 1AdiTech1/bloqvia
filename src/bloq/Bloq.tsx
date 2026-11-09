@@ -41,7 +41,8 @@ export interface BloqProps {
 
 /** One-off moments. All are no-ops before mount and with reduced motion where it matters. */
 export interface BloqHandle {
-  jump(): void;
+  /** A hop with gravity: "small" keeps his pose, "happy" (default) cheers, "big" is a celebration with a tuck. */
+  jump(kind?: "small" | "happy" | "big"): void;
   /** Mouth moves for ms milliseconds (use while a speech bubble shows). */
   /** Mouth moves for ms; with the line's text it follows the words (shapes, pauses, nods, brows, a gesture). */
   talk(ms?: number, text?: string): void;
@@ -69,7 +70,7 @@ interface Rig {
   setMood(m: string, ms?: number): Rig;
   face(d: string): Rig;
   look(dx: number, dy: number): Rig;
-  jump(): Rig;
+  jump(kind?: string): Rig;
   talk(ms?: number, text?: string): Rig;
   aimAt(el: Element | null): Rig;
   walking(on: boolean, follow?: boolean): Rig;
@@ -106,7 +107,7 @@ export const Bloq = forwardRef<BloqHandle, BloqProps>(function Bloq(
   useEffect(() => { first.current = false; }, []);
 
   useImperativeHandle(ref, () => ({
-    jump: () => { rig.current?.jump(); },
+    jump: (kind) => { rig.current?.jump(kind); },
     talk: (ms, text) => { rig.current?.talk(ms, text); },
     setMood: (m, ms) => { rig.current?.setMood(m, ms); },
     look: (dx, dy) => { rig.current?.look(dx, dy); },
