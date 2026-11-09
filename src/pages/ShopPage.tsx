@@ -52,7 +52,7 @@ function ShopInner() {
     : reaction?.kind === "sell" && reacted ? `Thanks! My stock is ${reacted.bloq_stock} now, so next time I pay ${reacted.buy_price}.`
     : reaction?.kind === "buy" && reacted ? `Pleasure! I've got ${reacted.bloq_stock} left, so the price goes up a little.`
     : baseLine;
-  useEffect(() => { merchant.current?.talk(talkMs(line)); }, [line]);
+  useEffect(() => { merchant.current?.talk(talkMs(line), line); }, [line]);
   useEffect(() => { if (!bloq.shop_open) merchant.current?.setMood("o"); }, [bloq.shop_open]);
 
   const later = (fn: () => void, ms: number) => { timers.current.push(window.setTimeout(fn, ms)); };
@@ -86,7 +86,7 @@ function ShopInner() {
       later(() => { setProp("cube"); setPose("hold"); }, 2600);
     }
   };
-  const tapMerchant = () => { merchant.current?.jump(); react("tap", ""); };
+  const tapMerchant = () => { merchant.current?.jump("small"); react("tap", ""); };
 
   const doGraduate = async () => {
     try {

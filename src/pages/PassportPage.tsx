@@ -40,15 +40,15 @@ function PassportInner() {
   const rest = restLine(p?.level ?? 0, p?.graduated ?? false);
   const [line, sayLine] = useSay();
   const shown = line || rest;
-  const say = (t: string) => { sayLine(t); bloq.current?.talk(talkMs(t)); };
+  const say = (t: string) => { sayLine(t); bloq.current?.talk(talkMs(t), t); };
 
   useEffect(() => {
-    const t = setTimeout(() => bloq.current?.talk(talkMs(rest)), 500);
+    const t = setTimeout(() => bloq.current?.talk(talkMs(rest), rest), 500);
     return () => clearTimeout(t);
   }, [rest]);
 
   const tapCard = () => {
-    bloq.current?.jump();
+    bloq.current?.jump("small");
     say("It's an NFT that only levels up. The contract refuses transfers.");
   };
 

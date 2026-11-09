@@ -97,7 +97,7 @@ function RevealInner({ season2 = false }: { season2?: boolean }) {
   const [burst, setBurst] = useState(false);
   const [line, sayLine] = useSay();
   useEffect(() => {
-    const say = (t: string) => { sayLine(t, 5200); det.current?.talk(talkMs(t)); };
+    const say = (t: string) => { sayLine(t, 5200); det.current?.talk(talkMs(t), t); };
     const ts = [
       window.setTimeout(() => { det.current?.setMood("o"); det.current?.look(-0.6, 0.6); say(season2 ? "Three chapters, one stamp. All of it on chain." : "Hmm… every step left a trace on chain."); }, 600),
       window.setTimeout(() => { det.current?.look(0, 0); setPose("cheer"); det.current?.jump(); det.current?.setMood("laugh", 1600); if (!reduce) setBurst(true); }, 3400),

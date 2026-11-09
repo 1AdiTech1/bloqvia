@@ -59,7 +59,7 @@ export function HopBloq({ base, looks, onActive, tone = "dark", label }: { base:
       if (!t) return;
       setQuiet(false);
       say(t);
-      bloq.current?.talk(talkMs(t));
+      bloq.current?.talk(talkMs(t), t);
     };
     const nearest = () => {
       const mid = window.innerHeight * 0.45;
@@ -115,7 +115,7 @@ export function HopBloq({ base, looks, onActive, tone = "dark", label }: { base:
     <div
       ref={host}
       className="absolute right-3 top-0 z-[3] w-[86px] cursor-pointer"
-      onClick={() => bloq.current?.jump()}
+      onClick={() => bloq.current?.jump("small")}
     >
       <div className="relative">
         <Bloq ref={bloq} hat={look.hat} {...(look.prop ? { prop: look.prop } : {})} pose={pose} label={label} className="w-full" />

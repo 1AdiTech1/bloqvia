@@ -126,7 +126,7 @@ function Hero({ onStart, onHeaderStart }: { onStart: () => void; onHeaderStart: 
   const hovering = useRef(false);
   const [line, say] = useSay();
 
-  const speak = useCallback((text: string) => { say(text); hero.current?.talk(talkMs(text)); }, [say]);
+  const speak = useCallback((text: string) => { say(text); hero.current?.talk(talkMs(text), text); }, [say]);
 
   const celebrate = useCallback(() => {
     hero.current?.jump();
@@ -288,7 +288,7 @@ function Context() {
   const speak = (i: number) => {
     const text = ctxCards[i]!.say;
     say(text);
-    bloq.current?.talk(talkMs(text));
+    bloq.current?.talk(talkMs(text), text);
   };
 
   const sitDown = (i: number) => {
@@ -370,7 +370,7 @@ function Context() {
             ref={host}
             className="absolute -bottom-3.5 left-0 z-[2] w-[clamp(118px,11vw,150px)] cursor-pointer"
             style={{ transform: "translateX(-160px)" }}
-            onClick={() => { bloq.current?.jump(); window.setTimeout(() => burst(host.current, "spark", 10, still), 330); }}
+            onClick={() => { bloq.current?.jump("small"); window.setTimeout(() => burst(host.current, "spark", 10, still), 330); }}
           >
             <Bloq ref={bloq} hat="cap2" pose={pose} facing={facing} label="Bloq walking to the card you pick" className="w-full" />
             <SpeechBubble text={line} />
@@ -431,7 +431,7 @@ function usePerch(start: { hat: BloqHat; prop: BloqProp }, intro: string) {
   const [prop, setProp] = useState<BloqProp>(start.prop);
   const [active, setActive] = useState(-1);
   const timers = useRef<number[]>([]);
-  const speak = useCallback((text: string) => { say(text); bloq.current?.talk(talkMs(text)); }, [say]);
+  const speak = useCallback((text: string) => { say(text); bloq.current?.talk(talkMs(text), text); }, [say]);
   useIntro(section, speak, intro);
   useEffect(() => () => timers.current.forEach((x) => window.clearTimeout(x)), []);
 
@@ -445,7 +445,7 @@ function usePerch(start: { hat: BloqHat; prop: BloqProp }, intro: string) {
       window.setTimeout(() => speak(c.say), 420),
     ];
   };
-  const tap = () => { bloq.current?.jump(); window.setTimeout(() => burst(host.current, "spark", 10, still), 330); };
+  const tap = () => { bloq.current?.jump("small"); window.setTimeout(() => burst(host.current, "spark", 10, still), 330); };
   const handlers = (i: number, c: PerchCard) => ({
     onMouseEnter: (e: React.MouseEvent<HTMLElement>) => go(i, c, e.currentTarget),
     onFocus: (e: React.FocusEvent<HTMLElement>) => go(i, c, e.currentTarget),
@@ -579,7 +579,7 @@ function Progress() {
   const [prop, setProp] = useState<BloqProp>("badge");
   const [active, setActive] = useState(-1);
   const timers = useRef<number[]>([]);
-  const speak = useCallback((text: string) => { say(text); bloq.current?.talk(talkMs(text)); }, [say]);
+  const speak = useCallback((text: string) => { say(text); bloq.current?.talk(talkMs(text), text); }, [say]);
   useIntro(section, speak, "Every reward here is recorded on chain. Point at one.");
   useEffect(() => () => timers.current.forEach((x) => window.clearTimeout(x)), []);
 
@@ -706,7 +706,7 @@ const ProgHop = forwardRef<ProgHopHandle, { box: React.RefObject<HTMLDivElement 
   passRef.current = onPass;
   const st = useRef({ at: -2 as number, started: false, timers: [] as number[] });
 
-  const speak = useCallback((t: string) => { setQuiet(false); say(t); bloq.current?.talk(talkMs(t)); }, [say]);
+  const speak = useCallback((t: string) => { setQuiet(false); say(t); bloq.current?.talk(talkMs(t), t); }, [say]);
   const sparks = useCallback(() => burst(host.current, "spark", 12, stillRef.current), []);
   useImperativeHandle(ref, () => ({
     cheer: () => {
@@ -848,7 +848,7 @@ const ProgHop = forwardRef<ProgHopHandle, { box: React.RefObject<HTMLDivElement 
   }, [box, speak, sparks]);
 
   return (
-    <div ref={host} className="absolute left-0 top-0 z-[4] w-[86px] cursor-pointer" onClick={() => { bloq.current?.jump(); bloq.current?.setMood("laugh", 900); }}>
+    <div ref={host} className="absolute left-0 top-0 z-[4] w-[86px] cursor-pointer" onClick={() => { bloq.current?.jump("small"); bloq.current?.setMood("laugh", 900); }}>
       <div className="relative">
         <div ref={body} style={{ transformOrigin: "50% 92%" }}>
           <Bloq ref={bloq} hat="grad" prop={prop} pose={pose} facing={facing} label="Bloq graduating" className="w-full" />
@@ -869,7 +869,7 @@ function Ready({ onStart }: { onStart: (e?: React.MouseEvent<HTMLElement>) => vo
   const rider = useRef<HTMLDivElement>(null);
   const bloq = useRef<BloqHandle>(null);
   const [line, say] = useSay();
-  const speak = useCallback((text: string) => { say(text); bloq.current?.talk(talkMs(text)); }, [say]);
+  const speak = useCallback((text: string) => { say(text); bloq.current?.talk(talkMs(text), text); }, [say]);
   useIntro(section, speak, "Starting is free: I make your account and pay the gas. Hop on!");
   const stillRef = useRef(still);
   stillRef.current = still;

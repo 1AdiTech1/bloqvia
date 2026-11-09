@@ -31,7 +31,7 @@ function MissionsHeader() {
   const bloq = useRef<BloqHandle>(null);
   const desktop = useIsDesktop();
   const [line, sayLine] = useSay();
-  const say = (t: string) => { sayLine(t); bloq.current?.talk(talkMs(t)); };
+  const say = (t: string) => { sayLine(t); bloq.current?.talk(talkMs(t), t); };
   useEffect(() => {
     const t = window.setTimeout(() => say(graduated ? "You graduated. The board checks you qualified, then pays." : "These open up once you graduate. The chain checks, not me."), 500);
     return () => window.clearTimeout(t);
@@ -44,7 +44,7 @@ function MissionsHeader() {
         <h1 className="mt-2 font-display text-4xl font-medium uppercase leading-none tracking-[-0.04em]">Missions</h1>
         <p className="mt-2 text-sm text-lavender">Graduates take on small tasks. The chain checks who qualified.</p>
       </div>
-      <button type="button" aria-label="Bloq" onClick={() => { bloq.current?.jump(); say("Small bounties are paid by the board. Big ones need a DAO vote."); }} className="relative w-[112px] shrink-0">
+      <button type="button" aria-label="Bloq" onClick={() => { bloq.current?.jump("small"); say("Small bounties are paid by the board. Big ones need a DAO vote."); }} className="relative w-[112px] shrink-0">
         <Bloq ref={bloq} hat="beanie" prop="badge" pose="hold" label="Bloq in a beanie" />
         <SpeechBubble text={line} tone="light" side={desktop ? "left" : "above"} />
       </button>

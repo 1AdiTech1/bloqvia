@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Check, ExternalLink, RotateCcw, X } from "lucide-react";
 import { useGame } from "@/game/useGame";
 import { Bloq, SpeechBubble, useSay, talkMs, type BloqHandle, type BloqHat, type BloqProp, type BloqPose, useMotionOff } from "@/bloq";
@@ -58,12 +58,11 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved, onBag }: { lesso
   const bloqBox = useRef<HTMLDivElement>(null);
   const [line, sayLine] = useSay();
   const [pose, setPose] = useState<BloqPose>("hold");
-  const shakeCtl = useAnimationControls();
   const [burst, setBurst] = useState(0);
   const look = daily ? DAILY_LOOK : LOOKS[lessonId] ?? DAILY_LOOK;
   const sheet = useSheetDrag(onClose, !desktop);
   const sheetPanel = sheet.ref;
-  const say = (t: string) => { sayLine(t); bloq.current?.talk(talkMs(t)); };
+  const say = (t: string) => { sayLine(t); bloq.current?.talk(talkMs(t), t); };
 
   useEffect(() => {
     const t = setTimeout(() => { bloq.current?.jump(); say(look.hello); }, 520);
@@ -83,7 +82,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved, onBag }: { lesso
       await game.completeLesson(lesson.lesson_id, opt);
       setDone(true);
       setPose("cheer");
-      bloq.current?.jump();
+      bloq.current?.jump("big");
       bloq.current?.setMood("laugh", 2200);
       if (!reduce) setBurst((b) => b + 1);
       say("Yes! The contract checked it. Here come your rewards!");
@@ -92,7 +91,6 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved, onBag }: { lesso
       setShake((s) => s + 1);
       bloq.current?.look(0, 0);
       bloq.current?.setMood("o", 1400);
-      if (!reduce) void shakeCtl.start({ x: [0, -7, 6, -4, 2, 0], transition: { duration: 0.5, ease: "easeOut" } });
       say("Oops, the contract said no. Read the hint below.");
     } finally {
       setPicked(null);
@@ -147,10 +145,9 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved, onBag }: { lesso
       >
       <motion.div
         ref={bloqBox}
-        animate={shakeCtl}
         className="absolute z-10 w-[104px] cursor-pointer"
         style={{ right: 68, top: 0, y: "-74%" }}
-        onClick={() => { bloq.current?.jump(); bloq.current?.setMood("laugh", 800); }}
+        onClick={() => { bloq.current?.jump("small"); bloq.current?.setMood("laugh", 800); }}
       >
         <div className="relative">
           <Bloq ref={bloq} hat={look.hat} prop={look.prop} pose={pose} label="Bloq, your guide" />

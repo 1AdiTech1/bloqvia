@@ -258,7 +258,7 @@ function MapInner() {
       : "One more, just for graduates: Missions. The DAO's board pays testnet NEAR for small tasks. Tap Missions below.",
     done: "That's everything for today. Come back tomorrow for a new quest and a new streak day.",
   };
-  const sayTour = (line: string) => { sayTourRaw(line); tourBloq.current?.talk(talkMs(line)); };
+  const sayTour = (line: string) => { sayTourRaw(line); tourBloq.current?.talk(talkMs(line), line); };
   const boxFor = (step: AfterStep) => step === "streak" ? streakBox.current : step === "daily" ? dailyBox.current : listBox.current;
   const spotFor = (step: AfterStep) => {
     const root = rootRef.current, box = boxFor(step);
@@ -321,7 +321,7 @@ function MapInner() {
               stopWalk = null;
               tourFlight.current = null;
               tourBloq.current?.walking(false);
-              host.animate([{ transform: `translate(${spot.x}px, ${up}px)` }, { transform: `translate(${spot.x}px, ${spot.y}px)` }], { duration: 300, easing: "cubic-bezier(.5,0,.6,1.3)" });
+              host.animate([{ transform: `translate(${spot.x}px, ${up}px)` }, { transform: `translate(${spot.x}px, ${spot.y}px)` }], { duration: 420, easing: "cubic-bezier(.3,.7,.4,1)" });
               host.style.transform = `translate(${spot.x}px, ${spot.y}px)`;
               setTourFacing("right");
               setTourPose("sit");
