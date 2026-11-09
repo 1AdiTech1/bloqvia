@@ -34,7 +34,7 @@ const CUBE_COLORS = ["#d4f033", "#b47ff0", "#ffffff"];
  * Quiz bottom sheet. On success the reward chips fly to the inventory bar,
  * then `onLanded` lets the map release the held numbers; `saved` arrives last.
  */
-export function QuizSheet({ lessonId, onClose, onLanded, saved, onBag }: { lessonId: string; onClose: () => void; onLanded: () => void; saved: boolean; onBag?: (show: boolean) => void }) {
+export function QuizSheet({ lessonId, onClose, onLanded, saved, onBag }: { lessonId: string; onClose: () => void; onLanded: () => void; saved: boolean; onBag?: (show: boolean, card?: DOMRect) => void }) {
   const game = useGame();
   const reduce = useMotionOff();
   const desktop = useIsDesktop();
@@ -110,7 +110,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved, onBag }: { lesso
     const sheetTop = sheetPanel.current?.getBoundingClientRect().top ?? window.innerHeight;
     const inView = !!bar && bar.top >= 0 && bar.bottom <= Math.min(window.innerHeight, sheetTop);
     const bag = !inView && !!onBag;
-    if (bag) onBag?.(true);
+    if (bag) onBag?.(true, sheetPanel.current?.getBoundingClientRect()); // the card's edges, for desktop (prompt 27c)
     const target = (id: string) => (bag ? document.querySelector<HTMLElement>(`[data-bag] [data-inv="${id}"]`) : onPage(id));
     const t1 = setTimeout(() => {
       const fl = ids

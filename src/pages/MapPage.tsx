@@ -225,7 +225,8 @@ function MapInner() {
     timers.current.push(setTimeout(() => setHeldLevel(null), reduce ? 0 : 750));
     timers.current.push(setTimeout(() => setSaved(true), reduce ? 0 : 1450));
   };
-  const showBag = (on: boolean) => { if (on) { const r = invBox.current?.getBoundingClientRect(); if (r) setBagBox({ left: r.left, width: r.width }); } setBag(on); };
+  // Phones: lined up with the inventory bar (as the sheet is). Desktop: lined up with the quiz card (prompt 27c).
+  const showBag = (on: boolean, card?: DOMRect) => { if (on) { const r = desktop && card ? card : invBox.current?.getBoundingClientRect(); if (r) setBagBox({ left: r.left, width: r.width }); } setBag(on); };
   const close = () => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
