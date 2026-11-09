@@ -75,7 +75,7 @@ diff -u a/engine.ts b/engine.ts
        this.hat = null; this.prop = null;
        this.setHat(opts.hat || "cap", false);
        this.setProp(opts.prop || null, false);
-@@ -516,6 +540,9 @@
+@@ -516,10 +540,13 @@
      setPose(p, snap = false) {
        if (!POSES[p]) p = "idle";
        if (p !== "walk" && p !== "idle") this._skipStride();
@@ -83,9 +83,16 @@ diff -u a/engine.ts b/engine.ts
 +      if (p === "cheer" && this.pose !== "cheer") { const vs = ["v", "pump", "shimmy"].filter((x) => x !== this._cheerV); this._cheerV = vs[Math.floor(Math.random() * vs.length)]; this._cheerT = 0; }
 +      if (this.pose === "sit" && p !== "sit" && !snap && !still()) this.standT = 0;
        this.pose = p; this.target = POSES[p];
+-      // Walking with something in hand (Nov 9): the elbow bends and holds it up in front of him (both hands for the
+-      // cube), so the arm never hangs through it; the springs carry him smoothly from holding to carrying and back.
+-      if (p === "walk" && this.prop) this.target = { ...POSES.walk, s: -26, e: -81, ...(this.prop === "cube" ? { bs: -26, be: -81 } : {}) };
++      // P2: walking with something in hand: the elbow bends and holds it up in front of him (both hands for the cube),
++      // so the arm never hangs through it; the springs carry him smoothly from holding to carrying and back
++      if (p === "walk" && this.prop) this.target = { ...POSES.walk, s: -26, e: -81, ...((PROP_W[this.prop] ?? 0) === 2 ? { bs: -26, be: -81 } : {}) };
        this.el.classList.toggle("pointing", p === "point");
        if (p === "sit" && !this.el.classList.contains("sitting") && !still()) this.sitT = 0;
-@@ -530,6 +557,7 @@
+       this.el.classList.toggle("sitting", p === "sit");
+@@ -533,6 +560,7 @@
      }
      setMood(m, ms) {
        clearTimeout(this._moodT);
@@ -93,7 +100,7 @@ diff -u a/engine.ts b/engine.ts
        this.el.dataset.mood = m;
        this.brow.ty = m === "o" ? -7 : m === "laugh" ? -4 : 0;
        if (ms) this._moodT = setTimeout(() => this.setMood("smile"), ms);
-@@ -608,11 +636,17 @@
+@@ -611,11 +639,17 @@
      _skipStride() {
        if (this.stopT >= 0 && this.stopT < 0.5) { this.stopT = 0.5; this.amp = 0; this.setView("front"); this.hatLag.v += 140; }
      }
@@ -114,7 +121,7 @@ diff -u a/engine.ts b/engine.ts
        this.jumpT = 0;
        return this;
      }
-@@ -661,7 +695,30 @@
+@@ -664,7 +698,30 @@
        this.blinkAt -= dt;
        if (this.blinkAt <= 0) { this.blink = 0.14; this.blinkAt = 2.2 + Math.random() * 3.4; if (Math.random() < 0.22) this.blinkAt = 0.32; }
        this.blink = Math.max(0, this.blink - dt);
@@ -146,7 +153,7 @@ diff -u a/engine.ts b/engine.ts
        if (this.turnT >= 0) { this.turnT += dt / 0.22; if (this.turnT >= 1) this.turnT = -1; }
        // turn, start and stop of a walk
        if (this.faceT >= 0) { this.faceT += dt / 0.3; if (this.faceT >= 1) this.faceT = -1; }
-@@ -675,7 +732,7 @@
+@@ -678,7 +735,7 @@
          if (was < 0.5 && this.stopT >= 0.5) { this.setView("front"); this.hatLag.v += 140; this.hatLag.vy += 1; }
          if (this.stopT >= 1) { this.stopT = -1; this.isWalking = false; }
        }
@@ -155,7 +162,7 @@ diff -u a/engine.ts b/engine.ts
        if (this.talkLeft > 0) {
          this.talkLeft -= dt;
          const P = this.talkPlan_;
-@@ -702,6 +759,7 @@
+@@ -705,6 +762,7 @@
          if (this.startT >= 0) { this.startT = -1; this.setView("side"); }
          if (this.stopT >= 0) { this.stopT = -1; this.isWalking = false; this.setView("front"); }
          this.amp = this.isWalking ? 1 : 0;
@@ -163,7 +170,7 @@ diff -u a/engine.ts b/engine.ts
        }
        this.t += dt;
        const t = this.t, a = { ...this.cur }, r = this.r, side = this.view === "side", J = RIG[this.view];
-@@ -709,6 +767,7 @@
+@@ -712,6 +770,7 @@
  
        let bodyY = 0, lean = 0, breath = live ? Math.sin(t * 1.8) * 0.018 : 0, headTilt = live ? Math.sin(t * 1.15) * 2.4 : 0;
        // the stride's size (0..1): grows after the start's dip, dies out at the stop
@@ -171,12 +178,13 @@ diff -u a/engine.ts b/engine.ts
        if (this.isWalking && live) {
          if (this.startT >= 0) this.amp = this.startT < 0.35 ? 0 : 1 - Math.pow(1 - (this.startT - 0.35) / 0.65, 3);
          else if (this.stopT >= 0) this.amp = this.stopT < 0.5 ? 1 - ease(this.stopT / 0.5) : 0;
-@@ -733,10 +792,21 @@
+@@ -736,11 +795,23 @@
          } else this.walkPhase += dt * (Math.PI * 2 / 0.62);
          const ph = this.walkPhase, s = Math.sin(ph), cph = Math.cos(ph), k = (1 + 0.45 * run) * this.amp, am = this.amp;
          a.hl += -26 * k * s; a.hr += 26 * k * s;
 -        a.kl += (36 + 44 * run) * am * Math.max(0, cph); a.kr += (36 + 44 * run) * am * Math.max(0, -cph);
 -        a.s += 26 * k * s; a.e += (12 * Math.max(0, s) + 46 * run) * am;
+-        if (this.prop) { a.s -= 0.7 * 26 * k * s; if (this.prop === "cube") a.bs += 0.7 * 26 * k * s; } // the carrying arm swings 30%
 -        a.bs += -26 * k * s; a.be += (12 * Math.max(0, -s) + 46 * run) * am;
 -        bodyY = -6 * (1 + 0.9 * run) * Math.abs(cph) * am; lean = (-5 - 7 * run) * am; headTilt += 2 * Math.sin(ph * 2) * am;
 +        // P2: a keyed walk. The swinging leg folds through the passing pose; the leg that just landed gives a little
@@ -188,6 +196,8 @@ diff -u a/engine.ts b/engine.ts
 +        const sa = Math.sin(ph - 0.3);
 +        a.s += 16 * k * sa; a.e += (10 * Math.max(0, sa) + 46 * run) * am;
 +        a.bs += -16 * k * sa; a.be += (10 * Math.max(0, -sa) + 46 * run) * am;
++        // P2: carrying something (the carry pose, set in setPose): the arm that holds it swings only 30%
++        if (this.prop) { a.s += -0.7 * 16 * k * sa; if ((PROP_W[this.prop] ?? 0) === 2) a.bs += 0.7 * 16 * k * sa; }
 +        bodyY = -6 * (1 + 0.9 * run) * Math.pow(Math.abs(Math.cos(ph - 0.25)), 1.6) * am + 2.2 * down * am;
 +        lean = (-5 - 7 * run) * am; headTilt += 2.4 * Math.sin(ph * 2 - 0.9) * am;
 +        this._rollL = am * (-14 * Math.pow(Math.max(0, s), 6) + 16 * Math.pow(Math.max(0, -s), 4));
@@ -197,7 +207,7 @@ diff -u a/engine.ts b/engine.ts
          // start: lean back and dip, then push into the first step; stop: rock back and soak it up
          if (this.startT >= 0) {
            const q = this.startT;
-@@ -750,7 +820,9 @@
+@@ -754,7 +825,9 @@
            a.s += 8 * pulse(q); a.bs -= 8 * pulse(q);
          }
        }
@@ -208,7 +218,7 @@ diff -u a/engine.ts b/engine.ts
        // talking with the body: a nod on each stressed word, one beat gesture a sentence
        if (this.talkPlan_ && this.talkLeft > 0 && live && this.pose !== "sit") {
          const P = this.talkPlan_, tt = this.talkT;
-@@ -760,7 +832,13 @@
+@@ -764,7 +837,13 @@
          const busy = this.prop && (this.pose === "hold" || this.pose === "present" || this.pose === "point" || this.pose === "thumbs");
          if (busy) { a.s -= 18 * g; a.e -= 16 * g; } else { a.s -= 38 * g; a.e -= 58 * g; }
        }
@@ -223,7 +233,7 @@ diff -u a/engine.ts b/engine.ts
        if (this.pose === "boardwave" && live) { a.be += 24 * Math.sin(t * 7.5); headTilt -= 3; }
        this._rideTilt = 0;
        if (this.pose === "ride" && live) {
-@@ -810,28 +888,79 @@
+@@ -814,28 +893,79 @@
          a.kl += 10 * Math.sin(t * 0.9); a.kr += 10 * Math.sin(t * 0.9 + 1.4); a.hl += 6 * Math.sin(t * 0.7);
          headTilt += 3 * Math.sin(t * 0.6);
        } else this._spaceRot = 0;
@@ -312,7 +322,7 @@ diff -u a/engine.ts b/engine.ts
        // the turn. |scale x| along it: a 3% widen (anticipation), squash in to 62%, swap, out with overshoot.
        let headRel = 1;
        if (this.faceT >= 0) {
-@@ -862,15 +991,19 @@
+@@ -866,15 +996,19 @@
        // in the side view the backpack bounces a little behind the step
        r.pack.setAttribute("transform", side && live ? `translate(${f(-2 + Math.sin(this.walkPhase * 2 + 0.6) * 1.5)} ${f(Math.sin(this.walkPhase * 2 + 0.9) * 2.5)})` : "");
  
@@ -334,7 +344,7 @@ diff -u a/engine.ts b/engine.ts
        const SB = T(J.shB), EB = add(SB, dir(a.bs), 44), WB = add(EB, dir(a.bs + a.be), 42);
        const bArm = side ? "armBS" : "armB", bHand = side ? "handBS" : "handB";
        r[bArm].setAttribute("d", limb(SB, EB, WB));
-@@ -880,10 +1013,10 @@
+@@ -884,10 +1018,10 @@
        const hRot = headTilt + this.look_.x * 6 + lean;
        r.head.setAttribute("transform", `translate(${f(neck[0] - 154)} ${f(neck[1] - 200)}) rotate(${f(hRot)} 154 200)` + (headRel !== 1 ? ` translate(154 0) scale(${headRel.toFixed(3)} 1) translate(-154 0)` : ""));
        r.eyes.setAttribute("transform", `translate(${f(this.look_.x * 5)} ${f(this.look_.y * 4)})`);
@@ -349,7 +359,7 @@ diff -u a/engine.ts b/engine.ts
        r.brows.setAttribute("transform", `translate(${f(this.look_.x * 3)} ${f(this.brow.y + this.look_.y * 2)})`);
        r.browS.setAttribute("transform", `translate(0 ${f(this.brow.y)})`);
  
-@@ -896,11 +1029,19 @@
+@@ -900,15 +1034,24 @@
        const [hx, hy] = this.headShape === "round" ? [0, 0] : side ? [-6, -3] : [6, -3];
        r.hats.setAttribute("transform", `translate(${hx} ${f(hy + Math.min(4, hl_.y))}) rotate(${f(hl_.a - hRot)} 152 96)`);
  
@@ -358,7 +368,9 @@ diff -u a/engine.ts b/engine.ts
 -      r.handF.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1])}) rotate(${f(a.s + a.e)})`);
 +      r.handF.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1])}) rotate(${f(a.s + a.e + this._handLag)})`);
        const sway = live ? Math.sin(t * 2.3) * 4 : 0;
--      r.up.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1])}) rotate(${f(sway)}) scale(1.55)`);
+-      // The arm is drawn behind the prop and the hand over it (svg order: armF, up, handF). The prop sits beyond the
+-      // hand, never along the forearm: held up as drawn while the forearm points up, out in front when it's level,
+-      // hanging from the hand when the arm hangs down.
 +      // P2: the prop trails the hand like a weight on a spring (light: quick and small; heavy: slow and wide)
 +      const P_ = this.pl;
 +      if (live && this.prop && dt > 0) {
@@ -368,7 +380,13 @@ diff -u a/engine.ts b/engine.ts
 +        P_.yv += (K * (-G * 0.25 * vy - P_.y) - C * P_.yv) * dt; P_.y += P_.yv * dt;
 +      } else { P_.a = 0; P_.y = 0; P_.lx = null; P_.ly = null; }
 +      const swing = Math.max(-25, Math.min(25, P_.a)), drop = Math.max(-6, Math.min(6, P_.y));
-+      r.up.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1] + drop)}) rotate(${f(sway * (wgt === 2 ? 0.4 : 1) + swing)}) scale(1.55)`);
++      // P2: the arm is drawn behind the prop and the hand over it (svg order: armF, up, handF). The prop sits beyond the
++      // hand, never along the forearm: held up as drawn while the forearm points up, out in
++      // front when it's level, hanging from the hand when the arm hangs down
+       const u_ = dir(a.s + a.e), kk = Math.max(0, Math.min(1, (u_[1] + 0.2) / 0.6)), hk = kk * kk * (3 - 2 * kk);
+-      r.up.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1])}) rotate(${f(sway)}) translate(${f(hk * u_[0] * 40)} ${f(hk * (u_[1] * 40 + 68))}) scale(1.55)`);
++      const ox = hk * u_[0] * 40, oy = hk * (u_[1] * 40 + 68);
++      r.up.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1] + drop)}) rotate(${f(sway * (wgt === 2 ? 0.4 : 1) + swing)}) translate(${f(ox)} ${f(oy)}) scale(1.55)`);
      }
    }
  

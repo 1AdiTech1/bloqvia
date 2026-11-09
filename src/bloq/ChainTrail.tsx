@@ -29,6 +29,7 @@ import { Bloq, type BloqHandle, type BloqHat, type BloqProp } from "./Bloq";
 import { SpeechBubble, useSay, talkMs } from "./SpeechBubble";
 import { motionOff } from "./motion";
 import { followCamera, keepInView } from "./camera";
+import { leap } from "./leap";
 
 /** Season 1: vault (keys), battery (gas), contract. Season 2: ownership (tokens/NFTs), transfer (signed transactions), pool (DeFi pricing). */
 export type QuestKind = "vault" | "battery" | "contract" | "ownership" | "transfer" | "pool";
@@ -620,24 +621,19 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
       await wait(1400);
       // He stays seated while he talks, and stands up as he takes off.
       if (wasPerched) setGuidePose("idle");
-      guide.current?.jump(); sayRaw("");
-      // One high arc, out to the left of the door text, then down through the gate (which sits above him,
-      // so he passes behind it like a portal) onto the next road.
-      // From the shop: up and out to the left, down the left edge (clear of the door text on narrow phones too), then in to the block.
-      // From the card: one high arc in front of everything, over the card and down onto the block.
-      const left = Math.min(a.x, b.x);
-      const [c1, c2] = a.y > b.y - 40 || a.x - b.x > 120
-        ? [{ x: a.x - 30, y: a.y - 170 }, { x: b.x + 20, y: b.y - 190 }]
-        : [{ x: left - 70, y: a.y - 230 }, { x: left - 90, y: b.y - 150 }];
-      await new Promise<void>((res) => {
-        const t0 = performance.now(), ms = 1400;
-        const tick = (now: number) => {
-          const k = Math.min(1, (now - t0) / ms), u = 1 - k, q = (p0: number, p1: number, p2: number, p3: number) => u * u * u * p0 + 3 * u * u * k * p1 + 3 * u * k * k * p2 + k * k * k * p3;
-          place(Math.max(30, q(a.x, c1.x, c2.x, b.x)), q(a.y, c1.y, c2.y, b.y));
-          k < 1 ? requestAnimationFrame(tick) : res();
-        };
-        requestAnimationFrame(tick);
+      sayRaw("");
+      // A real leap (leap.ts, like the tour; docs/design/motion-lab, Nov 9): a crouch, one arc with gravity that rises
+      // only 40 px above where he takes off, the fall onto the next road, a squash and a puff of dust. He stays through
+      // the landing; then this road lets him go and the next one's guide greets.
+      const w = walker.current;
+      if (w) await new Promise<void>((res) => {
+        leap(w, { x: b.x - 44, y: b.y - 117, w: 88 }, {
+          body: guideBody.current, lift: 40,
+          onTakeoff: (d) => { setFacing(d); setGuidePose("cheer"); },
+          onLand: () => { setGuidePose("idle"); timers.current.push(window.setTimeout(res, 380)); },
+        });
       });
+      pos.current = { x: b.x, y: b.y };
     }
     setGone(true);
   };
@@ -645,6 +641,7 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
   // Off to the next season's card: he walks down the left of the shop (clear of its text), onto the card's top edge,
   // along the edge to his spot, and sits down on the edge with his legs over the front, like on the sign-in card.
   const perched = useRef(false);
+  const guideBody = useRef<HTMLDivElement>(null); // wraps only the guide's <Bloq/>: the leap's crouch and squash
   const [seated, setSeated] = useState(false);
   const [bounce, setBounce] = useState(0);
   // Seated and waiting: his eyes follow the pointer, like on the sign-in card.
@@ -831,7 +828,7 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
             if (seated) { guide.current?.setMood("laugh", 1400); if (!reduced()) setBounce((b) => b + 1); return; }
             guide.current?.jump(); say(tip(at.current, stops));
           }}>
-          <div key={bounce} className={bounce ? "bq-sit-bounce" : undefined}>
+          <div key={bounce} ref={guideBody} className={bounce ? "bq-sit-bounce" : undefined}>
             <Bloq ref={guide} hat="cap" pose={guidePose} facing={facing} label="Bloq, your guide on the map" />
           </div>
           <SpeechBubble text={line} tone="light" />

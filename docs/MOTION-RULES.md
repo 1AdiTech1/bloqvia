@@ -72,11 +72,13 @@ Average score before → now (my estimate, 1 = poor, 5 = premium):
 | Turning around | 1.9 | 3.8 | Squash-swap turn instead of the CSS mirror: never thinner than 62%, head 40 ms ahead, knees step round, hat swings after. 300 ms. |
 | Start and stop walking | 2.4 | 3.6 | Start: lean back and dip, side view at the dip, the stride grows. Stop: the stride dies out, front view back, he rocks back and soaks it up. A page that moves on at once (sit, a jump, pointing) skips to the settle. |
 | Talking | 2.4 | 3.7 | `talk(ms, text)`: mouth shapes from the text with pauses; nods, brows on questions, one gesture a sentence, blinks on full stops. `talk(ms)` alone flaps as before. |
+| The jump into Season 2 | 2.2 | 4.0 | The same leap as the tour: a crouch, one arc with gravity that rises only 40 px above where he takes off (before: a curve 230 px above him at one speed), a landing with a squash and dust; he stays through the landing, then the next road's guide greets. About 0.7 s instead of 1.4 s. Both ways (into Network City and back home). |
+| Holding things (fix) | | | The arm no longer goes through what he holds: the arm is drawn behind the prop and the hand over it; walking with something in hand he carries it up in front with a bent elbow (both hands for the cube) and that arm swings 30%; a hanging arm lets the prop hang from the hand. |
 | Walking the map road | 2.4 | 3.4 | A pace (ease in/out, slower on bends and at turns), steps tied to the ground in 2D on the page (scrolling doesn't count as steps), the new turn, start and stop; settles, then hops and speaks. The camera follows as before. |
 
 Code: `src/bloq/engine.ts` (`face`, `walking`, `talk`, follow mode, the closed mouth), `src/bloq/Bloq.tsx`
 (`talk(ms, text?)`), `src/bloq/bloq.css` (closed mouth; no transition on `.bq-flip`), `src/bloq/ChainTrail.tsx` (the road
-walk; its lines pass their text). Lovable's pages that call `talk(ms)` keep working; passing the text is a later prompt.
+walk; its lines pass their text; `jumpTo` uses `leap`). The arm fix: `engine.ts` (svg order, the carry pose, the prop's place). Lovable's pages that call `talk(ms)` keep working; passing the text is a later prompt.
 
 ## Phase 2, proposal (lab copy of the engine)
 
@@ -90,7 +92,7 @@ Average score now → proposal (my estimate):
 | Waving | 3.0 | 3.6 | Shoulder joins in, the hand flops behind the forearm, he leans in. |
 | Sitting down | 2.6 | 3.6 | 650 ms: a glance at the seat and hands reaching back, a squash and one soft bounce, a settle wiggle; kicks that come and go. |
 | Standing up | 2.1 | 3.2 | 450 ms: lean over the feet, hands push, rise with a small stretch, settle. |
-| Holding things | 2.8 | 3.9 | Weight classes: light props follow the hand, medium ones ride 6° lower and swing wider, the cube takes two hands; every prop trails the hand like a weight on a spring. |
+| Holding things | 2.8 | 3.9 | (The arm fix is shipped.) Weight classes: light props follow the hand, medium ones ride 6° lower and swing wider, the cube takes two hands; every prop trails the hand like a weight on a spring. |
 | Faces | 3.0 | 4.0 | Surprise (mood "o", so wrong answers too): a take, head and body pull back, eyes 22% wider. The laugh shakes him a little. |
 | Idle | 4.0 | 4.3 | Every 4–8 s a weight shift or a glance; after 10 s also fixing his hat or a stretch; never the same twice in a row. |
 | Quiz answers | 2.8 | 3.7 | Right: the new hop and a cheer; wrong: the surprise take. Engine only, the quiz page doesn't change. |

@@ -370,12 +370,12 @@ const engine = (function () {
       <g data-r="hats">${hats}</g>
     </g>
     <g class="v-front"><path data-r="armB" fill="none" ${o}/><g data-r="handB">${hand}</g></g>
+    <path data-r="armF" fill="none" ${o}/>
     <g data-r="up">
       <circle class="bq-glow" cx="0" cy="-44" r="40" fill="url(#bq-glow)"/>
       <g class="bq-props">${props}</g>
       <g class="bq-shine"><path d="M22 -74 l5 -9"/><path d="M32 -60 l9 -4"/><path d="M8 -82 l1 -10"/></g>
     </g>
-    <path data-r="armF" fill="none" ${o}/>
     <g data-r="handF"><g class="bq-finger"><path d="M-4 12 C-6 22 -3 31 1 31 C5 31 7 22 4 12" fill="${W}" ${o5}/></g>${hand}</g>
   </g>
 </svg>`);
@@ -517,6 +517,9 @@ const engine = (function () {
       if (!POSES[p]) p = "idle";
       if (p !== "walk" && p !== "idle") this._skipStride();
       this.pose = p; this.target = POSES[p];
+      // Walking with something in hand (Nov 9): the elbow bends and holds it up in front of him (both hands for the
+      // cube), so the arm never hangs through it; the springs carry him smoothly from holding to carrying and back.
+      if (p === "walk" && this.prop) this.target = { ...POSES.walk, s: -26, e: -81, ...(this.prop === "cube" ? { bs: -26, be: -81 } : {}) };
       this.el.classList.toggle("pointing", p === "point");
       if (p === "sit" && !this.el.classList.contains("sitting") && !still()) this.sitT = 0;
       this.el.classList.toggle("sitting", p === "sit");
@@ -735,6 +738,7 @@ const engine = (function () {
         a.hl += -26 * k * s; a.hr += 26 * k * s;
         a.kl += (36 + 44 * run) * am * Math.max(0, cph); a.kr += (36 + 44 * run) * am * Math.max(0, -cph);
         a.s += 26 * k * s; a.e += (12 * Math.max(0, s) + 46 * run) * am;
+        if (this.prop) { a.s -= 0.7 * 26 * k * s; if (this.prop === "cube") a.bs += 0.7 * 26 * k * s; } // the carrying arm swings 30%
         a.bs += -26 * k * s; a.be += (12 * Math.max(0, -s) + 46 * run) * am;
         bodyY = -6 * (1 + 0.9 * run) * Math.abs(cph) * am; lean = (-5 - 7 * run) * am; headTilt += 2 * Math.sin(ph * 2) * am;
         // start: lean back and dip, then push into the first step; stop: rock back and soak it up
@@ -900,7 +904,11 @@ const engine = (function () {
       r.armF.setAttribute("d", limb(SF, EF, WF));
       r.handF.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1])}) rotate(${f(a.s + a.e)})`);
       const sway = live ? Math.sin(t * 2.3) * 4 : 0;
-      r.up.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1])}) rotate(${f(sway)}) scale(1.55)`);
+      // The arm is drawn behind the prop and the hand over it (svg order: armF, up, handF). The prop sits beyond the
+      // hand, never along the forearm: held up as drawn while the forearm points up, out in front when it's level,
+      // hanging from the hand when the arm hangs down.
+      const u_ = dir(a.s + a.e), kk = Math.max(0, Math.min(1, (u_[1] + 0.2) / 0.6)), hk = kk * kk * (3 - 2 * kk);
+      r.up.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1])}) rotate(${f(sway)}) translate(${f(hk * u_[0] * 40)} ${f(hk * (u_[1] * 40 + 68))}) scale(1.55)`);
     }
   }
 
