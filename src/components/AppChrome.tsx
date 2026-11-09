@@ -5,6 +5,7 @@ import { Check, X } from "lucide-react";
 import { useGame } from "@/game/useGame";
 import { BloqMark } from "@/components/Logo";
 import { TouchScrollbar } from "@/components/TouchScrollbar";
+import { isWrongAnswer } from "@/near";
 
 /** Global busy indicator, error toast and the short "Saved" confirmation. */
 export function AppChrome() {
@@ -15,7 +16,10 @@ export function AppChrome() {
   const lastHash = useRef<string | null>(null);
 
   useEffect(() => {
-    if (game.error) setErr(game.error);
+    if (!game.error) return;
+    // A wrong quiz answer is shown by the quiz itself (Bloq's line, the crossed-out option, the hint): no top pill then (prompt 27e).
+    if (isWrongAnswer(game.error) && document.querySelector("[data-quiz]")) return;
+    setErr(game.error);
   }, [game.error]);
 
   useEffect(() => {

@@ -134,7 +134,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved, onBag }: { lesso
   const lastWrong = wrong.length > 0 && !done;
 
   return (
-    <motion.div className="fixed inset-0 z-[45] flex items-end justify-center dk:items-center dk:pb-6 dk:pt-[110px] dk:pl-[calc(max(0px,(100vw-1440px)/2)+220px)] dk:pr-[calc(max(0px,(100vw-1440px)/2)+330px)]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-modal="true" aria-label={lesson.title}>
+    <motion.div className="fixed inset-0 z-[45] flex items-end justify-center dk:items-center dk:pb-6 dk:pt-[110px] dk:pl-[calc(max(0px,(100vw-1440px)/2)+220px)] dk:pr-[calc(max(0px,(100vw-1440px)/2)+330px)]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-modal="true" aria-label={lesson.title} data-quiz="">
       <button aria-label="Close" onClick={onClose} className="absolute inset-0 bg-navy/50" />
       <motion.div
         initial={reduce ? { opacity: 0 } : desktop ? { scale: 0.96, opacity: 0 } : { y: 80, opacity: 0 }}
