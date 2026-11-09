@@ -15,6 +15,16 @@
  * One shared requestAnimationFrame loop drives every rig on the page; rigs off screen are skipped and the
  * loop stops when no rig is mounted.
  */
+import { headSvg, hatSvg, frontMatrix, mat, headHull, headSide, grown, poly, COVERS_EARS, HAND as HAND3, GRIP as GRIP3 } from "./head3d";
+import { packSvg, strapSvg, strapSmooth, TORSO } from "./body3d";
+
+/* Phase 3 (Nov 9, approved in docs/design/turnaround v4.13): the head is a thin rounded slab that really turns, with the
+   body, through any angle (yaw). Facing you he is today's drawing; turned you see the thin side; in profile a thin
+   rectangle without a face; from behind a plain back. The 15 hats turn with it, every part on its own surface. Two lime
+   lights in the sides of his head where ears would be (hidden under the headset, the aviator and the helmets). The
+   mirror and the fixed side view are gone: facing left is yaw −30, walking is yaw ±90, and a turn is the head leading
+   the body through the angles. Every behaviour of Phases 1–2 (moods, blink, talk, gestures, cheers, hops, props,
+   sitting, riding) is untouched: only the drawing of the head and hats changed, and the hands are the new ones. */
 const engine = (function () {
   const C = { ink: "#1b1622", p: "#8b45d9", pd: "#6630b3", pl: "#b47ff0", l: "#d4f033", ld: "#a6c21a", w: "#ffffff", sh: "#ebe5f6" };
   const { ink: INK, p: P, pd: PD, pl: PL, l: L, ld: LD, w: W, sh: SH } = C;
@@ -23,25 +33,7 @@ const engine = (function () {
   const RAD = Math.PI / 180;
   let uid = 0;
 
-  /* Block head: a soft rounded cube. The back face is offset up-right by 14 so the top and
-     the right side show; two short edges join the corners. Round head kept as an option. */
-  const HEAD_BLOCK = `
-      <rect x="90" y="40" width="150" height="148" rx="38" fill="url(#bq-side)" ${o}/>
-      <path d="M87.1 65.1 L101.1 51.1 L228.9 176.9 L214.9 190.9 Z" fill="url(#bq-side)"/>
-      <path d="M87.1 65.1 L101.1 51.1 M214.9 190.9 L228.9 176.9" fill="none" ${o}/>
-      <rect x="76" y="54" width="150" height="148" rx="38" fill="url(#bq-face)" ${o}/>
-      <path d="M90 104 C89 80 98 68 118 66" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity=".95"/>
-      <path d="M120 45 C150 42 190 42 214 47" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity=".8"/>`;
-  const HEAD_BLOCK_SIDE = `
-      <rect x="62" y="40" width="150" height="148" rx="38" fill="url(#bq-side)" ${o}/>
-      <path d="M214.9 65.1 L200.9 51.1 L73.1 176.9 L87.1 190.9 Z" fill="url(#bq-side)"/>
-      <path d="M214.9 65.1 L200.9 51.1 M87.1 190.9 L73.1 176.9" fill="none" ${o}/>
-      <rect x="76" y="54" width="150" height="148" rx="38" fill="url(#bq-face)" ${o}/>
-      <path d="M90 104 C89 80 98 68 118 66" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity=".95"/>
-      <path d="M86 45 C112 42 152 42 184 47" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity=".8"/>`;
-  const HEAD_ROUND = `
-      <path d="M150 40 C198 38 234 72 233 118 C232 166 198 203 154 202 C108 201 72 170 72 126 C72 80 104 42 150 40 Z" fill="url(#bq-face)" ${o}/>
-      <path d="M88 108 C88 82 100 64 122 56" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity=".95"/>`;
+  /* The head is drawn by head3d.ts (Phase 3): a thin rounded slab that turns. */
 
   /* Hats are drawn on the head's top and scaled up around the brow line (152,100). */
   const HAT_SCALE = { moto: 1.04, astro: 1.0, tophat: 1.32, aviator: 1.42, agent: 1.12, cap2: 1.3, captain: 1.5, grad: 1.56, bucket: 1.42, surf: 1.42, beanie: 1.32, hardhat: 1.32, detective: 1.32, beret: 1.3, cap: 1.3 };
@@ -232,7 +224,9 @@ const engine = (function () {
     side:  { hipL: [147, 286], hipR: [158, 286], shF: [160, 217], shB: [150, 214] },
   };
 
-  const dir = (deg) => [-Math.sin(deg * RAD), Math.cos(deg * RAD)];
+  const ss_ = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  let MIR = 1;   // Phase 3: -1 while the mirrored rig is drawn (he faces left), so the limbs' "forward" flips with him
+  const dir = (deg) => [-MIR * Math.sin(deg * RAD), Math.cos(deg * RAD)];
   const add = (p, d, len) => [p[0] + d[0] * len, p[1] + d[1] * len];
   const f = (n) => n.toFixed(1);
   /* A limb as one curve through the joint: no corner at elbow or knee. */
@@ -245,8 +239,7 @@ const engine = (function () {
       <path d="M-35 16 C-22 21 -2 21 11 16" fill="none" stroke="${LD}" stroke-width="5" stroke-linecap="round"/>
       <path d="M-24 3 C-18 -1 -10 -2 -4 -1" fill="none" stroke="${W}" stroke-width="4" stroke-linecap="round" opacity=".9"/>`;
   const shoeOut = `<g class="v-front">${shoe}</g><g class="v-side"><g transform="scale(-1 1)">${shoe}</g></g>`;
-  const hand = `<path d="M-11 -5 C-15 5 -9 16 0 17 C10 17 15 8 13 -2 C11 -10 -8 -12 -11 -5 Z" fill="${W}" ${o5}/>
-      <path d="M11 1 C18 0 19 8 12 10" fill="${W}" ${o5}/>`;
+  const hand = HAND3;   // Phase 3: the more detailed open hand (three fingers, a fuller thumb); GRIP3 when he holds the strap
 
   /* Faces. Smile: corners lifted above the middle of the upper lip, a hint of teeth, a dimple at each corner.
      Laugh: wider and deeper, cheeks push the eyes into happy arcs. */
@@ -275,30 +268,9 @@ const engine = (function () {
     <g class="bq-m bq-m-o"><path d="M147 156 C146 148 163 147 164 156 C165 167 159 174 155 174 C150 174 147 166 147 156 Z" fill="${INK}"/></g>
     <g class="bq-m bq-m-talk"><path d="M135 151 C146 157 165 157 176 149 C175 163 166 171 155 171 C144 171 136 163 135 151 Z" fill="${INK}"/><path d="M145 166 C150 161 160 161 164 166 C159 170 150 170 145 166 Z" fill="${L}"/></g>
     <g class="bq-m bq-m-closed"><path d="M134 153 C146 161 165 161 177 151" fill="none" stroke="${INK}" stroke-width="5.5" stroke-linecap="round"/><path d="M129 149 C128 152 129 155 132 157 M182 147 C183 150 182 153 179 155" fill="none" stroke="${INK}" stroke-width="3.2" stroke-linecap="round"/></g>`;
-  const faceSide = `
-    <ellipse cx="196" cy="152" rx="10" ry="6" fill="#e9b8e6" opacity=".55"/>
-    <g data-r="browS"><path d="M187 100 q10 -6 20 2" fill="none" stroke="${INK}" stroke-width="4.5" stroke-linecap="round"/></g>
-    <g data-r="eyeS">
-      <g class="bq-open"><ellipse cx="198" cy="125" rx="7.2" ry="11.6" fill="${INK}" transform="rotate(4 198 125)"/><circle cx="200.5" cy="119.5" r="2.7" fill="${W}"/></g>
-      <g class="bq-squint"><path d="M189 129 C193 118 204 118 207 128" fill="none" stroke="${INK}" stroke-width="6" stroke-linecap="round"/></g>
-    </g>
-    <g class="bq-m bq-m-smile">
-      <path d="M186 148 C198 155 214 153 227 142 C227 161 215 175 202 175 C192 174 186 163 186 148 Z" fill="${INK}"/>
-      <path d="M190 151 C201 157 214 155 224 147 C223 151 221 153 219 154 C210 160 199 160 192 156 Z" fill="${W}"/>
-      <path d="M195 169 C200 163 210 163 214 168 C209 173 200 174 195 169 Z" fill="${L}"/>
-      <path d="M182 143 C181 147 182 151 185 153" fill="none" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/>
-    </g>
-    <g class="bq-m bq-m-laugh">
-      <path d="M182 144 C197 155 218 151 231 136 C233 162 219 186 203 186 C190 186 181 169 182 144 Z" fill="${INK}"/>
-      <path d="M187 148 C200 157 216 154 228 142 C227 147 225 150 222 152 C211 160 198 161 190 156 Z" fill="${W}"/>
-      <path d="M193 178 C199 169 212 169 217 176 C211 183 199 184 193 178 Z" fill="${L}"/>
-    </g>
-    <g class="bq-m bq-m-o"><path d="M207 156 C207 149 219 149 219 157 C219 166 214 171 212 171 C208 171 206 164 207 156 Z" fill="${INK}"/></g>
-    <g class="bq-m bq-m-talk"><path d="M190 150 C200 155 214 153 224 145 C224 159 214 168 203 168 C195 168 190 160 190 150 Z" fill="${INK}"/></g>
-    <g class="bq-m bq-m-closed"><path d="M191 153 C201 159 213 157 223 148" fill="none" stroke="${INK}" stroke-width="5.5" stroke-linecap="round"/></g>`;
-
   function svg(id) {
-    const hats = Object.entries(HATS).map(([k, d]) => `<g class="bq-hat" data-hat="${k}"><g transform="translate(152 100) scale(${HAT_SCALE[k] || 1.3}) translate(-152 -100)">${d}</g></g>`).join("");
+    // the hat groups stay as the targets of the hat-swap animation (.bq-hat on/leaving); the 3D hat is drawn into hatBack/hatOver/hatFront
+    const hats = Object.entries(HATS).map(([k]) => `<g class="bq-hat" data-hat="${k}"></g>`).join("");
     const props = Object.entries(PROPS).map(([k, d]) => `<g class="bq-prop" data-prop="${k}">${d}</g>`).join("");
     return premium(`<svg viewBox="0 0 300 400" class="bq" aria-hidden="true" focusable="false">
   <defs><clipPath id="bd${id}"><path d="M250 150 C274 186 276 300 262 372 C258 385 242 385 238 372 C224 300 226 186 250 150 Z"/></clipPath></defs>
@@ -333,32 +305,16 @@ const engine = (function () {
       <path d="M210 316 C222 306 252 306 266 320" fill="none" stroke="${INK}" stroke-width="12" stroke-linecap="round"/><path d="M210 316 C222 306 252 306 266 320" fill="none" stroke="${PD}" stroke-width="6" stroke-linecap="round"/>
       <path d="M160 336 L184 338" stroke="${INK}" stroke-width="7" stroke-linecap="round"/>
     </g>
-    <g class="v-side"><path data-r="armBS" fill="none" ${o}/><g data-r="handBS">${hand}</g></g>
     <path data-r="legL" fill="none" ${o}/><g data-r="shoeL">${shoeOut}</g>
     <path data-r="legR" fill="none" ${o}/><g data-r="shoeR"><g class="v-front"><g transform="scale(-1 1)">${shoe}</g></g><g class="v-side"><g transform="scale(-1 1)">${shoe}</g></g></g>
+    <g data-r="armBBack"></g>
     <g data-r="torso">
-      <g data-r="pack">
-        <path d="M100 212 C91 193 121 185 138 197 C147 233 147 266 136 285 C114 295 91 283 89 262 C87 246 93 228 100 212 Z" fill="${P}" ${o}/>
-        <path d="M93 245 C103 253 122 255 137 247" fill="none" stroke="${PD}" stroke-width="4"/>
-        <path d="M92 258 C96 276 112 286 132 282" fill="none" stroke="${PD}" stroke-width="8" stroke-linecap="round" opacity=".55"/>
-        <path d="M104 214 C108 206 116 202 124 202" fill="none" stroke="${PL}" stroke-width="5" stroke-linecap="round"/>
-        <path d="M108 252 C108 262 112 268 117 270" fill="none" stroke="${L}" stroke-width="5" stroke-linecap="round"/>
-        <g class="bq-agentwear"><rect x="98" y="222" width="30" height="20" rx="5" fill="${INK}"/>
-          <circle class="bq-led" cx="106" cy="232" r="3.5" fill="${L}"/><circle class="bq-led l2" cx="113" cy="232" r="3.5" fill="${L}"/><circle class="bq-led l3" cx="120" cy="232" r="3.5" fill="${L}"/></g>
-      </g>
-      <g class="v-front">
-        <path d="M134 197 C125 230 125 270 136 291 C147 303 170 302 178 290 C187 262 183 222 174 197 Z" fill="${W}" ${o}/>
-        <path d="M168 206 C178 232 180 262 172 287 C166 293 158 295 150 295 C163 278 169 246 168 206 Z" fill="${SH}"/>
-        <path d="M138 200 C150 214 166 214 176 200" fill="none" stroke="#3a2a5c" stroke-width="10" stroke-linecap="round" opacity=".12"/>
-        <path d="M118 204 C138 200 156 218 158 247" fill="none" stroke="${INK}" stroke-width="15" stroke-linecap="round"/>
-        <path d="M118 204 C138 200 156 218 158 247" fill="none" stroke="${P}" stroke-width="7" stroke-linecap="round"/>
-      </g>
-      <g class="v-side">
-        <path d="M139 197 C130 230 132 270 141 291 C151 302 170 300 174 288 C180 262 178 222 168 197 Z" fill="${W}" ${o}/>
-        <path d="M163 206 C173 232 175 262 168 286 C163 292 157 294 151 294 C162 278 165 246 163 206 Z" fill="${SH}"/>
-        <path d="M126 203 C146 197 160 210 163 236" fill="none" stroke="${INK}" stroke-width="15" stroke-linecap="round"/>
-        <path d="M126 203 C146 197 160 210 163 236" fill="none" stroke="${P}" stroke-width="7" stroke-linecap="round"/>
-      </g>
+      <g data-r="packBack"></g>
+      <g data-r="pack"><g class="bq-agentwear"><rect x="98" y="222" width="30" height="20" rx="5" fill="${INK}"/>
+          <circle class="bq-led" cx="106" cy="232" r="3.5" fill="${L}"/><circle class="bq-led l2" cx="113" cy="232" r="3.5" fill="${L}"/><circle class="bq-led l3" cx="120" cy="232" r="3.5" fill="${L}"/></g></g>
+      <g data-r="torso3">${TORSO}</g>
+      <g data-r="strap3"></g>
+      <g data-r="packFront"></g>
     </g>
     <g class="bq-board">
       <path d="M250 150 C274 186 276 300 262 372 C258 385 242 385 238 372 C224 300 226 186 250 150 Z" fill="${P}" ${o}/>
@@ -368,19 +324,22 @@ const engine = (function () {
       <path d="M250 150 C274 186 276 300 262 372 C258 385 242 385 238 372 C224 300 226 186 250 150 Z" fill="none" ${o}/>
     </g>
     <g data-r="head">
-      <g class="head-block"><g class="v-front">${HEAD_BLOCK}</g><g class="v-side">${HEAD_BLOCK_SIDE}</g></g><g class="head-round">${HEAD_ROUND}</g>
-      <g class="v-front">${faceFront}</g>
-      <g class="v-side">${faceSide}</g>
+      <g data-r="hatBack"></g>
+      <g data-r="headUnder"></g>
+      <g data-r="face3">${faceFront}</g>
+      <g data-r="headOver"></g>
+      <g data-r="hatOver"></g>
       <g data-r="hats">${hats}</g>
+      <g data-r="hatFront"></g>
     </g>
-    <g class="v-front"><path data-r="armB" fill="none" ${o}/><g data-r="handB">${hand}</g></g>
+    <g data-r="armBFront"><path data-r="armB" fill="none" ${o}/><g data-r="handB">${hand}</g></g>
     <path data-r="armF" fill="none" ${o}/>
     <g data-r="up">
       <circle class="bq-glow" cx="0" cy="-44" r="40" fill="url(#bq-glow)"/>
       <g class="bq-props">${props}</g>
       <g class="bq-shine"><path d="M22 -74 l5 -9"/><path d="M32 -60 l9 -4"/><path d="M8 -82 l1 -10"/></g>
     </g>
-    <g data-r="handF"><g class="bq-finger"><path d="M-4 12 C-6 22 -3 31 1 31 C5 31 7 22 4 12" fill="${W}" ${o5}/></g>${hand}</g>
+    <g data-r="handF"><g class="bq-finger"><path d="M-4 12 C-6 22 -3 31 1 31 C5 31 7 22 4 12" fill="${W}" ${o5}/></g><g data-r="handOpen">${hand}</g><g data-r="handGrip" style="display:none">${GRIP3}</g></g>
   </g>
 </svg>`);
   }
@@ -523,6 +482,10 @@ const engine = (function () {
       this.idle = { next: 4 + Math.random() * 4, beat: null, last: null, for: 0 };
       this.pl = { a: 0, v: 0, y: 0, yv: 0, lx: null, ly: null };
       this.hat = null; this.prop = null;
+      // Phase 3: the angle he faces (yaw, degrees: 0 toward you, +90 his right side toward you = facing right, 180 away).
+      // The body follows a spring toward yawTarget; the head leads it by HEAD_LEAD seconds.
+      this.yaw = 30; this.yawV = 0; this.yawTarget = 30; this.headYaw = 30; this._yawHist = [];
+      this.ears = opts.ears === undefined ? "light" : opts.ears;
       this.setHat(opts.hat || "cap", false);
       this.setProp(opts.prop || null, false);
       this.setPose(opts.pose || "idle", true);
@@ -553,7 +516,7 @@ const engine = (function () {
       this.el.classList.toggle("riding", p === "ride");
       this.el.classList.toggle("biking", p === "bike");
       this.el.classList.toggle("spacing", p === "space");
-      if (p === "bike") this.setView("side");
+      if (p === "bike") { this.setView("side"); this._aimYaw(); }
       else if (!this.isWalking && this.view === "side") this.setView("front");
       if (snap || still()) KEYS.forEach((k) => { this.cur[k] = this.target[k]; this.vel[k] = 0; });
       return this;
@@ -599,17 +562,30 @@ const engine = (function () {
       if (v === this.view) return this;
       this.view = v;
       this.el.classList.toggle("side", v === "side");
+      this._aimYaw();
       if (!still()) this.turnT = 0;
       return this;
     }
     /* The mirror flips at once (no CSS transition) and the rig plays the turn: from the old side, a small dip,
        squash to 62% (never thinner), swap at the squash, the head 40 ms ahead of the body, out with a 5% overshoot,
        knees stepping round, the hat swinging after. 300 ms. */
+    /* Facing right is his everyday view turned 30° to the right (yaw 30); facing left is the same to the left (−30).
+       Walking turns him to the side (±90). No mirror: he really turns, the head 45 ms ahead of the body. */
     face(d) {
       const was = this.facing;
-      this.facing = d; this.flip.classList.toggle("left", d === "left");
-      if (was && was !== d && !still()) { this.faceT = 0; this.hatLag.v += 170; }
+      this.facing = d;
+      this._aimYaw();
+      if (was && was !== d && !still()) { this.faceT = 0; this.hatLag.v += 170 * (d === "left" ? -1 : 1); }
       return this;
+    }
+    /** The yaw he should be at for his facing and view (walking shows the side). */
+    _aimYaw() {
+      // in the model a positive yaw turns him toward your right (today's "facing right" drawing is yaw 30), so facing
+      // right is positive and facing left negative. Walking in profile is 90°; a walk that follows the ground (the map
+      // road, the cards: walking(true, true)) keeps his face toward you at a 3/4 angle (55°), so you see him on the way
+      const sgn = this.facing === "left" ? -1 : 1;
+      this.yawTarget = this.view === "side" ? (this.pose === "bike" ? 62 : this.isWalking && this.follow ? 55 : 90) * sgn : 30 * sgn;
+      if (still()) { this.yaw = this.headYaw = this.yawTarget; this.yawV = 0; }
     }
     look(dx, dy) { this.look_.tx = dx * (this.facing === "left" ? -1 : 1); this.look_.ty = dy; return this; }
     /* Starting: a lean back and a dip in the front view (90 ms), the turn to the side at the dip, then the
@@ -627,7 +603,7 @@ const engine = (function () {
           if (still()) { this.amp = 1; this.setView("side"); }
           else { this.startT = 0; this.amp = 0; this.walkPhase = 0; }
         } else if (this.view !== "side") this.setView("side");
-        this.setPose("walk");
+        this.setPose("walk"); this._aimYaw();
       } else if (this.isWalking) {
         this.startT = -1;
         if (still()) { this.isWalking = false; this.amp = 0; this.setView("front"); }
@@ -672,7 +648,9 @@ const engine = (function () {
       const want = tx < me.left + me.width / 2 ? "left" : "right";
       if (want !== this.facing) { this.face(want); return; } // turn first, aim next frame
       const pt = new DOMPoint(tx, ty).matrixTransform(m.inverse());
-      const sh = [176, 216], vx = pt.x - sh[0], vy = pt.y - sh[1];
+      // Phase 3: the front shoulder is where the rig puts it at his angle (mirrored when he faces left); the arm's
+      // angle is in the rig's own convention, where dir(ang) is mirrored too
+      const mir = this._mir || 1, sh = [152 + mir * (RIG.front.shF[0] - 152), RIG.front.shF[1]], vx = (pt.x - sh[0]) * mir, vy = pt.y - sh[1];
       const ang = Math.atan2(-vx, vy) / RAD;   // dir(ang) points from the shoulder at the target
       this.target = { ...POSES.point, s: Math.max(-170, Math.min(-10, ang)), e: 0 };
       this.look_.tx = 0.6; this.look_.ty = Math.max(-1, Math.min(1, vy / 200));
@@ -692,6 +670,12 @@ const engine = (function () {
         const a = k * (this.target[key] - this.cur[key]) - c * this.vel[key];
         this.vel[key] += a * dt; this.cur[key] += this.vel[key] * dt;
       });
+      // the turn: the body's yaw springs to its target (critically damped, ~300 ms); the head is where the body was
+      // 45 ms ago, played ahead (it leads into the turn and settles first)
+      { const k = 110, c = 2 * Math.sqrt(k) * 0.78, acc = k * (this.yawTarget - this.yaw) - c * this.yawV; this.yawV += acc * dt; this.yaw += this.yawV * dt;
+        this._yawHist.push({ t: this.t + dt, y: this.yaw }); while (this._yawHist.length > 2 && this._yawHist[1].t < this.t + dt - 0.045) this._yawHist.shift();
+        const h = this._yawHist[0]; const lead = this.yaw + (this.yaw - h.y) * 1.0;   // ahead by as much as it moved in the last 45 ms
+        this.headYaw = Math.abs(this.yawTarget - this.yaw) < 0.05 ? this.yaw : lead; }
       const L_ = this.look_;
       L_.x += (L_.tx - L_.x) * Math.min(1, dt * 8); L_.y += (L_.ty - L_.y) * Math.min(1, dt * 8);
       this.brow.y += (this.brow.ty - this.brow.y) * Math.min(1, dt * 12);
@@ -763,9 +747,16 @@ const engine = (function () {
         if (this.stopT >= 0) { this.stopT = -1; this.isWalking = false; this.setView("front"); }
         this.amp = this.isWalking ? 1 : 0;
         this.standT = -1; this.takeT = -1; this.idle.beat = null; this.pl.a = 0; this.pl.y = 0;
+        this._aimYaw();
       }
       this.t += dt;
-      const t = this.t, a = { ...this.cur }, r = this.r, side = this.view === "side", J = RIG[this.view];
+      const t = this.t, a = { ...this.cur }, r = this.r, side = this.view === "side";
+      // joints: blend from the front rig to the side rig by how far he has turned; a yaw to the left mirrors x about 152
+      const yawB = this.yaw, ys = Math.abs(Math.sin(yawB * RAD)), kSide = ss_(0.5, 1, ys), mir = Math.sin(yawB * RAD) >= 0 ? 1 : -1;
+      // the rig's "front" shoulder is on your right in its drawing; when the mirrored rig is used, the hands' thumbs go the other way
+      this._mir = mir; MIR = mir;
+      const jm = (p) => [152 + mir * (p[0] - 152), p[1]];
+      const J = {}; for (const k of ["hipL", "hipR", "shF", "shB"]) { const F = RIG.front[k], S = RIG.side[k]; J[k] = jm([F[0] + (S[0] - F[0]) * kSide, F[1] + (S[1] - F[1]) * kSide]); }
       const floaty = this.el.classList.contains("floaty");
 
       let bodyY = 0, lean = 0, breath = live ? Math.sin(t * 1.8) * 0.018 : 0, headTilt = live ? Math.sin(t * 1.15) * 2.4 : 0;
@@ -962,18 +953,15 @@ const engine = (function () {
           a.kl += 30 * Math.max(0, imp); a.kr += 30 * Math.max(0, imp);
         }
       }
-      // turning between views: a quick squash, like a head turn in a cartoon
-      if (this.turnT >= 0) sx *= 1 - 0.16 * Math.sin(Math.PI * this.turnT);
+      // turning between views: a small dip as he swings round (the angles themselves do the turning now)
+      if (this.turnT >= 0) bodyY += 2.5 * Math.sin(Math.PI * this.turnT);
       // squash and stretch that keep his volume: sitting down, standing up, the idle stretch
       { const st = -this._sitSq + this._standSt + this._idleSt; if (st) { sy *= 1 + st; sx /= 1 + st; } }
-      // the turn. |scale x| along it: a 3% widen (anticipation), squash in to 62%, swap, out with overshoot.
-      let headRel = 1;
+      // the turn (Phase 3: he really turns through the angles, head first). What stays from the squash-swap is the
+      // body language: a small dip, the knees stepping round, the arms swinging, the hat swinging after
       if (this.faceT >= 0) {
-        const q = this.faceT, LEAD = 0.13;
-        const prof = (u) => u < 0.18 ? 1 + 0.03 * pulse(u / 0.18) : u < 0.5 ? 1 - 0.38 * Math.pow((u - 0.18) / 0.32, 2) : 0.62 + 0.38 * (1 - Math.pow(1 - (u - 0.5) / 0.5, 2)) + 0.055 * pulse((u - 0.5) / 0.5);
-        const body = (q < 0.5 ? -1 : 1) * prof(q), head = (q + LEAD < 0.5 ? -1 : 1) * prof(Math.min(1, q + LEAD));
-        sx *= body; headRel = head / body;
-        sy *= 1 + 0.03 * pulse(q / 0.5);                       // a touch taller as he squashes (volume)
+        const q = this.faceT;
+        sy *= 1 + 0.02 * pulse(q / 0.5);
         bodyY += 3.5 * pulse(q / 0.3) - 5 * pulse((q - 0.3) / 0.45);
         a.kl += 26 * pulse((q - 0.2) / 0.4); a.kr += 26 * pulse((q - 0.42) / 0.4);
         a.s += 9 * pulse(q); a.bs -= 9 * pulse(q);
@@ -993,13 +981,21 @@ const engine = (function () {
       const hip = [152, 288];
       const T = (p) => { const x = p[0] - hip[0], y = (p[1] - hip[1]) * (1 + breath), c_ = Math.cos(lean * RAD), s_ = Math.sin(lean * RAD); return [hip[0] + x * c_ - y * s_, hip[1] + x * s_ + y * c_]; };
       r.torso.setAttribute("transform", `rotate(${f(lean)} ${hip[0]} ${hip[1]}) translate(0 ${f(hip[1])}) scale(1 ${(1 + breath).toFixed(3)}) translate(0 ${-hip[1]})`);
-      // in the side view the backpack bounces a little behind the step
-      r.pack.setAttribute("transform", side && live ? `translate(${f(-2 + Math.sin(this.walkPhase * 2 + 0.6) * 1.5)} ${f(Math.sin(this.walkPhase * 2 + 0.9) * 2.5)})` : "");
+      // Phase 3: the backpack and the strap at the body's yaw (the pack behind him facing you, in front of him from
+      // behind); walking, the pack bounces a little behind the step
+      if (yawB !== this._drawnBodyYaw) {
+        const Pk = packSvg(yawB), behind = Math.cos(yawB * RAD) > -0.25;
+        r.packBack.innerHTML = behind ? Pk.svg : ""; r.packFront.innerHTML = behind ? "" : Pk.svg;
+        r.strap3.innerHTML = strapSvg(yawB);
+        this._drawnBodyYaw = yawB;
+      }
+      const bounce = side && live ? `translate(${f(-2 + Math.sin(this.walkPhase * 2 + 0.6) * 1.5)} ${f(Math.sin(this.walkPhase * 2 + 0.9) * 2.5)})` : "";
+      r.packBack.setAttribute("transform", bounce); r.packFront.setAttribute("transform", bounce); r.pack.setAttribute("transform", bounce);
 
       [["legL", "shoeL", J.hipL, a.hl, a.kl, this._rollL], ["legR", "shoeR", J.hipR, a.hr, a.kr, this._rollR]].forEach(([ln, sn, H, ha, ka, roll]) => {
         const K = add(H, dir(ha), 34 * a.tl), A = add(K, dir(ha + ka), 33);
         r[ln].setAttribute("d", limb(H, K, A));
-        r[sn].setAttribute("transform", `translate(${f(A[0])} ${f(A[1])}) rotate(${f((ha + ka) * 0.55 + (side ? roll : 0))})`); // heel-toe roll
+        r[sn].setAttribute("transform", `translate(${f(A[0])} ${f(A[1])}) rotate(${f(MIR * ((ha + ka) * 0.55 + (side ? roll : 0)))}) scale(${MIR} 1)`); // heel-toe roll; the toes point the way he faces
         // sitting: each dangling shoe casts a soft shadow on the card face behind it
         const sh = r[ln === "legL" ? "footShL" : "footShR"];
         sh.setAttribute("cx", f(A[0] + (ln === "legL" ? -6 : 8))); sh.setAttribute("cy", f(A[1] + 30));
@@ -1010,32 +1006,51 @@ const engine = (function () {
       this._two += ((holding && wgt === 2 && !side ? 1 : 0) - this._two) * Math.min(1, dt * 8);
       if (this._two > 0.01) { const [ib, ie] = ik(T(J.shB), [WF[0] - 24, WF[1] - 24], 44, 42, 1); a.bs += (ib - a.bs) * this._two; a.be += (ie - a.be) * this._two; }
       const SB = T(J.shB), EB = add(SB, dir(a.bs), 44), WB = add(EB, dir(a.bs + a.be), 42);
-      const bArm = side ? "armBS" : "armB", bHand = side ? "handBS" : "handB";
+      const bArm = "armB", bHand = "handB";
       r[bArm].setAttribute("d", limb(SB, EB, WB));
-      r[bHand].setAttribute("transform", `translate(${f(WB[0])} ${f(WB[1])}) rotate(${f(a.bs + a.be)})`);
+      r[bHand].setAttribute("transform", `translate(${f(WB[0])} ${f(WB[1])}) rotate(${f(MIR * (a.bs + a.be))}) scale(${MIR} 1)`);
+      // Phase 3: turned past 45°, his far shoulder is behind his body, so the back arm goes behind the torso (it used to
+      // show through him in profile); facing you it stays in front, as drawn today
+      const armBehind = ys > 0.72;
+      if (armBehind !== this._armBehind) { this._armBehind = armBehind; const g = r.armBFront; (armBehind ? r.armBBack : this.all).insertBefore(g, armBehind ? null : r.armF); }
 
       const neck = T([154, 200]);
       const hRot = headTilt + this.look_.x * 6 + lean;
-      r.head.setAttribute("transform", `translate(${f(neck[0] - 154)} ${f(neck[1] - 200)}) rotate(${f(hRot)} 154 200)` + (headRel !== 1 ? ` translate(154 0) scale(${headRel.toFixed(3)} 1) translate(-154 0)` : ""));
+      r.head.setAttribute("transform", `translate(${f(neck[0] - 154)} ${f(neck[1] - 200)}) rotate(${f(hRot)} 154 200)`);
+      // Phase 3: the slab, the face laid on its front, the hat round it, all at the head's yaw
+      const hy_ = this.headYaw, ears = this.hat && COVERS_EARS.has(this.hat) ? null : this.ears;
+      if (hy_ !== this._drawnYaw || ears !== this._drawnEars || this.hat !== this._drawnHat) {
+        const Hd = headSvg(hy_, ears), Ht = hatSvg(this.hat, hy_);
+        r.headUnder.innerHTML = Hd.under; r.headOver.innerHTML = Hd.over;
+        r.hatBack.innerHTML = Ht.back; r.hatFront.innerHTML = Ht.front;
+        // a part that lies over the near side of his head (the headset's band) is clipped to the head, a little beyond its outline
+        r.hatOver.innerHTML = Ht.over ? `<clipPath id="hc3-${this.id}"><path d="${poly(grown(headHull(hy_), 4.5))}"/></clipPath><g clip-path="url(#hc3-${this.id})">${Ht.over}</g>` : "";
+        r.face3.setAttribute("transform", mat(frontMatrix(hy_)));
+        r.face3.setAttribute("opacity", Hd.faceOn ? Hd.alpha.toFixed(3) : "0");
+        this._drawnYaw = hy_; this._drawnEars = ears; this._drawnHat = this.hat;
+      }
       r.eyes.setAttribute("transform", `translate(${f(this.look_.x * 5)} ${f(this.look_.y * 4)})`);
       const bs = this.blink > 0 ? 0.1 : 1, ew = this._eyeWide || 1, ewS = ew.toFixed(3), ehS = (bs * ew).toFixed(3); // wide eyes on a take
       r.eyeL.setAttribute("transform", `translate(136 126) scale(${ewS} ${ehS}) translate(-136 -126)`);
       r.eyeR.setAttribute("transform", `translate(172.5 126) scale(${ewS} ${ehS}) translate(-172.5 -126)`);
-      r.eyeS.setAttribute("transform", `translate(${f(this.look_.x * 2 + 198)} ${f(this.look_.y * 3 + 125)}) scale(${ewS} ${ehS}) translate(-198 -125)`);
+
       r.brows.setAttribute("transform", `translate(${f(this.look_.x * 3)} ${f(this.brow.y + this.look_.y * 2)})`);
-      r.browS.setAttribute("transform", `translate(0 ${f(this.brow.y)})`);
+
 
       const hl_ = this.hatLag;
       if (live) {
         hl_.v += (150 * (hRot - hl_.a) - 7 * hl_.v) * dt; hl_.a += hl_.v * dt;
         hl_.vy += (-90 * hl_.y - 6 * hl_.vy) * dt; hl_.y += hl_.vy * dt * 10;
       } else { hl_.a = hRot; hl_.y = 0; }
-      // the cube's top sits up-right in the front view, up-left in the side view
-      const [hx, hy] = this.headShape === "round" ? [0, 0] : side ? [-6, -3] : [6, -3];
-      r.hats.setAttribute("transform", `translate(${hx} ${f(hy + Math.min(4, hl_.y))}) rotate(${f(hl_.a - hRot)} 152 96)`);
+      // the hat's lag (it swings after the head and bounces on each step) moves the drawn hat
+      const hatT = `translate(0 ${f(Math.min(4, hl_.y))}) rotate(${f(hl_.a - hRot)} 152 96)`;
+      r.hatBack.setAttribute("transform", hatT); r.hatFront.setAttribute("transform", hatT); r.hatOver.setAttribute("transform", hatT); r.hats.setAttribute("transform", hatT);
 
       r.armF.setAttribute("d", limb(SF, EF, WF));
-      r.handF.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1])}) rotate(${f(a.s + a.e + this._handLag)})`);
+      r.handF.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1])}) rotate(${f(MIR * (a.s + a.e + this._handLag))}) scale(${MIR} 1)`);
+      // idle with nothing in hand, the front hand rests on the strap and grips it (today's drawing); any gesture opens it
+      const grips = this.pose === "idle" && !this.prop && !this.isWalking && this.jumpT < 0 && Math.abs(this.cur.s - POSES.idle.s) < 12 && Math.abs(this.cur.e - POSES.idle.e) < 12;
+      if (grips !== this._grips) { this._grips = grips; r.handOpen.style.display = grips ? "none" : ""; r.handGrip.style.display = grips ? "" : "none"; }
       const sway = live ? Math.sin(t * 2.3) * 4 : 0;
       // the prop trails the hand like a weight on a spring (light: quick and small; heavy: slow and wide)
       const P_ = this.pl;
@@ -1050,7 +1065,7 @@ const engine = (function () {
       // hand, never along the forearm: held up as drawn while the forearm points up, out in
       // front when it's level, hanging from the hand when the arm hangs down
       const u_ = dir(a.s + a.e), kk = Math.max(0, Math.min(1, (u_[1] + 0.2) / 0.6)), hk = kk * kk * (3 - 2 * kk);
-      const ox = hk * u_[0] * 40, oy = hk * (u_[1] * 40 + 68);
+      const ox = hk * u_[0] * 40, oy = hk * (u_[1] * 40 + 68);   // u_ comes from dir(), already mirrored
       r.up.setAttribute("transform", `translate(${f(WF[0])} ${f(WF[1] + drop)}) rotate(${f(sway * (wgt === 2 ? 0.4 : 1) + swing)}) translate(${f(ox)} ${f(oy)}) scale(1.55)`);
     }
   }

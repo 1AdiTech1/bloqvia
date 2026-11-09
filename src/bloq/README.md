@@ -29,3 +29,13 @@ Outfits: `surf agent astro`.
 
 **Rules.** Never the same hat on two Bloqs of one page (make a v2 hat instead). The AI agent always wears `agent` and appears only through `AgentPod`. Fuel / gas is always drawn as a battery (lucide `BatteryCharging`), never a flame or a pump. Motion off (the switch, or the device asking for less motion): everything
 stands still and stays visible. SSR-safe: nothing touches the DOM until mount.
+
+## Phase 3 (Nov 9): the 3D Bloq
+
+The head is a thin rounded slab that really turns with the body through any angle (`head3d.ts`); the 15 hats turn with
+it, every part on its own surface (`hats3d.ts`, art in `hatArt.ts`); the backpack and the single strap follow the angle
+(`body3d.ts`); two lime lights sit in the sides of his head where ears would be (hidden under the headset, the aviator
+and the helmets). Facing right is his everyday view turned 30° to the right, facing left the same to the left, walking is
+the profile (90°). The CSS mirror (`.bq-flip.left`) and the fixed side view are no longer used for drawing. Everything
+else in `engine.ts` (moods, blink, talk, gestures, cheers, hops, props, sitting, riding, the tap) is unchanged.
+Approved in docs/design/turnaround (v4.13); checked move by move in docs/design/motion-lab-p3.
