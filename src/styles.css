@@ -490,3 +490,9 @@ html.touch-sb::-webkit-scrollbar { display: none; }
 .lv-motion button::after { content: ""; position: absolute; inset: -8px; }
 .lv-motion button[aria-pressed="true"] { background: #16243a; color: #f7f4eb; }
 .lv-motion button:focus-visible { outline: 2px solid #d4f033; outline-offset: 2px; }
+
+/* Desktop game pages: the top messages centre over the middle column, like the quiz card (prompt 27d). */
+@media (min-width: 1100px) {
+  html[data-shell="nav"] .bq-toasts { padding-left: calc(max(0px, (100vw - 1440px) / 2) + 220px); padding-right: calc(max(0px, (100vw - 1440px) / 2) + 330px); }
+  html[data-shell="chain"] .bq-toasts { padding-left: max(0px, (100vw - 1440px) / 2); padding-right: calc(max(0px, (100vw - 1440px) / 2) + 330px); }
+}

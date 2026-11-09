@@ -23,9 +23,11 @@ export function PhoneShell({
   const showPanel = nav || chain;
   const ask = (el: HTMLElement) => { returnTo.current = el; setAsking(true); };
   useEffect(() => {
-    document.documentElement.classList.add("bq-game");
-    return () => document.documentElement.classList.remove("bq-game");
-  }, []);
+    const html = document.documentElement;
+    html.classList.add("bq-game");
+    html.dataset["shell"] = nav ? "nav" : chain ? "chain" : "plain"; // for AppChrome's top messages (prompt 27d)
+    return () => { html.classList.remove("bq-game"); delete html.dataset["shell"]; };
+  }, [nav, chain]);
 
   return (
     <div className="min-h-screen w-full overflow-x-clip bg-night text-ivory">

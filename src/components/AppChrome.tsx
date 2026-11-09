@@ -42,7 +42,7 @@ export function AppChrome() {
   return (
     <>
     <TouchScrollbar />
-    <div className="pointer-events-none fixed inset-x-0 top-3 z-50 flex flex-col items-center gap-2 px-4">
+    <div className="bq-toasts pointer-events-none fixed inset-x-0 top-3 z-50 flex flex-col items-center gap-2 px-4">
       <AnimatePresence>
         {game.busy && !onLanding && (
           <motion.div key="busy" {...anim} className={`${pill} bg-navy text-ivory`}>
