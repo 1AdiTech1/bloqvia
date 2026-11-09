@@ -9,17 +9,19 @@
  *   const xNow = stop();                      // interrupted: he stays where he is; returns that x
  *
  * The host is an absolutely positioned box moved with `transform: translate(x, y)`. walkTo() writes the
- * final transform first and plays the trip over it. With reduced motion he is placed there at once.
+ * final transform first and plays the trip over it. With motion off (motion.ts) he is placed there at once.
+ * `run: false` keeps it a calm walk however far he goes (along a card's edge, docs/design/morning-fixes).
  */
+import { motionOff } from "./motion";
 
 export interface WalkOptions {
   /** The y to walk at (default 0, standing on the ground line). */
   y?: number;
   /** Runs when he gets there (not when the walk is interrupted). */
   onArrive?: () => void;
+  /** false: always a calm walk, however far. By default trips over 3 body widths become a run. */
+  run?: boolean;
 }
-
-const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function translateOf(el: HTMLElement): { x: number; y: number } {
   const t = getComputedStyle(el).transform;
@@ -43,19 +45,19 @@ export function walkFrames(x0: number, x1: number, y: number, vmax: number, acc:
 
 /** Bloq walks from where the host is now to x. Returns stop(), which leaves him where he is and returns that x. */
 export function walkTo(host: HTMLElement, x: number, opts: WalkOptions = {}): () => number {
-  const { y = 0, onArrive } = opts;
+  const { y = 0, onArrive, run } = opts;
   const from = translateOf(host);
   const end = () => {
     host.style.transition = "none";
     host.style.transform = `translate(${x}px, ${y}px)`;
   };
-  if (reducedMotion() || Math.abs(x - from.x) < 1) {
+  if (motionOff() || Math.abs(x - from.x) < 1) {
     end();
     onArrive?.();
     return () => x;
   }
   const w = host.offsetWidth || 120;
-  const long = Math.abs(x - from.x) > w * 3;
+  const long = run !== false && Math.abs(x - from.x) > w * 3;
   const { frames, ms } = walkFrames(from.x, x, y, long ? w * 2.7 : w * 1.05, long ? w * 3.2 : w * 4);
   end(); // the end state; the trip plays over it
   const trip = host.animate(frames, { duration: ms, easing: "linear" });

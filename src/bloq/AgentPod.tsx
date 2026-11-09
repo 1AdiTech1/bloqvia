@@ -13,9 +13,10 @@
  */
 import { forwardRef, useEffect, useImperativeHandle, useRef, type CSSProperties } from "react";
 import { Bloq, type BloqHandle } from "./Bloq";
+import { motionOff } from "./motion";
 
 export interface AgentPodHandle {
-  /** Lean out for `ms` (default 2200) and bounce. No-op with reduced motion. */
+  /** Lean out for `ms` (default 2200) and bounce. No-op with motion off (motion.ts). */
   peek(ms?: number): void;
   jump(): void;
   talk(ms?: number): void;
@@ -29,7 +30,7 @@ export interface AgentPodProps {
   className?: string;
 }
 
-const still = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const still = () => motionOff();
 
 export const AgentPod = forwardRef<AgentPodHandle, AgentPodProps>(function AgentPod({ size = 32, lean = true, className }, ref) {
   const pod = useRef<HTMLSpanElement>(null);

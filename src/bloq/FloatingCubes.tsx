@@ -4,6 +4,7 @@
  * and hop together when you call hop() on the handle. Sits behind Bloq, faded (the eyes go to Bloq).
  */
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { motionOff, useMotionOff } from "./motion";
 
 type Kind = "drift" | "spin" | "tumble" | "orbit" | "sway" | "hop";
 // [left %, top %, size px, color]
@@ -14,16 +15,19 @@ export interface FloatingCubesHandle { hop(): void }
 
 export const FloatingCubes = forwardRef<FloatingCubesHandle, { className?: string }>(function FloatingCubes({ className }, ref) {
   const box = useRef<HTMLDivElement>(null);
+  const off = useMotionOff(); // motion off: the cubes stand still (motion.ts)
   useImperativeHandle(ref, () => ({
     hop: () => {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (motionOff()) return;
       box.current?.querySelectorAll("svg").forEach((s, i) =>
         s.animate([{ translate: "0 0" }, { translate: "0 -26px" }, { translate: "0 0" }], { duration: 520, delay: i * 40, easing: "cubic-bezier(.3,.7,.4,1)" }));
     },
   }), []);
   useEffect(() => {
     const root = box.current; if (!root) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = off;
+    // Motion turned off: every cube goes back to its resting spot.
+    if (reduce) root.querySelectorAll<HTMLElement | SVGElement>("[data-cube], [data-cube] > svg").forEach((el) => { el.style.transform = ""; });
     const rnd = (a: number, b: number) => a + Math.random() * (b - a);
     const kinds: Kind[] = (["drift", "spin", "tumble", "orbit", "sway", "hop"] as Kind[]).sort(() => Math.random() - 0.5);
     const wraps = [...root.querySelectorAll<HTMLElement>("[data-cube]")];
@@ -65,7 +69,7 @@ export const FloatingCubes = forwardRef<FloatingCubesHandle, { className?: strin
     };
     window.addEventListener("pointermove", onMove, { passive: true });
     return () => { cancelAnimationFrame(raf); io.disconnect(); window.removeEventListener("pointermove", onMove); };
-  }, []);
+  }, [off]);
   return (
     <div ref={box} aria-hidden="true" className={className} style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1, opacity: 0.34, filter: "saturate(.7)" }}>
       {SPOTS.map(([x, y, w, k], i) => {

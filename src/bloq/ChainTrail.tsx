@@ -9,6 +9,8 @@
  * The road runs from the side of one block to the side of the next, fades out before each block and
  * carries on into it as three stepping stones (docs/design/roads, F). At the foot of the map: an
  * orchard of Merkle trees in Season 1 (docs/design/fields-scenery, C), a skyline in Season 2.
+ * While Bloq walks, the screen follows him (camera.ts; docs/design/morning-fixes, Nov 9). With motion off
+ * (motion.ts) he is placed at the next stop at once and the screen jumps to him.
  *
  *   <ChainTrail
  *     stops={[{ id, title: "The Vault", kind: "vault", post: "keys · ed25519", reward: <ItemIcon id="key-fragment" /> }, …]}
@@ -25,6 +27,8 @@
 import { forwardRef, useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { Bloq, type BloqHandle, type BloqHat, type BloqProp } from "./Bloq";
 import { SpeechBubble, useSay, talkMs } from "./SpeechBubble";
+import { motionOff } from "./motion";
+import { followCamera, keepInView } from "./camera";
 
 /** Season 1: vault (keys), battery (gas), contract. Season 2: ownership (tokens/NFTs), transfer (signed transactions), pool (DeFi pricing). */
 export type QuestKind = "vault" | "battery" | "contract" | "ownership" | "transfer" | "pool";
@@ -97,7 +101,7 @@ const TOWERS: readonly (readonly [number, number, string])[] = [[0.88, 110, "val
 const FADE = { rx: 124, ry: 86, core: 0.8 } as const;
 const STONES = [[92, 9], [72, 7.5], [54, 6]] as const;
 const MERCHANT = { hat: "tophat", prop: "cube", label: "Bloq the merchant, waving from his shop" } as const satisfies ChainTrailProps["host"];
-const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const reduced = () => motionOff();
 
 function defaultTip(level: number, stops: ChainTrailProps["stops"]): string {
   if (level <= 0) return `Hi, I'm Bloq. Tap the first block and we'll open ${stops[0].title}.`;
@@ -446,11 +450,16 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
   useLayoutEffect(() => {
     if (!geo || walkingRef.current) return;
     if (locked || level <= at.current || reduced()) {
-      at.current = level; const r = rest(level); place(r.x, r.y); setFacing(r.face); return;
+      const moved = !locked && level > at.current;
+      at.current = level; const r = rest(level); place(r.x, r.y); setFacing(r.face);
+      // Motion off: he is at the next stop at once, and so is the screen.
+      if (moved) requestAnimationFrame(() => { if (walker.current) keepInView(walker.current); });
+      return;
     }
     const from = at.current, to = level;
     walkingRef.current = true;
     let cancelled = false;
+    let cam: (() => void) | null = null;
     const anim = (ms: number, step: (k: number) => void) => new Promise<void>((res) => {
       const t0 = performance.now();
       const tick = (now: number) => { if (cancelled) return res(); const k = Math.min(1, (now - t0) / ms); step(k); k < 1 ? requestAnimationFrame(tick) : res(); };
@@ -514,8 +523,9 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
       return p.x + 30 < d.x - 74 || p.x - 30 > d.x + 74 || feet < d.y - 136 || feet - 110 > d.y + 14;
     };
     (async () => {
-      walker.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-      await new Promise((r) => timers.current.push(window.setTimeout(r, 500)));
+      // The camera stays on him: still while he is in the middle of the screen, gliding after him near the edges.
+      if (walker.current) cam = followCamera(walker.current);
+      await new Promise((r) => timers.current.push(window.setTimeout(r, 250)));
       guide.current?.walking(true);
       for (let i = from + 1; i <= to && !cancelled; i++) {
         const a = rest(i - 1);
@@ -552,6 +562,7 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
         at.current = i;
       }
       guide.current?.walking(false);
+      const stopCam = cam; if (stopCam) timers.current.push(window.setTimeout(stopCam, 700)); // let it settle
       const r = rest(to); setFacing(r.face); walkingRef.current = false;
       if (cancelled) return;
       if (to >= 3) { cheerTogether(); timers.current.push(window.setTimeout(() => arrivedRef.current?.(to), 2300)); return; }
@@ -559,7 +570,7 @@ export const ChainTrail = forwardRef<ChainTrailHandle, ChainTrailProps>(function
       say(tip(to, stops));
       arrivedRef.current?.(to);
     })();
-    return () => { cancelled = true; walkingRef.current = false; guide.current?.walking(false); };
+    return () => { cancelled = true; walkingRef.current = false; guide.current?.walking(false); cam?.(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geo, level, locked]);
 

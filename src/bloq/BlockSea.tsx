@@ -12,6 +12,7 @@
  *   </div>
  */
 import { useEffect, useRef, type RefObject } from "react";
+import { useMotionOff } from "./motion";
 
 const SZ = 20, GAP = 3, STEP = SZ + GAP;
 
@@ -53,8 +54,9 @@ function draw(c: HTMLCanvasElement, t: number, L: Layer, flashes: Map<string, nu
 
 export function BlockSea({ riderRef }: { riderRef?: RefObject<HTMLElement | null> }) {
   const back = useRef<HTMLCanvasElement>(null), front = useRef<HTMLCanvasElement>(null), box = useRef<HTMLDivElement>(null);
+  const off = useMotionOff(); // motion off: the sea stands still (motion.ts)
   useEffect(() => {
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = off;
     const flashes = new Map<string, number>();
     let on = true, raf = 0, rideY = 92;
     const t0 = performance.now();
@@ -75,7 +77,7 @@ export function BlockSea({ riderRef }: { riderRef?: RefObject<HTMLElement | null
     };
     raf = requestAnimationFrame(frame);
     return () => { cancelAnimationFrame(raf); io.disconnect(); };
-  }, [riderRef]);
+  }, [riderRef, off]);
   return (
     <div ref={box} aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
       <canvas ref={back} style={{ position: "absolute", left: 0, bottom: 0, width: "100%", height: 200, zIndex: 1 }} />

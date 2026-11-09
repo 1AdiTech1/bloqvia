@@ -69,6 +69,12 @@
 @keyframes bq-shadow { 0%,100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(.72); opacity: .55; } }
 
 .still .bq *, .still .bq { animation: none !important; }
+/* Motion off (the landing's Motion switch, motion.ts): every animation on the page ends at once on its last frame
+   (a tiny duration rather than none, so elements that animate in still show and animationend still fires),
+   transitions are skipped, and the page jumps instead of gliding. */
+body.still *, body.still *::before, body.still *::after { animation-duration: .01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: 0s !important; transition-delay: 0s !important; }
+html:has(body.still) { scroll-behavior: auto !important; }
+body.still .bloq-trail .chunk { display: none; }
 @media (prefers-reduced-motion: reduce) { .bq, .bq * { animation: none !important; } }
 
 /* ---------- speech bubble (SpeechBubble.tsx): frosted glass, tail keeps pointing at Bloq when nudged ---------- */

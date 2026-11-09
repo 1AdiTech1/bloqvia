@@ -12,8 +12,9 @@
  * The host is an absolutely positioned box moved with `transform: translate(x, y)` and sized with `width`
  * (Bloq keeps a 3:4 box inside it). leap() writes the final transform and width first and plays the
  * flight over them, so cancel() (or an interruption) leaves him where he is and the next move starts there.
- * With reduced motion he goes straight to the spot and both callbacks run at once.
+ * With motion off (motion.ts) he goes straight to the spot and both callbacks run at once.
  */
+import { motionOff } from "./motion";
 
 /** Where the host box goes: its translate in px and its width in px. */
 export interface LeapSpot { x: number; y: number; w: number }
@@ -32,8 +33,6 @@ export interface LeapOptions {
   /** Runs as he lands. */
   onLand?: () => void;
 }
-
-const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** Flight time: longer jumps take a little longer (0.52 s to 1 s). */
 export function leapMs(a: LeapSpot, b: LeapSpot): number {
@@ -89,7 +88,7 @@ export function leap(host: HTMLElement, to: LeapSpot, opts: LeapOptions = {}): (
     host.style.width = `${to.w}px`;
     host.style.transform = `translate(${to.x}px, ${to.y}px)`;
   };
-  if (reducedMotion()) {
+  if (motionOff()) {
     land();
     onTakeoff?.(dir);
     onLand?.();

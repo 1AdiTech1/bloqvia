@@ -19,3 +19,5 @@ export type { AgentPodHandle, AgentPodProps } from "./AgentPod";
 export { ChainTrail, BlockTicker } from "./ChainTrail";
 export type { ChainTrailHandle, ChainTrailProps, TrailStop, QuestKind } from "./ChainTrail";
 export { colors as bloqColors } from "./engine";
+export { motionOff, setMotion, useMotionOff, useMotionRoot } from "./motion";
+export { followCamera, keepInView, scrollBox } from "./camera";
