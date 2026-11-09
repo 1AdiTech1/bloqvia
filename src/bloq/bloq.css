@@ -54,6 +54,7 @@
 .bq[data-mood="laugh"] .bq-open { display: none; }
 .bq-finger { display: none; }
 .pointing .bq-finger { display: inline; }
+.spacing .bq-finger { display: inline; } /* floating in space (the landing's hero) his raised hand points too, at the Start button in the corner (Nov 10) */
 
 .bq-prop { display: none; transform-origin: 0px -40px; }
 .bq-prop.on { display: inline; }
