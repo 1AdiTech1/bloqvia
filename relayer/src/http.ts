@@ -8,6 +8,9 @@
  *   POST /admin/quest        -> { date?: "YYYY-MM-DD" } + header x-admin-token -> generate + seed now, then post the day's bounty
  *   POST /ask                -> { question, lessonId?, accountId? } -> { answer, generated_by }  (Ask Bloq, grounded, signed)
  *   GET  /market             -> price snapshots (48 h), the NPC trader's last move and rules, the fast-forward's state
+ *   GET  /seat?accountId=&daoPublicKey= -> { graduate, founder, canVote }: the account's seats on the cohort DAO
+ *   POST /register           -> { publicKey, daoPublicKey? } (the second key is the Passport's vote, limited to the DAO)
+ *   POST /propose            -> a founder's bounty proposal, signed with the second key; filed on the DAO (propose.ts)
  *   POST /fastforward        -> start "a day of trading in a minute" (six scripted learners); 429 with nextAt when gated
  *
  * Wrap `handle()` in a Vercel/Netlify function if you host it serverless.
@@ -21,6 +24,9 @@ import { syncDailyBounty } from "./bounties.js";
 import { getSnapshots, latest } from "./market.js";
 import { traderState, RULES } from "./trader.js";
 import { ffState, startFastForward, FF } from "./fastforward.js";
+import { getPolicy, seatsOf } from "./seats.js";
+import { hasKey } from "./accounts.js";
+import { propose, type ProposeBody } from "./propose.js";
 import { createAskBloq, type AskBloq } from "./ask.js";
 import { view, type NearContext } from "./near.js";
 
@@ -130,11 +136,24 @@ export async function handle(ctx: NearContext, req: IncomingMessage, res: Server
       return send(res, 200, result, origin, allowed);
     }
 
+    if (req.method === "GET" && url.pathname === "/seat") {
+      const accountId = url.searchParams.get("accountId") ?? "", publicKey = url.searchParams.get("daoPublicKey");
+      if (!accountId) throw new PolicyError("Send ?accountId=");
+      const [policy, canVote] = await Promise.all([getPolicy(ctx), publicKey ? hasKey(ctx, accountId, publicKey) : Promise.resolve(false)]);
+      return send(res, 200, { daoId: ctx.config.daoId, ...seatsOf(policy, accountId), canVote }, origin, allowed);
+    }
+
+    if (req.method === "POST" && url.pathname === "/propose") {
+      const body = (await readJson(req)) as unknown as ProposeBody;
+      const result = await propose(ctx, body);
+      return send(res, 200, result, origin, allowed);
+    }
+
     if (req.method === "POST" && url.pathname === "/register") {
       const body = await readJson(req);
       const started = Date.now();
       let result;
-      if (typeof body.publicKey === "string") result = await registerLearner(ctx, body.publicKey);
+      if (typeof body.publicKey === "string") result = await registerLearner(ctx, body.publicKey, typeof body.daoPublicKey === "string" ? body.daoPublicKey : undefined);
       else if (typeof body.accountId === "string") result = await registerExistingAccount(ctx, body.accountId);
       else throw new PolicyError("Send { publicKey } or { accountId }");
       console.log(`[relayer] register ${result.accountId} created=${result.created} registered=${result.registered} ${Date.now() - started}ms`);

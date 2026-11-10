@@ -6,7 +6,7 @@
  */
 import { createHash } from "node:crypto";
 import { PublicKey, actions, nearToYocto } from "near-api-js";
-import { LEARNER_KEY_METHODS } from "./policy.js";
+import { DAO_KEY_METHODS, LEARNER_KEY_METHODS } from "./policy.js";
 import { GAS_30, ZERO, type NearContext, view } from "./near.js";
 
 export interface RegisterResult {
@@ -14,6 +14,8 @@ export interface RegisterResult {
   created: boolean;
   registered: boolean;
   txHashes: string[];
+  /** True when the account carries the second key, limited to the DAO's act_proposal (Nov 10: the Passport's vote). */
+  canVote: boolean;
 }
 
 /** Deterministic account name from the public key, so re-registering with the same key is idempotent. */
@@ -40,23 +42,31 @@ async function isRegistered(ctx: NearContext, accountId: string): Promise<boolea
  * Creates (if needed) and registers a learner for the given public key.
  * Safe to call twice: every step checks on-chain state first.
  */
-export async function registerLearner(ctx: NearContext, publicKeyString: string): Promise<RegisterResult> {
+export async function registerLearner(ctx: NearContext, publicKeyString: string, daoPublicKeyString?: string): Promise<RegisterResult> {
   const publicKey = PublicKey.fromString(publicKeyString);
+  const daoPublicKey = daoPublicKeyString ? PublicKey.fromString(daoPublicKeyString) : null;
   const accountId = learnerAccountId(publicKey.toString(), ctx.config.relayerAccountId);
   const txHashes: string[] = [];
 
-  let created = false;
+  let created = false, canVote = false;
   if (!(await accountExists(ctx, accountId))) {
+    // The second key is the Passport's vote: it can call only the DAO's act_proposal, nothing on core and no
+    // transfers; the DAO itself checks the account holds a seat. Added at creation, because only then can a key be
+    // added at all (the relayer keeps no key to the learner's account afterwards).
     const outcome = await ctx.relayer.signAndSendTransaction({
       receiverId: accountId,
       actions: [
         actions.createAccount(),
         actions.transfer(nearToYocto(Number(ctx.config.learnerFundingNear))),
         actions.addFunctionCallAccessKey(publicKey, ctx.config.coreContractId, LEARNER_KEY_METHODS),
+        ...(daoPublicKey ? [actions.addFunctionCallAccessKey(daoPublicKey, ctx.config.daoId, DAO_KEY_METHODS)] : []),
       ],
     });
     txHashes.push(outcome.transaction.hash);
     created = true;
+    canVote = !!daoPublicKey;
+  } else if (daoPublicKey) {
+    canVote = await hasKey(ctx, accountId, daoPublicKey.toString());
   }
 
   let registered = false;
@@ -73,7 +83,17 @@ export async function registerLearner(ctx: NearContext, publicKeyString: string)
     registered = true;
   }
 
-  return { accountId, created, registered, txHashes };
+  return { accountId, created, registered, txHashes, canVote };
+}
+
+/** Does the account carry this key? (The browser asks on a returning session, to know whether it can vote.) */
+export async function hasKey(ctx: NearContext, accountId: string, publicKey: string): Promise<boolean> {
+  try {
+    await ctx.provider.viewAccessKey({ accountId, publicKey });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -93,5 +113,5 @@ export async function registerExistingAccount(ctx: NearContext, accountId: strin
     });
     registered = true;
   }
-  return { accountId, created: false, registered, txHashes: [] };
+  return { accountId, created: false, registered, txHashes: [], canVote: false };
 }

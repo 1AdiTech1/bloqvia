@@ -17,6 +17,10 @@ export const ALLOWED_METHODS = ["complete_lesson", "sell_to_bloq", "buy_from_blo
  */
 export const LEARNER_KEY_METHODS: string[] = [...ALLOWED_METHODS];
 
+/** The second key (Nov 10, the Passport's vote): one method on the cohort DAO, and the only two votes it can cast. */
+export const DAO_KEY_METHODS: string[] = ["act_proposal"];
+export const DAO_VOTES = ["VoteApprove", "VoteReject"] as const;
+
 /**
  * Hard cap per relayed call. graduate needs ~25 TGas (own work + 15 TGas of
  * Passport calls); claim_bounty forwards to the board, which reads core back
@@ -29,6 +33,8 @@ export const MAX_DEPOSIT = 0n;
 
 export interface PolicyContext {
   coreContractId: string;
+  /** The cohort DAO; a registered learner may relay act_proposal to it (the DAO checks the seat). */
+  daoId?: string;
   /** Returns true when the sender is a registered learner (cached view call). */
   isRegistered: (accountId: string) => Promise<boolean>;
 }
@@ -42,19 +48,23 @@ export class PolicyError extends Error {
 /** Throws PolicyError if the delegate must not be relayed. */
 export async function assertAllowed(sd: SignedDelegate, ctx: PolicyContext): Promise<void> {
   const da = sd.delegateAction;
-  if (da.receiverId !== ctx.coreContractId) {
+  const toDao = !!ctx.daoId && da.receiverId === ctx.daoId;
+  if (da.receiverId !== ctx.coreContractId && !toDao) {
     throw new PolicyError(`Receiver ${da.receiverId} is not ${ctx.coreContractId}`);
   }
   if (!Array.isArray(da.actions) || da.actions.length === 0) {
     throw new PolicyError("Delegate carries no actions");
   }
-  if (da.actions.length > 2) {
-    throw new PolicyError("At most two actions per relayed call");
+  if (da.actions.length > (toDao ? 1 : 2)) {
+    throw new PolicyError(toDao ? "One vote per relayed call" : "At most two actions per relayed call");
   }
   for (const action of da.actions) {
-    const fc = (action as { functionCall?: { methodName: string; gas: bigint; deposit: bigint } }).functionCall;
+    const fc = (action as { functionCall?: { methodName: string; gas: bigint; deposit: bigint; args: Uint8Array } }).functionCall;
     if (!fc) throw new PolicyError("Only function calls are relayed");
-    if (!(ALLOWED_METHODS as readonly string[]).includes(fc.methodName)) {
+    if (toDao) {
+      if (!DAO_KEY_METHODS.includes(fc.methodName)) throw new PolicyError(`Method ${fc.methodName} is not allowed on the DAO`);
+      if (!isVote(fc.args)) throw new PolicyError("Only VoteApprove and VoteReject are relayed to the DAO");
+    } else if (!(ALLOWED_METHODS as readonly string[]).includes(fc.methodName)) {
       throw new PolicyError(`Method ${fc.methodName} is not allowed`);
     }
     if (BigInt(fc.gas) > MAX_GAS_PER_ACTION) throw new PolicyError("Gas above the per-call cap");
@@ -62,6 +72,16 @@ export async function assertAllowed(sd: SignedDelegate, ctx: PolicyContext): Pro
   }
   if (!(await ctx.isRegistered(da.senderId))) {
     throw new PolicyError(`${da.senderId} is not a registered learner`, 403);
+  }
+}
+
+/** act_proposal args must be { id, action: VoteApprove | VoteReject }: a vote, never Finalize, RemoveProposal or a council action. */
+export function isVote(args: Uint8Array | string): boolean {
+  try {
+    const a = JSON.parse(typeof args === "string" ? args : Buffer.from(args).toString("utf8")) as { id?: unknown; action?: unknown };
+    return Number.isInteger(a.id) && typeof a.action === "string" && (DAO_VOTES as readonly string[]).includes(a.action);
+  } catch {
+    return false;
   }
 }
 

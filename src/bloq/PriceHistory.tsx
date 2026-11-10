@@ -29,7 +29,10 @@ export function PriceHistory({ points, change, label = "He pays · 24 h", classN
     area = `${path} L${W} ${H} L0 ${H} Z`;
     last = pts[pts.length - 1]!;
   }
-  const delta = change === null ? null : change >= 0 ? `▲ +${change} since yesterday` : `▼ ${change} since yesterday`;
+  // "since yesterday" once there is a day of points; before that the change is since the oldest point we have
+  const span = points.length >= 2 ? points[points.length - 1]!.t - points[0]!.t : 0;
+  const since = span >= 20 * 60 * 60 * 1000 ? "since yesterday" : "today";
+  const delta = change === null ? null : change >= 0 ? `▲ +${change} ${since}` : `▼ ${change} ${since}`;
   return (
     <div className={className} data-price-history="" style={{ display: "grid", gap: 4 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>

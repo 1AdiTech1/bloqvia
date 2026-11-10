@@ -19,7 +19,7 @@ Tracks: games (primary), nfts, memecoins, social, open. Read `README.md` first, 
    `cd ../bloqvia-passport && cargo test` → expect 11 passed.
    `cd ../bloqvia-streak && cargo test` → expect 9 passed (Module A, merged).
    `cd ../bloqvia-bounties && cargo test` → expect 14 passed (Module B, merged Nov 5 after its on-chain proof).
-3. `cd relayer && npm i && npm test` → expect 32 passed.
+3. `cd relayer && npm i && npm test` → expect 36 passed.
    `cd ../scripts && npm i && npm test` → expect 2 passed.
 If any of these fail on a clean clone, stop and report the full output; do not
 "fix" by changing tests.
@@ -81,6 +81,7 @@ If any of these fail on a clean clone, stop and report the full output; do not
 | Module B proof | `cd scripts && npm run bounty:claim -- --relayer http://localhost:8787 --bounty 1` | a fresh learner graduates and claims; `claim: Paid`, balance up by the reward |
 | Reopen used-up bounties (Adi's go-ahead) | `cd scripts && set -a && source ../relayer/.env && set +a && npm run bounty:reopen -- --apply` (without `--apply`: dry run) | fully claimed bounties closed and re-added with room; the open list printed |
 | Make the NPC trader's account (once, Adi's go-ahead) | `cd scripts && npm run trader:create -- --relayer http://localhost:8787` | the account, its three quests done, two lines for `relayer/.env` and Railway |
+| DAO seat roles (once, Adi's go-ahead) | `cd scripts && set -a && source ../relayer/.env && set +a && npm run dao:roles -- --apply` (without `--apply`: dry run; `--seat <account> <graduates\|founders>` seats one by hand) | the ChangePolicy proposal approved; `get_policy` lists graduates and founders |
 | Fast-forward now | `curl -s -X POST localhost:8787/fastforward` then `curl -s localhost:8787/market` | `{ started: true }`; `/market` shows round, log and snapshots |
 | Account balances (read-only) | `cd scripts && npm run balances` | table of balance / locked / free per account; exit 1 and a top-up hint if one is low |
 | View on chain | `near contract call-function as-read-only core.bloqvia.testnet get_bloq json-args '{}' network-config testnet now` | JSON |

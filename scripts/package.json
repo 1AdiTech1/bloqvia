@@ -15,6 +15,7 @@
     "bounty:claim": "tsx bounty-claim.ts",
     "bounty:reopen": "tsx bounty-reopen.ts",
     "trader:create": "tsx trader-create.ts",
+    "dao:roles": "tsx dao-roles.ts",
     "balances": "tsx check-balances.ts"
   },
   "dependencies": {

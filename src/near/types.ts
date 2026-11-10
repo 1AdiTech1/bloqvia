@@ -58,7 +58,11 @@ export interface RegisterResult {
   created: boolean;
   registered: boolean;
   txHashes: string[];
+  /** The account carries the second key (the Passport's vote on the cohort DAO). */
+  canVote?: boolean;
 }
+/** GET /seat: the account's seats on the cohort DAO. */
+export interface SeatResult { daoId: string; graduate: boolean; founder: boolean; canVote: boolean }
 
 export interface RelayResult {
   txHash: string;
@@ -125,3 +129,7 @@ export interface DaoPolicy {
   default_vote_policy: { weight_kind: string; quorum: string; threshold: [number, number] | string };
   proposal_bond: string; proposal_period: string;
 }
+
+/** POST /propose (founders): a new bounty for the board, filed by the relayer as a DAO FunctionCall proposal. */
+export interface ProposeInput { title: string; description: string; tier: "Small" | "Medium" | "Large"; requirement: "Graduated" | { PassportLevel: { min: number } } | { QuestCompleted: { lesson_id: string } }; reward_near: string; max_claims: number }
+export interface ProposeResult { proposalId: number; url: string }

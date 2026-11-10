@@ -13,6 +13,8 @@ export interface RelayerConfig {
   ai: { apiKey: string; baseUrl: string; questModel: string; chatModel: string; askDailyCap: number } | null;
   /** Shared secret for POST /admin/*; without it those routes are off. */
   adminToken: string | null;
+  /** The cohort's Sputnik DAO (Module B): seats for graduates and founders, votes relayed to it (seats.ts). */
+  daoId: string;
 }
 
 function required(name: string): string {
@@ -36,6 +38,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): RelayerConfig 
     relayerAccountId: required("RELAYER_ACCOUNT_ID"),
     relayerPrivateKey: privateKey as RelayerConfig["relayerPrivateKey"],
     coreContractId: required("CORE_CONTRACT_ID"),
+    daoId: env.DAO_ID?.trim() || "bloqvia-dao.sputnik-v2.testnet",
     passportContractId: required("PASSPORT_CONTRACT_ID"),
     learnerFundingNear: env.LEARNER_FUNDING_NEAR ?? "0.01",
     corsOrigins: (env.CORS_ORIGINS ?? "http://localhost:5173").split(",").map((s) => s.trim()).filter(Boolean),

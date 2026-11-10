@@ -4,6 +4,7 @@ import { receiptFailure } from "./outcome.js";
 import { PolicyError, RateLimiter, assertAllowed } from "./policy.js";
 import { type NearContext, view } from "./near.js";
 import { afterTrade } from "./market.js";
+import { afterLearnerCall } from "./seats.js";
 
 const limiter = new RateLimiter(30, 60_000); // 30 calls per minute per sender
 const registeredCache = new Map<string, number>();
@@ -33,6 +34,7 @@ export async function relay(ctx: NearContext, payloadBase64: string): Promise<Re
   limiter.check(senderId);
   await assertAllowed(signedDelegate, {
     coreContractId: ctx.config.coreContractId,
+    daoId: ctx.config.daoId,
     isRegistered: (id) => isRegisteredCached(ctx, id),
   });
 
@@ -49,5 +51,14 @@ export async function relay(ctx: NearContext, payloadBase64: string): Promise<Re
     throw new PolicyError(failure.message, 422);
   }
   if (methods.some((m) => m === "sell_to_bloq" || m === "buy_from_bloq" || m === "graduate")) afterTrade(ctx); // the curve gets the trade's point
+  if (signedDelegate.delegateAction.receiverId === ctx.config.coreContractId) {
+    const calls = signedDelegate.delegateAction.actions.map((a) => {
+      const fc = (a as { functionCall?: { methodName: string; args: Uint8Array } }).functionCall;
+      let args: Record<string, unknown> = {};
+      try { args = fc ? (JSON.parse(Buffer.from(fc.args).toString("utf8")) as Record<string, unknown>) : {}; } catch { /* not JSON: nothing to read */ }
+      return { method: fc?.methodName ?? "?", args };
+    });
+    afterLearnerCall(ctx, senderId, calls); // a graduation or a stamp seats the learner on the DAO (seats.ts)
+  }
   return { txHash, senderId, methods };
 }

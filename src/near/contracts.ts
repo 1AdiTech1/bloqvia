@@ -3,7 +3,7 @@
  * Views go straight to RPC. Changes are signed by the learner and relayed.
  */
 import { JsonRpcProvider, actions, teraToGas } from "near-api-js";
-import { CALL_GAS_TGAS, CLAIM_GAS_TGAS, NEAR_CONFIG } from "./config";
+import { CALL_GAS_TGAS, CLAIM_GAS_TGAS, VOTE_GAS_TGAS, NEAR_CONFIG } from "./config";
 import { relayerApi } from "./relayer";
 import type { LearnerSigner } from "./signer";
 import type {
@@ -78,4 +78,9 @@ export const game = {
   checkIn: (signer: LearnerSigner) => send(signer, "check_in", {}),
   /** Module B: claim a bounty; core forwards to the board, which checks the requirement against core. */
   claimBounty: (signer: LearnerSigner, bountyId: number) => send(signer, "claim_bounty", { bounty_id: bountyId }, CLAIM_GAS_TGAS),
+  /** The Passport's vote (Nov 10): act_proposal on the cohort DAO, signed with the account's second key. */
+  voteDao: async (signer: LearnerSigner, proposalId: number, approve: boolean): Promise<RelayResult> => {
+    const payload = await signer.signDelegate(NEAR_CONFIG.daoId, [call("act_proposal", { id: proposalId, action: approve ? "VoteApprove" : "VoteReject" }, VOTE_GAS_TGAS)]);
+    return relayerApi.relay(payload);
+  },
 };
