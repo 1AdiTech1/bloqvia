@@ -22,3 +22,17 @@ export async function view<T>(ctx: NearContext, contractId: string, method: stri
 
 export const GAS_30 = teraToGas("30");
 export const ZERO = nearToYocto("0");
+
+/** The public RPC rate-limits bursts (-429). Retry with a short backoff; anything else is thrown at once. */
+export async function withRetry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
+  let wait = 1000;
+  for (let i = 1; ; i++) {
+    try { return await fn(); }
+    catch (e) {
+      const m = (e as Error).message ?? "";
+      if (i >= attempts || !/429|Rate limit|Too Many/i.test(m)) throw e;
+      await new Promise((r) => setTimeout(r, wait)); wait *= 2;
+    }
+  }
+}
+export const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));

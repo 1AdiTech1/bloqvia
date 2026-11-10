@@ -3,6 +3,7 @@ import { decodeSignedDelegateBase64 } from "./codec.js";
 import { receiptFailure } from "./outcome.js";
 import { PolicyError, RateLimiter, assertAllowed } from "./policy.js";
 import { type NearContext, view } from "./near.js";
+import { afterTrade } from "./market.js";
 
 const limiter = new RateLimiter(30, 60_000); // 30 calls per minute per sender
 const registeredCache = new Map<string, number>();
@@ -47,5 +48,6 @@ export async function relay(ctx: NearContext, payloadBase64: string): Promise<Re
     console.log(`[relayer] relay ${senderId} ${methods.join(",")} tx=${txHash} FAILED in ${failure.executor}: ${failure.message}`);
     throw new PolicyError(failure.message, 422);
   }
+  if (methods.some((m) => m === "sell_to_bloq" || m === "buy_from_bloq" || m === "graduate")) afterTrade(ctx); // the curve gets the trade's point
   return { txHash, senderId, methods };
 }

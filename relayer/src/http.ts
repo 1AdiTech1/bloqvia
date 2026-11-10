@@ -7,6 +7,8 @@
  *   GET  /quests             -> every lesson with its public text (bonus quests carry the AI signature)
  *   POST /admin/quest        -> { date?: "YYYY-MM-DD" } + header x-admin-token -> generate + seed now, then post the day's bounty
  *   POST /ask                -> { question, lessonId?, accountId? } -> { answer, generated_by }  (Ask Bloq, grounded, signed)
+ *   GET  /market             -> price snapshots (48 h), the NPC trader's last move and rules, the fast-forward's state
+ *   POST /fastforward        -> start "a day of trading in a minute" (six scripted learners); 429 with nextAt when gated
  *
  * Wrap `handle()` in a Vercel/Netlify function if you host it serverless.
  */
@@ -16,6 +18,9 @@ import { PolicyError } from "./policy.js";
 import { relay } from "./relay.js";
 import { generateDailyQuest } from "./quests.js";
 import { syncDailyBounty } from "./bounties.js";
+import { getSnapshots, latest } from "./market.js";
+import { traderState, RULES } from "./trader.js";
+import { ffState, startFastForward, FF } from "./fastforward.js";
 import { createAskBloq, type AskBloq } from "./ask.js";
 import { view, type NearContext } from "./near.js";
 
@@ -76,6 +81,26 @@ export async function handle(ctx: NearContext, req: IncomingMessage, res: Server
         passport: ctx.config.passportContractId,
         ai: ctx.config.ai ? { questModel: ctx.config.ai.questModel, chatModel: ctx.config.ai.chatModel } : null,
       }, origin, allowed);
+    }
+
+    if (req.method === "GET" && url.pathname === "/market") {
+      const t = traderState(), ff = ffState();
+      return send(res, 200, {
+        now: Date.now(),
+        snapshots: getSnapshots(),
+        latest: latest(),
+        trader: { accountId: t.accountId, on: t.on, last: t.last, lastTick: t.lastTick, note: t.note, rules: { sellAbove: RULES.sellAbove.toString(), buyBelow: RULES.buyBelow.toString(), keepGold: RULES.keepGold.toString(), keepItems: RULES.keepItems.toString(), intervalMin: RULES.intervalMin } },
+        fastForward: { ...ff, players: FF.players, everyMin: FF.everyMin },
+      }, origin, allowed);
+    }
+
+    if (req.method === "POST" && url.pathname === "/fastforward") {
+      try {
+        const s = startFastForward(ctx);
+        return send(res, 202, { started: true, rounds: s.rounds, players: FF.players, nextAt: s.nextAt }, origin, allowed);
+      } catch (e) {
+        return send(res, 429, { error: (e as Error).message, nextAt: ffState().nextAt }, origin, allowed);
+      }
     }
 
     if (req.method === "GET" && url.pathname === "/quests") {

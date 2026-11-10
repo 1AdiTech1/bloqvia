@@ -14,6 +14,7 @@
     "streak:offline": "tsx streak-sim.ts",
     "bounty:claim": "tsx bounty-claim.ts",
     "bounty:reopen": "tsx bounty-reopen.ts",
+    "trader:create": "tsx trader-create.ts",
     "balances": "tsx check-balances.ts"
   },
   "dependencies": {

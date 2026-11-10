@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Living Market Mock</title>
+<meta name="description" content="Mock of the living market on Bloq's shop: price history on every trade card, the NPC trader's line in the stall, and the fast-forward button for judges.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root { --navy:#16243a; --navy-2:#22324c; --ivory:#f7f4eb; --lime:#d4f033; --lime-d:#a6c21a; --purple:#8b45d9; --purple-d:#6630b3; --lavender:#c9a6f3; --lavender-soft:#efe7fb; --card:#fffdf7; --muted:#ece8dc; --muted-fg:#4f5b6e; --border:#ddd8c9; --coral:#f5a58b;
+  --display:"Space Grotesk",system-ui,sans-serif; --sans:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace; color-scheme: dark; }
+*{box-sizing:border-box} html{background:#131f33} body{margin:0;background:#131f33;color:var(--ivory);font:15px/1.5 var(--sans);-webkit-font-smoothing:antialiased;padding:24px 16px 72px}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:28px}
+h1{margin:0;font:600 28px/1.15 var(--display);letter-spacing:-.02em} .lead{margin:6px 0 0;color:var(--lavender);max-width:90ch}
+.sec{display:grid;gap:12px;padding:20px;border-radius:26px;background:#23344f;box-shadow:0 0 0 1px rgb(255 255 255/.06)}
+.sec h2{margin:0;font:600 20px/1.2 var(--display)} .sec p{margin:0;color:var(--lavender)}
+.pair{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.frame{background:var(--navy);border-radius:18px;padding:16px;box-shadow:0 0 0 1px rgb(255 255 255/.08)}
+.frame.ph{width:390px;max-width:100%} .frame.dk{flex:1 1 640px;min-width:0}
+.cap{font:500 12px var(--mono);color:var(--lime);margin-bottom:10px}
+/* --- the shop, as on bloqvia.app --- */
+.stall{position:relative;padding:34px 16px 14px;border-radius:26px;background:linear-gradient(180deg,var(--navy-2),#1a2740);border:1px solid rgb(247 244 235/.12)}
+.awn{position:absolute;left:-1px;right:-1px;top:-1px;height:26px;border-radius:26px 26px 0 0;background:repeating-linear-gradient(90deg,var(--lime) 0 16px,var(--purple) 16px 32px);clip-path:polygon(0 0,100% 0,100% 60%,94% 100%,88% 60%,82% 100%,76% 60%,70% 100%,64% 60%,58% 100%,52% 60%,46% 100%,40% 60%,34% 100%,28% 60%,22% 100%,16% 60%,10% 100%,4% 60%,0 100%);z-index:3}
+.row{display:grid;grid-template-columns:132px 1fr;align-items:end;gap:10px;min-height:150px}
+.bloqph{width:120px;height:150px;border-radius:14px;background:radial-gradient(circle at 50% 30%,#f7f4eb 0 34%,transparent 35%),radial-gradient(circle at 50% 72%,#8b45d9 0 22%,transparent 23%);display:grid;place-items:end center;color:var(--lavender);font:500 10px var(--mono);padding-bottom:4px}
+.say{align-self:center;margin-bottom:26px;background:var(--ivory);color:var(--navy);border-radius:16px;padding:10px 13px;font-size:14px;position:relative;max-width:300px}
+.say::after{content:"";position:absolute;left:-7px;bottom:16px;width:14px;height:14px;background:var(--ivory);transform:rotate(45deg)}
+.counter{position:relative;margin:-18px -16px 0;height:26px;background:linear-gradient(var(--purple),var(--purple-d));border-radius:6px 6px 0 0;z-index:3;box-shadow:0 -2px 0 rgb(255 255 255/.12) inset}
+.treasury{display:flex;justify-content:space-between;gap:10px;margin-top:12px;font:500 12px/1.4 var(--mono);color:var(--lavender)} .treasury b{color:var(--lime);font-weight:700}
+/* NEW: the market strip under the counter */
+.market{margin-top:12px;display:grid;gap:8px;padding:12px 14px;border-radius:16px;background:rgb(13 22 38/.55);border:1px solid rgb(247 244 235/.1)}
+.market .k{display:flex;align-items:center;gap:8px;font:600 10.5px/1 var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--lime)}
+.market .k i{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 0 rgb(212 240 51/.6);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgb(212 240 51/.6)}50%{box-shadow:0 0 0 5px rgb(212 240 51/0)}}
+.market .line{font-size:13.5px;color:var(--ivory)} .market .line b{color:var(--lime);font-weight:600} .market .line small{display:block;margin-top:2px;font:500 11px var(--mono);color:var(--lavender)}
+.ff{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+.ffbtn{appearance:none;border:0;cursor:pointer;min-height:40px;padding:0 16px;border-radius:999px;background:var(--lime);color:var(--navy);font:600 13px/1 var(--display);display:inline-flex;align-items:center;gap:8px}
+.ffbtn[disabled]{opacity:.7;cursor:default}
+.ffnote{font:500 11.5px/1.4 var(--mono);color:var(--lavender)}
+.prog{height:6px;border-radius:999px;background:rgb(247 244 235/.12);overflow:hidden;flex:1 1 120px;min-width:80px} .prog i{display:block;height:100%;width:0;background:var(--lime);transition:width .6s linear}
+/* trade cards */
+.cards{margin-top:18px;display:flex;flex-direction:column;gap:12px} .dk .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.dk .hist{grid-template-columns:1fr;gap:4px} .dk .hist .lbl{order:-1;text-align:left;white-space:normal} .dk .hist .lbl b{display:block} .dk .hist .lbl span{font-size:10px}
+.dk .acts{flex-direction:column;align-items:stretch} .dk .qty{justify-content:space-between} .dk .acts .pairb{display:flex;gap:8px} .dk .acts .btn{flex:1}
+.trade{border-radius:24px;background:var(--ivory);color:var(--navy);padding:16px;box-shadow:0 20px 44px -18px rgb(22 36 58/.4);container-type:inline-size}
+.thead{display:flex;align-items:center;gap:12px} .ico{width:44px;height:44px;flex:none;border-radius:16px;background:var(--navy);color:var(--lime);display:grid;place-items:center;font:700 14px var(--display)}
+.tname h3{margin:0;font:500 18px/1.2 var(--display)} .tname p{margin:2px 0 0;font-size:12px;color:var(--muted-fg)} .tname strong{color:var(--navy)}
+.info{margin-left:auto;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:rgb(22 36 58/.6);font:700 13px var(--display);border:1.5px solid rgb(22 36 58/.25)}
+.prices{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pr{border-radius:16px;padding:8px 12px} .pr.pay{background:var(--lavender-soft)} .pr.ch{background:var(--navy);color:var(--ivory)}
+.pr small{display:block;font:600 11px/1.4 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:rgb(22 36 58/.6)} .pr.ch small{color:var(--lavender)}
+.pr b{display:block;font:500 24px/1.2 var(--display)}
+/* NEW: price history */
+.hist{margin-top:10px;display:grid;grid-template-columns:1fr auto;align-items:end;gap:8px}
+.hist svg{width:100%;height:44px;display:block} .hist .lbl{font:500 10.5px/1.4 var(--mono);color:var(--muted-fg);text-align:right;white-space:nowrap} .hist .lbl b{display:block;color:var(--navy);font:600 12px var(--display)}
+.hist .lbl .up{color:#5a8a00} .hist .lbl .dn{color:#b4471f}
+.acts{margin-top:12px;display:flex;align-items:center;gap:8px} .pairb{display:flex;gap:8px;flex:1}
+.qty{display:flex;align-items:center;border-radius:999px;background:var(--muted);height:40px;padding:0 6px;gap:6px;font:600 14px var(--display)} .qty span{width:28px;text-align:center}
+.btn{flex:1;min-height:40px;border-radius:999px;font:600 14px var(--display);display:grid;place-items:center}
+.btn.sell{border:2px solid var(--navy)} .btn.buy{background:var(--navy);color:var(--ivory)}
+@container (max-width:209px){.prices{grid-template-columns:1fr}}
+.note{font-size:13px;color:var(--lavender);margin:0}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;background:rgb(212 240 51/.14);color:var(--lime);font:600 10.5px var(--display);letter-spacing:.1em;text-transform:uppercase;margin-right:6px}
+</style>
+<div class="wrap">
+  <div>
+    <h1>The market never sleeps — mock</h1>
+    <p class="lead">Bloq's shop with three additions: a price history on every trade card, the NPC trader's last move in the stall, and a fast-forward button that runs a day of trading on testnet in front of a judge, in about two minutes. Press the button in either frame to see the curves move.</p>
+  </div>
+  <div class="sec">
+    <h2>What changes</h2>
+    <p><span class="tag">1</span>Each trade card shows <b>He pays · last 24 h</b> as a small curve from the relayer's price snapshots, with the change since yesterday.</p>
+    <p><span class="tag">2</span>The stall gets a <b>Market · live</b> strip: what the NPC trader (an account like a learner's, <code>trader.bloqvia.testnet</code>) last did, and when. The trader follows three readable rules; prices are still the contract's.</p>
+    <p><span class="tag">3</span><b>Watch a day of trading</b>: six scripted learners sign up, play the quests and trade for about two minutes; the curves and the treasury move live. Once every 10 minutes; the progress bar shows the rounds.</p>
+    <p class="note">Nothing in the contracts changes. The trader and the bots go through the relayer exactly like a player (NEP-366), so every trade is on the explorer.</p>
+  </div>
+  <div class="sec">
+    <h2>Phone · desktop</h2>
+    <div class="pair">
+      <div class="frame ph"><div class="cap">390 px</div><div class="shop" data-shop></div></div>
+      <div class="frame dk"><div class="cap">desktop column (the quiz card width)</div><div class="shop" data-shop></div></div>
+    </div>
+  </div>
+</div>
+<script>
+const ITEMS = [["key-fragment","Key Fragment","KF"],["fuel-cell","Fuel Cell","FC"],["contract-seal","Contract Seal","CS"]];
+const base = 100, halving = 40, spread = 250;
+const buy = (s) => Math.floor(base * halving / (halving + s)), sell = (s) => Math.floor(buy(s) * (10000 + spread) / 10000);
+// 24 h of stock history per item (pretend snapshots every 30 min)
+function series(seed, n = 48) { let s = seed, out = []; for (let i = 0; i < n; i++) { s = Math.max(0, s + Math.round((Math.sin(i / 5 + seed) + (Math.random() - .45)) * 3)); out.push(s); } return out; }
+const state = { stock: { "key-fragment": series(22), "fuel-cell": series(31), "contract-seal": series(14) }, gold: 1842 };
+const you = { "key-fragment": 1, "fuel-cell": 2, "contract-seal": 1 };
+function spark(vals) {
+  const w = 160, h = 44, mn = Math.min(...vals), mx = Math.max(...vals), r = Math.max(1, mx - mn);
+  const pts = vals.map((v, i) => [i / (vals.length - 1) * w, h - 4 - (v - mn) / r * (h - 10)]);
+  const d = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+  const last = pts[pts.length - 1];
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d} L${w} ${h} L0 ${h} Z" fill="rgb(139 69 217 / .12)"/><path d="${d}" fill="none" stroke="#6630b3" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${last[0]}" cy="${last[1]}" r="3" fill="#d4f033" stroke="#16243a" stroke-width="1.5"/></svg>`;
+}
+function card(id, name, abbr, mini) {
+  const st = state.stock[id], now = st[st.length - 1], ago = st[0], p = buy(now), p0 = buy(ago), d = p - p0;
+  return `<article class="trade" data-item="${id}">
+    <div class="thead"><span class="ico">${abbr}</span><div class="tname"><h3>${name}</h3><p>You <strong>${you[id]}</strong> · Bloq's stock <strong data-stock>${now}</strong></p></div><span class="info">i</span></div>
+    <div class="prices"><div class="pr pay"><small>He pays</small><b data-pay>${p}</b></div><div class="pr ch"><small>He charges</small><b data-ch>${sell(now)}</b></div></div>
+    <div class="hist"><div data-spark>${spark(st.map(buy))}</div><div class="lbl"><b>He pays · 24 h</b><span class="${d >= 0 ? "up" : "dn"}" data-delta>${d >= 0 ? "▲ +" : "▼ "}${d} since yesterday</span></div></div>
+    <div class="acts"><div class="qty"><span>−</span><span>1</span><span>+</span></div><div class="pairb"><div class="btn sell">Sell</div><div class="btn buy">Buy</div></div></div>
+  </article>`;
+}
+function shop(root, mini) {
+  root.innerHTML = `<div class="stall"><div class="awn"></div>
+    <div class="row"><div class="bloqph">Bloq, top hat</div><div class="say">Sell me what I'm short on and I pay more. That's the whole rule.</div></div>
+    <div class="counter"></div>
+    <div class="treasury"><span>Treasury <b data-gold>${state.gold}</b> gold</span><span>Shop <b>open</b></span></div>
+    <div class="market"><div class="k"><i></i>Market · live</div>
+      <div class="line" data-line>The trader sold <b>2 Fuel Cells</b> to Bloq for 61 gold each.<small>trader.bloqvia.testnet · 3 min ago · every trade on the explorer ↗</small></div>
+      <div class="ff"><button class="ffbtn" data-ff>▶ Watch a day of trading</button><div class="prog"><i data-bar></i></div><span class="ffnote" data-note>six learners sign up and trade for a couple of minutes</span></div>
+    </div></div>
+    <div class="cards">${ITEMS.map(([id, n, a]) => card(id, n, a, mini)).join("")}</div>`;
+  const btn = root.querySelector("[data-ff]"), bar = root.querySelector("[data-bar]"), note = root.querySelector("[data-note]"), line = root.querySelector("[data-line]");
+  btn.addEventListener("click", () => {
+    if (btn.disabled) return; btn.disabled = true; let round = 0; const rounds = 6;
+    const names = ["learner-7c4f", "learner-a91e", "learner-03bd", "learner-e4f2", "learner-5c10", "learner-b7a8"];
+    const tick = () => {
+      round++; bar.style.width = (round / rounds * 100) + "%";
+      const who = names[round - 1], it = ITEMS[Math.floor(Math.random() * 3)], n = 1 + Math.floor(Math.random() * 3), sellIt = Math.random() < .65;
+      for (const [id] of ITEMS) { const st = state.stock[id]; let s = st[st.length - 1]; if (id === it[0]) s = Math.max(0, s + (sellIt ? n : -n)); else s = Math.max(0, s + Math.round((Math.random() - .5) * 2)); st.push(s); st.shift(); }
+      state.gold += sellIt ? -buy(state.stock[it[0]].at(-1)) * n : sell(state.stock[it[0]].at(-1)) * n;
+      note.textContent = `round ${round} of ${rounds} · ${who} ${sellIt ? "sold" : "bought"} ${n} ${it[1]}${n > 1 ? "s" : ""}`;
+      line.innerHTML = `<b>${who}…</b> ${sellIt ? "sold" : "bought"} <b>${n} ${it[1]}${n > 1 ? "s" : ""}</b> ${sellIt ? "to" : "from"} Bloq.<small>fast-forward · round ${round} · live on testnet</small>`;
+      root.querySelector("[data-gold]").textContent = state.gold;
+      for (const [id] of ITEMS) { const c = root.querySelector(`[data-item="${id}"]`), st = state.stock[id], now = st.at(-1), p = buy(now), d = p - buy(st[0]);
+        c.querySelector("[data-stock]").textContent = now; c.querySelector("[data-pay]").textContent = p; c.querySelector("[data-ch]").textContent = sell(now);
+        c.querySelector("[data-spark]").innerHTML = spark(st.map(buy)); const dl = c.querySelector("[data-delta]"); dl.className = d >= 0 ? "up" : "dn"; dl.textContent = `${d >= 0 ? "▲ +" : "▼ "}${d} since yesterday`; }
+      if (round < rounds) setTimeout(tick, 900); else { note.textContent = "done · a day of trading · next run in 10 min"; btn.textContent = "✓ Watched"; }
+    };
+    btn.textContent = "Trading…"; setTimeout(tick, 600);
+  });
+}
+document.querySelectorAll("[data-shop]").forEach((el, i) => shop(el, i === 0));
+</script>
+</html>

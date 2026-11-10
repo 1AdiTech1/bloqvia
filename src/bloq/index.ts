@@ -21,3 +21,5 @@ export type { ChainTrailHandle, ChainTrailProps, TrailStop, QuestKind } from "./
 export { colors as bloqColors } from "./engine";
 export { motionOff, setMotion, useMotionOff, useMotionRoot } from "./motion";
 export { followCamera, keepInView, scrollBox } from "./camera";
+export { PriceHistory } from "./PriceHistory";
+export type { PriceHistoryProps, PricePoint } from "./PriceHistory";

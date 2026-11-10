@@ -12,6 +12,8 @@ export { useDailyQuests, parseDailyQuest } from "./useDailyQuests";
 export { useChapters, parseChapter, season2Done, SEASON2_CHAPTERS, SEASON2_STAMP } from "./useChapters";
 export { useAskBloq } from "./useAskBloq";
 export { useFinalBlock, fetchFinalBlockHeight } from "./useFinalBlock";
+export { useMarket, historyOf, changeOf } from "./useMarket";
+export type { Market, MarketData, MarketSnapshot, TraderView, TraderMove, FastForwardView, FFLine } from "./useMarket";
 export { humanError, isWrongAnswer } from "./errors";
 export { useBounties, unmet as bountyUnmet, statusLabel as claimStatusLabel } from "./useBounties";
 export { useAfterSeasons, markMissionsSeen } from "./useAfterSeasons";

@@ -1,0 +1,120 @@
+/**
+ * Fast-forward (Nov 10): "watch a day of trading" in about two minutes. Six scripted learners sign up, play the founding
+ * quests and trade with Bloq for six rounds while the shop page polls GET /market and watches the curves move.
+ *
+ * It is the live simulation (`scripts/simulate.ts`) inside the relayer, capped so a public button cannot drain the
+ * relayer: one run at a time, one run per FF_EVERY_MIN minutes, FF_DAILY_CAP runs per UTC day. Each run creates
+ * FF_PLAYERS learner accounts (0.01 NEAR each, like any player). The strategies are scripted, not a model, so a run
+ * is reproducible; prices are the contract's.
+ */
+import { ITEMS, call, learner, newBot, playQuests, prices, type Bot, type Item, type Prices } from "./bots.js";
+import { pause } from "./near.js";
+import { takeSnapshot } from "./market.js";
+import type { NearContext } from "./near.js";
+
+export const FF = {
+  players: Number(process.env.FF_PLAYERS ?? 6),
+  rounds: 6,
+  everyMin: Number(process.env.FF_EVERY_MIN ?? 10),
+  dailyCap: Number(process.env.FF_DAILY_CAP ?? 24),
+} as const;
+
+type Strategy = "seller" | "trader" | "hoarder";
+const STRATEGIES: Strategy[] = ["seller", "trader", "hoarder", "seller", "trader", "hoarder"];
+const LABEL: Record<Item, string> = { "key-fragment": "Key Fragment", "fuel-cell": "Fuel Cell", "contract-seal": "Contract Seal" };
+/** The players react to Bloq's prices like people do: they buy when he is cheap and sell when he pays well. */
+export const LINES = { cheap: 40n, dear: 50n, keepGold: 20n, maxBuy: 4n } as const;
+
+export interface FFLine { at: number; who: string; text: string; txHash?: string }
+export interface FFState { running: boolean; round: number; rounds: number; startedAt: number | null; finishedAt: number | null; nextAt: number; runsToday: number; dailyCap: number; log: FFLine[]; error: string | null }
+
+const state: FFState = { running: false, round: 0, rounds: FF.rounds, startedAt: null, finishedAt: null, nextAt: 0, runsToday: 0, dailyCap: FF.dailyCap, log: [], error: null };
+let day = new Date().toISOString().slice(0, 10);
+export function ffState(): FFState { return state; }
+
+const short = (id: string) => `${id.split(".")[0]?.slice(0, 12) ?? id}…`;
+const plural = (n: bigint | number, s: string) => `${n} ${s}${Number(n) === 1 ? "" : "s"}`;
+
+/** Can a run start now? Returns the reason it cannot, or null. Pure, so it is tested. */
+export function gate(s: FFState, now = Date.now()): string | null {
+  if (s.running) return "A run is in progress";
+  if (now < s.nextAt) return `Next run in ${Math.ceil((s.nextAt - now) / 60000)} min`;
+  if (s.runsToday >= s.dailyCap) return "Today's runs are used up; tomorrow again";
+  return null;
+}
+
+type Move = { kind: "sell" | "buy"; token_id: Item; amount: bigint; price: bigint } | null;
+
+/** One trade for a player this round, from the prices and what it holds. Pure, so it is tested. */
+export function plan(strategy: Strategy, p: Prices, me: { gold: bigint; items: Record<Item, bigint> }): Move {
+  if (!p.shop_open) return null;
+  const dearest = [...ITEMS].sort((a, b) => Number(p.buy[b] - p.buy[a]))[0]!;
+  const cheapest = [...ITEMS].sort((a, b) => Number(p.sell[a] - p.sell[b]))[0]!;
+  const canBuy = (it: Item) => { const n = (me.gold - LINES.keepGold) / p.sell[it]; return n < p.stock[it] ? n : p.stock[it]; };
+  const spare = (it: Item) => (me.items[it] > 1n ? me.items[it] - 1n : 0n);
+  if (strategy === "seller") {
+    // dumps what it has when Bloq pays well; when he pays little it buys a few instead and waits
+    if (p.buy[dearest] >= LINES.dear && spare(dearest) > 0n) return { kind: "sell", token_id: dearest, amount: spare(dearest), price: p.buy[dearest] };
+    if (p.sell[cheapest] <= LINES.cheap && canBuy(cheapest) >= 1n) return { kind: "buy", token_id: cheapest, amount: canBuy(cheapest) < 2n ? canBuy(cheapest) : 2n, price: p.sell[cheapest] };
+    return null;
+  }
+  if (strategy === "hoarder") {
+    // buys the cheapest item while it is cheap and the gold lasts
+    if (p.sell[cheapest] <= LINES.cheap && canBuy(cheapest) >= 1n) return { kind: "buy", token_id: cheapest, amount: canBuy(cheapest) < LINES.maxBuy ? canBuy(cheapest) : LINES.maxBuy, price: p.sell[cheapest] };
+    return null;
+  }
+  // trader: one unit at a time, sells the dearest above the line, else buys the cheapest below it
+  if (p.buy[dearest] >= LINES.dear && spare(dearest) > 0n) return { kind: "sell", token_id: dearest, amount: 1n, price: p.buy[dearest] };
+  if (p.sell[cheapest] <= LINES.cheap && canBuy(cheapest) >= 1n) return { kind: "buy", token_id: cheapest, amount: 1n, price: p.sell[cheapest] };
+  return null;
+}
+
+async function playerRound(ctx: NearContext, bot: Bot, strategy: Strategy, r: number, p: Prices, say: (text: string, tx?: string) => void): Promise<void> {
+  if (r <= 3) {
+    const n = await playQuests(ctx, bot, r);
+    if (n) say(`finished quest ${r}: +100 gold and 3 ${LABEL[ITEMS[r - 1]!]}s`);
+    if (r < 3) return;
+  }
+  const me = await learner(ctx, bot.accountId);
+  const m = plan(strategy, p, me);
+  if (!m) { say(p.shop_open ? "waited for a better price" : "found the shop closed"); return; }
+  const res = await call(ctx, bot, m.kind === "sell" ? "sell_to_bloq" : "buy_from_bloq", { token_id: m.token_id, amount: m.amount.toString() });
+  say(`${m.kind === "sell" ? "sold" : "bought"} ${plural(m.amount, LABEL[m.token_id])} ${m.kind === "sell" ? "to" : "from"} Bloq at ${m.price} gold`, res.txHash);
+}
+
+async function run(ctx: NearContext, log: (s: string) => void): Promise<void> {
+  const bots: { bot: Bot; strategy: Strategy }[] = [];
+  const say = (who: string) => (text: string, txHash?: string) => { state.log.push({ at: Date.now(), who, text, ...(txHash ? { txHash } : {}) }); if (state.log.length > 60) state.log.shift(); };
+  const snap = () => takeSnapshot(ctx).catch((e) => log(`[fastforward] snapshot skipped: ${(e as Error).message}`));
+  for (let i = 0; i < FF.players; i++) {
+    const bot = await newBot(ctx);
+    bots.push({ bot, strategy: STRATEGIES[i % STRATEGIES.length]! });
+    say(short(bot.accountId))("signed up: a new NEAR account, the relayer paid");
+    await pause(300);
+  }
+  await snap();
+  for (let r = 1; r <= FF.rounds; r++) {
+    state.round = r;
+    const p = await prices(ctx); // one read per round, shared by the players (the public RPC rate-limits bursts)
+    for (let i = 0; i < bots.length; i += 2) { // two at a time: under the public RPC's burst limit, with the retry behind it
+      await Promise.all(bots.slice(i, i + 2).map(({ bot, strategy }) => playerRound(ctx, bot, strategy, r, p, say(short(bot.accountId))).catch((e) => say(short(bot.accountId))(`hit an error: ${(e as Error).message}`))));
+      await pause(200);
+    }
+    await snap();
+    log(`[fastforward] round ${r}/${FF.rounds} done`);
+  }
+}
+
+/** Start a run in the background. Throws with a reason when the gate is closed. */
+export function startFastForward(ctx: NearContext, log: (s: string) => void = console.log): FFState {
+  const today = new Date().toISOString().slice(0, 10);
+  if (today !== day) { day = today; state.runsToday = 0; }
+  const why = gate(state);
+  if (why) throw new Error(why);
+  state.running = true; state.round = 0; state.startedAt = Date.now(); state.finishedAt = null; state.log = []; state.error = null; state.runsToday += 1;
+  state.nextAt = Date.now() + FF.everyMin * 60 * 1000;
+  run(ctx, log)
+    .catch((e) => { state.error = (e as Error).message; console.error(`[fastforward] ${(e as Error).message}`); })
+    .finally(() => { state.running = false; state.finishedAt = Date.now(); log(`[fastforward] finished in ${Math.round((Date.now() - (state.startedAt ?? Date.now())) / 1000)} s`); });
+  return state;
+}
