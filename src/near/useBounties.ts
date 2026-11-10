@@ -120,7 +120,9 @@ async function refresh(): Promise<void> {
     } catch {
       /* the DAO read is informational; the board still works without it */
     }
-    set({ enabled: true, boardId, config, bounties, recent, myClaims, learner, dao, loading: false, error: null });
+    // Closed bounties stay on chain (the board closes each day's "Today's quest, done" when it posts the next, and
+    // the ones testing used up were closed and re-posted on Nov 10); the Missions page shows the open ones.
+    set({ enabled: true, boardId, config, bounties: bounties.filter((b) => b.open), recent, myClaims, learner, dao, loading: false, error: null });
   } catch (e) {
     set({ loading: false, error: humanError(e) });
   }

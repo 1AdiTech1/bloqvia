@@ -264,9 +264,12 @@ export async function generateDailyQuest(ctx: NearContext, ai: AiConfig, model: 
  * Run once at start and then every `everyMs`: seed today's quest if missing.
  * Safe to run on several instances; the contract refuses a duplicate id.
  */
-export function startQuestScheduler(ctx: NearContext, ai: AiConfig, model: string, everyMs = 15 * 60 * 1000): () => void {
+export function startQuestScheduler(ctx: NearContext, ai: AiConfig, model: string, everyMs = 15 * 60 * 1000, after: () => Promise<unknown> = async () => undefined): () => void {
+  // the quest first, then `after` (index.ts: the board's bounty for it, bounties.ts); both idempotent
   const tick = () =>
-    generateDailyQuest(ctx, ai, model).catch((e) => console.error(`[quest] scheduler: ${(e as Error).message}`));
+    generateDailyQuest(ctx, ai, model)
+      .then(() => after())
+      .catch((e) => console.error(`[quest] scheduler: ${(e as Error).message}`));
   void tick();
   const id = setInterval(tick, everyMs);
   return () => clearInterval(id);

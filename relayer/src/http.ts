@@ -5,7 +5,7 @@
  *   POST /register           -> { publicKey } | { accountId }   -> RegisterResult
  *   POST /relay              -> { payload: <base64 SignedDelegate> } -> RelayResult
  *   GET  /quests             -> every lesson with its public text (bonus quests carry the AI signature)
- *   POST /admin/quest        -> { date?: "YYYY-MM-DD" } + header x-admin-token -> generate + seed now
+ *   POST /admin/quest        -> { date?: "YYYY-MM-DD" } + header x-admin-token -> generate + seed now, then post the day's bounty
  *   POST /ask                -> { question, lessonId?, accountId? } -> { answer, generated_by }  (Ask Bloq, grounded, signed)
  *
  * Wrap `handle()` in a Vercel/Netlify function if you host it serverless.
@@ -15,6 +15,7 @@ import { registerExistingAccount, registerLearner } from "./accounts.js";
 import { PolicyError } from "./policy.js";
 import { relay } from "./relay.js";
 import { generateDailyQuest } from "./quests.js";
+import { syncDailyBounty } from "./bounties.js";
 import { createAskBloq, type AskBloq } from "./ask.js";
 import { view, type NearContext } from "./near.js";
 
@@ -89,7 +90,8 @@ export async function handle(ctx: NearContext, req: IncomingMessage, res: Server
       const date = typeof body.date === "string" ? new Date(`${body.date}T12:00:00Z`) : new Date();
       if (Number.isNaN(date.getTime())) throw new PolicyError("date must be YYYY-MM-DD");
       const result = await generateDailyQuest(ctx, ctx.config.ai, ctx.config.ai.questModel, date);
-      return send(res, 200, result, origin, allowed);
+      const bounty = await syncDailyBounty(ctx, date);
+      return send(res, 200, { ...result, bounty }, origin, allowed);
     }
 
     if (req.method === "POST" && url.pathname === "/ask") {
