@@ -1,7 +1,6 @@
 /* Bloq rig v2 — the script drives joints every frame; CSS only switches parts and runs the glow. */
 .bq-host { position: relative; }
-.bq-flip { transform-origin: 50% 100%; } /* the mirror flips at once; the rig plays the turn (engine face()) */
-.bq-flip.left { transform: scaleX(-1); }
+.bq-flip { transform-origin: 50% 100%; } /* no mirror since Phase 3: he really turns (engine face()) */
 .bq { display: block; width: 100%; height: auto; overflow: visible; }
 .bq * { transform-box: view-box; }
 .bq-shadow { fill: rgb(10 16 30 / .26); transition: opacity .3s; }

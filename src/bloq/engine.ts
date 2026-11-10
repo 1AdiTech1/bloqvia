@@ -37,127 +37,9 @@ const engine = (function () {
 
   /* Hats are drawn on the head's top and scaled up around the brow line (152,100). */
   const HAT_SCALE = { moto: 1.04, astro: 1.0, tophat: 1.32, aviator: 1.42, agent: 1.12, cap2: 1.3, captain: 1.5, grad: 1.56, bucket: 1.42, surf: 1.42, beanie: 1.32, hardhat: 1.32, detective: 1.32, beret: 1.3, cap: 1.3 };
-  const HATS = {
-    cap: `<path d="M82 98 C58 99 32 113 25 136 C47 144 82 132 106 110 Z" fill="${PD}" ${o}/>
-          <path d="M74 106 C68 60 102 31 150 28 C202 27 233 58 231 101 C196 89 112 92 74 106 Z" fill="${P}" ${o}/>
-          <path d="M84 100 C114 90 186 86 228 96" fill="none" stroke="${PD}" stroke-width="5" opacity=".7"/>
-          <path d="M100 54 C111 41 128 35 145 33" fill="none" stroke="${PL}" stroke-width="6" stroke-linecap="round"/>
-          <path d="M176 40 C191 39 207 50 211 64 C199 71 183 68 172 58 Z" fill="${L}" ${o5}/>
-          <ellipse cx="150" cy="30" rx="7" ry="5.5" fill="${P}" ${o5}/>`,
-    bucket: `<path d="M93 88 C91 44 118 26 151 25 C186 25 212 42 211 88 Z" fill="${P}" ${o}/>
-          <path d="M104 46 C112 36 124 31 136 29" fill="none" stroke="${PL}" stroke-width="6" stroke-linecap="round"/>
-          <path d="M56 94 C58 80 108 76 152 76 C200 76 246 81 248 95 C249 108 204 111 152 111 C102 111 55 107 56 94 Z" fill="${PD}" ${o}/>
-          <path d="M98 82 C132 75 176 75 208 82" fill="none" stroke="${INK}" stroke-width="2.5" stroke-dasharray="6 6" opacity=".5"/>
-          <path d="M114 44 a9 9 0 1 1 10 0 l3 16 h-16 Z" fill="${L}" ${o5}/>`,
-    beanie: `<path d="M73 98 C70 48 106 22 152 21 C199 21 234 47 231 98 Z" fill="${P}" ${o}/>
-          <path d="M96 44 C108 32 124 26 140 24" fill="none" stroke="${PL}" stroke-width="6" stroke-linecap="round"/>
-          <path d="M66 86 C110 73 196 73 238 86 L237 106 C194 94 110 95 67 107 Z" fill="${L}" ${o}/>
-          <path d="M70 97 C112 85 192 84 234 96" fill="none" stroke="${PD}" stroke-width="5"/>
-          <path d="M139 18 C138 8 148 3 155 5 C164 7 168 16 164 24 C160 31 146 32 141 26 Z" fill="${L}" ${o}/>`,
-    captain: `<path d="M92 78 C130 86 176 87 212 78 L210 98 C176 104 130 105 94 98 Z" fill="${L}" ${o}/>
-          <path d="M98 97 C126 112 184 112 212 96 C186 104 126 105 98 97 Z" fill="${INK}" ${o5}/>
-          <path d="M66 69 C64 46 120 40 154 40 C196 40 240 45 238 68 C237 87 66 88 66 69 Z" fill="${P}" ${o}/>
-          <path d="M92 56 C120 48 170 46 210 52" fill="none" stroke="${PL}" stroke-width="5" stroke-linecap="round"/>
-          <path d="M72 76 C120 84 190 84 232 74" fill="none" stroke="${PD}" stroke-width="4" opacity=".7"/>
-          <circle cx="152" cy="64" r="9" fill="${L}" ${o5}/>`,
-    hardhat: `<path d="M80 98 C78 46 111 26 152 26 C193 26 226 46 224 98 Z" fill="${P}" ${o}/>
-          <path d="M145 28 L158 28 L161 96 L143 96 Z" fill="${L}" ${o5}/>
-          <path d="M100 52 C110 41 121 35 133 32" fill="none" stroke="${PL}" stroke-width="6" stroke-linecap="round"/>
-          <path d="M59 101 C58 90 108 88 152 88 C198 88 246 90 245 100 C245 112 198 112 152 112 C106 112 60 112 59 101 Z" fill="${PD}" ${o}/>`,
-    beret: `<path d="M62 92 C47 61 111 23 176 29 C240 36 251 78 228 94 C186 105 108 104 62 92 Z" fill="${P}" ${o}/>
-          <path d="M92 56 C112 42 140 36 166 36" fill="none" stroke="${PL}" stroke-width="6" stroke-linecap="round"/>
-          <path d="M80 92 C120 99 190 99 226 90" fill="none" stroke="${PD}" stroke-width="5" opacity=".7"/>
-          <path d="M172 30 C171 20 179 13 188 15" fill="none" stroke="${INK}" stroke-width="6" stroke-linecap="round"/>
-          <circle cx="190" cy="15" r="5" fill="${L}" ${o5}/>`,
-    detective: `<path d="M80 100 C78 47 113 28 152 28 C191 28 226 47 224 100 Z" fill="${P}" ${o}/>
-          <path d="M152 31 C151 52 152 76 152 98 M116 42 C108 62 106 82 108 100 M190 42 C198 62 200 82 198 100" fill="none" stroke="${PD}" stroke-width="3.5"/>
-          <path d="M104 52 C110 42 118 36 128 33" fill="none" stroke="${PL}" stroke-width="6" stroke-linecap="round"/>
-          <path d="M150 96 C196 89 241 94 250 108 C228 119 188 114 150 104 Z" fill="${PD}" ${o}/>
-          <ellipse cx="138" cy="26" rx="12" ry="7" fill="${L}" ${o5} transform="rotate(-24 138 26)"/>
-          <ellipse cx="166" cy="26" rx="12" ry="7" fill="${L}" ${o5} transform="rotate(24 166 26)"/>`,
-    cap2: `<g class="v-front">
-          <path d="M78 98 C74 56 106 30 152 28 C198 27 230 56 226 98 C190 90 114 90 78 98 Z" fill="${P}" ${o}/>
-          <path d="M98 52 C110 40 126 34 142 32" fill="none" stroke="${PL}" stroke-width="6" stroke-linecap="round"/>
-          <rect x="142" y="48" width="20" height="8" rx="4" fill="${L}" ${o5}/><rect x="140" y="59" width="24" height="8" rx="4" fill="${LD}" ${o5}/><rect x="138" y="70" width="28" height="8" rx="4" fill="${L}" ${o5}/>
-          <path d="M76 96 C110 86 194 86 228 96 L226 102 C192 113 112 113 78 102 Z" fill="#D4F033" ${o}/>
-          <path d="M96 103 C124 109 180 109 208 103" fill="none" stroke="${LD}" stroke-width="4" stroke-linecap="round"/>
-          <ellipse cx="152" cy="30" rx="7" ry="5.5" fill="${L}" ${o5}/>
-        </g><g class="v-side"><path d="M76 104 C72 58 104 30 152 28 C200 27 230 56 228 100 C190 90 112 92 76 104 Z" fill="${P}" ${o}/>
-          <path d="M98 52 C110 40 126 34 142 32" fill="none" stroke="${PL}" stroke-width="6" stroke-linecap="round"/>
-          <path d="M152 30 C150 50 150 74 152 94" fill="none" stroke="${PD}" stroke-width="3.5" opacity=".8"/>
-          <rect x="166" y="52" width="20" height="8" rx="4" fill="${L}" ${o5}/><rect x="166" y="63" width="24" height="8" rx="4" fill="${LD}" ${o5}/><rect x="166" y="74" width="28" height="8" rx="4" fill="${L}" ${o5}/>
-          <path d="M200 90 C228 86 258 92 270 106 C252 116 222 115 198 107 Z" fill="${L}" ${o}/>
-          <path d="M206 96 C228 94 248 98 258 104" fill="none" stroke="${LD}" stroke-width="4" stroke-linecap="round"/>
-          <ellipse cx="152" cy="30" rx="7" ry="5.5" fill="${L}" ${o5}/></g>`,
-    agent: `<path d="M152 4 L152 24" stroke="${INK}" stroke-width="7" stroke-linecap="round"/>
-          <circle class="bq-led" cx="152" cy="2" r="8" fill="${L}" ${o5}/>
-          <path d="M70 112 C64 48 104 22 152 22 C200 22 240 48 234 112" fill="none" stroke="${INK}" stroke-width="20" stroke-linecap="round"/>
-          <path d="M70 112 C64 48 104 22 152 22 C200 22 240 48 234 112" fill="none" stroke="${P}" stroke-width="10" stroke-linecap="round"/>
-          <path d="M96 40 C112 30 128 26 146 25" fill="none" stroke="${PL}" stroke-width="4" stroke-linecap="round"/>
-          <rect x="52" y="96" width="30" height="46" rx="12" fill="${P}" ${o}/><rect x="58" y="104" width="14" height="30" rx="6" fill="${L}"/>
-          <rect x="222" y="96" width="30" height="46" rx="12" fill="${P}" ${o}/><rect x="232" y="104" width="14" height="30" rx="6" fill="${L}"/>
-          <path d="M238 138 C238 166 220 176 196 174" fill="none" stroke="${INK}" stroke-width="6" stroke-linecap="round"/>
-          <circle cx="192" cy="174" r="7" fill="${L}" ${o5}/>`,
-    moto: `<g class="v-front">
-          <path d="M60 162 C50 82 94 20 152 20 C210 20 256 82 246 162 L246 174 C246 184 232 186 226 178 L222 122 C220 102 206 92 186 90 L118 90 C98 92 86 102 84 122 L80 178 C74 186 60 184 60 174 Z" fill="${P}" ${o}/>
-          <path d="M152 24 C152 44 152 64 152 88" fill="none" stroke="${INK}" stroke-width="20" stroke-linecap="round"/>
-          <path d="M152 24 C152 44 152 64 152 88" fill="none" stroke="${L}" stroke-width="12" stroke-linecap="round"/>
-          <path d="M88 104 C108 86 196 86 218 104" fill="none" stroke="${L}" stroke-width="6" stroke-linecap="round"/>
-          <path d="M84 70 C94 48 112 34 132 28" fill="none" stroke="${PL}" stroke-width="7" stroke-linecap="round"/>
-          <circle cx="70" cy="150" r="7" fill="${L}" ${o5}/><circle cx="236" cy="150" r="7" fill="${L}" ${o5}/>
-        </g><g class="v-side">
-          <path d="M64 166 C54 82 98 20 160 20 C208 20 240 50 246 94 L202 98 C190 100 184 112 184 126 L186 182 C176 190 72 190 64 166 Z" fill="${P}" ${o}/>
-          <path d="M80 60 C110 30 170 24 214 44" fill="none" stroke="${INK}" stroke-width="18" stroke-linecap="round"/>
-          <path d="M80 60 C110 30 170 24 214 44" fill="none" stroke="${L}" stroke-width="10" stroke-linecap="round"/>
-          <path d="M190 104 C198 98 222 96 244 100" fill="none" stroke="${L}" stroke-width="6" stroke-linecap="round"/>
-          <circle cx="120" cy="136" r="9" fill="${L}" ${o5}/>
-        </g>`,
-    // tech space helmet: smooth shell with circuit traces, a HUD visor pushed up, sensor pods with
-    // ring lights at the ears and a glowing sensor fin along the top
-    // tech space helmet: smooth shell to the cheeks, a HUD visor with a charging bar, sensor pods with
-    // ring lights at the ears and a glowing sensor fin on top
-    astro: `<path d="M134 18 C140 4 164 4 170 18 L166 30 L138 30 Z" fill="url(#bq-pdg)" ${o5}/>
-          <rect class="bq-scan" x="144" y="10" width="16" height="5" rx="2.5" fill="${L}"/>
-          <path d="M54 168 C42 80 92 20 152 20 C212 20 262 80 250 168 C248 184 236 190 222 186 L208 124 C208 104 194 92 174 90 L130 90 C110 92 96 104 96 124 L82 186 C68 190 56 184 54 168 Z" fill="url(#bq-wg)" ${o}/>
-          <path d="M84 178 L96 124 C96 104 110 92 130 92 L174 92 C194 92 208 104 208 124 L220 178" fill="none" stroke="url(#bq-pdg)" stroke-width="9" stroke-linecap="round"/>
-          <path d="M64 112 L64 96 L80 84 M240 112 L240 96 L224 84" fill="none" stroke="${P}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/>
-          <circle cx="80" cy="84" r="3" fill="${P}"/><circle cx="224" cy="84" r="3" fill="${P}"/>
-          <path d="M80 66 C96 44 120 35 146 33" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity=".85"/>
-          <path d="M80 72 C100 40 204 40 224 72 L218 84 C190 70 114 70 86 84 Z" fill="#1b1622" fill-opacity=".88" ${o5}/>
-          <circle class="bq-charge" style="animation-delay:0.00s" cx="108.0" cy="66.5" r="3.6" fill="${L}"/><circle class="bq-charge" style="animation-delay:0.16s" cx="122.6" cy="64.3" r="3.6" fill="${L}"/><circle class="bq-charge" style="animation-delay:0.32s" cx="137.2" cy="62.9" r="3.6" fill="${L}"/><circle class="bq-charge" style="animation-delay:0.48s" cx="151.8" cy="62.5" r="3.6" fill="${L}"/><circle class="bq-charge" style="animation-delay:0.64s" cx="166.4" cy="62.9" r="3.6" fill="${L}"/><circle class="bq-charge" style="animation-delay:0.80s" cx="181.0" cy="64.3" r="3.6" fill="${L}"/><circle class="bq-charge" style="animation-delay:0.96s" cx="195.6" cy="66.5" r="3.6" fill="${L}"/>
-          <path d="M96 56 C120 46 150 44 172 46" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity=".55"/>
-          <rect x="40" y="100" width="24" height="44" rx="10" fill="url(#bq-pdg)" ${o}/><rect x="240" y="100" width="24" height="44" rx="10" fill="url(#bq-pdg)" ${o}/>
-          <circle class="bq-ring" cx="52" cy="122" r="6.5" fill="none" stroke="${L}" stroke-width="3"/><circle class="bq-ring" cx="252" cy="122" r="6.5" fill="none" stroke="${L}" stroke-width="3"/>
-          <circle cx="52" cy="122" r="2.5" fill="${L}"/><circle cx="252" cy="122" r="2.5" fill="${L}"/>`,
-    // the merchant's top hat (Bloq runs the shop)
-    tophat: `<path d="M100 96 L107 14 C130 7 176 7 199 14 L206 96 Z" fill="${P}" ${o}/>
-          <ellipse cx="153" cy="14" rx="46" ry="9" fill="${PL}" ${o5}/>
-          <path d="M103 70 C134 76 172 76 203 70 L205 88 C172 94 134 94 102 88 Z" fill="${L}" ${o5}/>
-          <rect x="182" y="72" width="13" height="16" rx="3" fill="${PD}" ${o5}/>
-          <path d="M118 28 C120 46 120 60 118 66" fill="none" stroke="${PL}" stroke-width="6" stroke-linecap="round"/>
-          <path d="M58 100 C60 86 108 84 152 84 C198 84 246 86 248 100 C247 112 198 114 152 114 C106 114 58 112 58 100 Z" fill="${PD}" ${o}/>`,
-    // the explorer's aviator cap: ear flaps and lime goggles up on the forehead
-    aviator: `<path d="M76 108 C70 52 108 24 152 24 C196 24 234 52 228 108 Z" fill="${P}" ${o}/>
-          <path d="M78 98 C76 124 72 150 76 172 C86 178 96 172 98 160 L98 104 Z" fill="${P}" ${o}/>
-          <path d="M226 98 C228 124 232 150 228 172 C218 178 208 172 206 160 L206 104 Z" fill="${P}" ${o}/>
-          <path d="M98 46 C112 34 128 28 144 27" fill="none" stroke="${PL}" stroke-width="6" stroke-linecap="round"/>
-          <path d="M152 26 C151 46 151 70 152 100" fill="none" stroke="${PD}" stroke-width="3.5" opacity=".8"/>
-          <path d="M80 70 C110 62 194 62 224 70" fill="none" stroke="${INK}" stroke-width="12" stroke-linecap="round"/>
-          <circle cx="126" cy="68" r="17" fill="${L}" fill-opacity=".92" ${o}/><circle cx="180" cy="68" r="17" fill="${L}" fill-opacity=".92" ${o}/>
-          <path d="M118 62 l7 -6 M172 62 l7 -6" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
-          <circle cx="87" cy="168" r="4" fill="${L}"/><circle cx="217" cy="168" r="4" fill="${L}"/>`,
-    surf: `<path d="M93 88 C91 44 118 26 151 25 C186 25 212 42 211 88 Z" fill="${P}" ${o}/>
-          <path d="M94 70 C130 62 176 62 210 70 L211 86 C176 80 130 80 93 86 Z" fill="${L}" ${o5}/>
-          <path d="M104 46 C112 36 124 31 136 29" fill="none" stroke="${PL}" stroke-width="6" stroke-linecap="round"/>
-          <path d="M56 94 C58 80 108 76 152 76 C200 76 246 81 248 95 C249 108 204 111 152 111 C102 111 55 107 56 94 Z" fill="${PD}" ${o}/>`,
-    grad: `<path d="M100 70 L101 100 C134 112 170 112 204 100 L204 70 Z" fill="${PD}" ${o}/>
-          <path d="M54 64 L152 33 L250 63 L152 95 Z" fill="${P}" ${o}/>
-          <path d="M80 62 L150 41" fill="none" stroke="${PL}" stroke-width="5" stroke-linecap="round"/>
-          <path d="M152 64 L86 78 C85 88 86 100 86 110" fill="none" stroke="${INK}" stroke-width="9" stroke-linecap="round"/>
-          <path d="M152 64 L86 78 C85 88 86 100 86 110" fill="none" stroke="${L}" stroke-width="4" stroke-linecap="round"/>
-          <path d="M80 106 h13 l2 20 h-17 Z" fill="${L}" ${o5}/>
-          <circle cx="152" cy="64" r="6" fill="${L}" ${o5}/>`,
-  };
+  // The hats. Their art is the Phase 3 turnaround (hatArt.ts, drawn in 3D by hats3d.ts); this is the list, in the
+  // wardrobe's order, for the swap animation's groups and the HATS export.
+  const HATS = Object.fromEntries(["cap", "bucket", "beanie", "captain", "hardhat", "beret", "detective", "cap2", "agent", "moto", "astro", "tophat", "aviator", "surf", "grad"].map((k) => [k, true]));
 
   /* Props sit upright at the front wrist; the object is above the hand. */
   const PROPS = {
@@ -638,6 +520,7 @@ const engine = (function () {
     setHead(shape) { this.headShape = shape; this.el.classList.toggle("h-round", shape === "round"); return this; }
     /** "surf": board shorts and a surfboard at his side. */
     setOutfit(o) { this.outfit = o; this.el.classList.toggle("outfit-surf", o === "surf"); this.el.classList.toggle("outfit-agent", o === "agent"); this.el.classList.toggle("outfit-astro", o === "astro"); return this; }
+    /** Point the front arm at an element and keep aiming while it moves (layout changes, scroll). null stops. */
     /** Point the front arm at an element and keep aiming while it moves (layout changes, scroll). null stops. */
     aimAt(el) { this.aimEl = el; if (el) this.setPose("point"); return this; }
     _aim() {

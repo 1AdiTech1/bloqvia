@@ -1,7 +1,8 @@
 # Bloq motion rules (the motion programme, Nov 9)
 
-Status: **Phases 1 and 2 shipped** (approved by Adi on Nov 9), in `src/bloq/`. Watch every changed move before → now in
-the Motion Lab (`docs/design/motion-lab/`), with slow motion, frame strips, onion skin and scores.
+Status: **all five phases shipped** (Phases 1 to 3 approved by Adi on Nov 9, Phase 4 on Nov 10, Phase 5 checked Nov 10),
+in `src/bloq/`. Watch every changed move before → now in the Motion Lab (`docs/design/motion-lab/`, Phases 1 and 2) and
+the Phase 3 check page (`docs/design/motion-lab-p3/`), with slow motion, frame strips, onion skin and scores.
 
 The programme:
 
@@ -10,13 +11,13 @@ The programme:
 | 0 | Motion Lab: every move, slowed down, framed and scored | done (`docs/design/motion-lab/`) |
 | 1 | These rules, plus the four moves that hurt most (turn, start/stop, talk, map road) | **shipped Nov 9** |
 | 2 | The rules for every other move in the engine: hops with gravity in three sizes, a keyed walk, three cheers, sit and stand, idle beats, props with weight, the surprise take, the laugh, the wave | **shipped Nov 9** (the change as approved: `docs/design/motion-lab/proposal.diff`) |
-| 3 | Vector turnaround sheet (front, ¾, side, back for the body and each hat); turns go through the ¾ view; the light stays top-left | later |
-| 4 | One way to travel on every page (Lovable prompts for the page-side movers) | later |
-| 5 | QA in the lab and on bloqvia.app, phone and desktop, Motion on and off | last |
+| 3 | The 3D Bloq: head, hats, ears, backpack and strap drawn at any angle (`docs/design/turnaround/`, v4.13); turns really turn, through the ¾ view; the light stays top-left | **shipped Nov 9** (`8417f3d`) |
+| 4 | The pages use the moves: lines drive the mouth, taps are small hops, a solved quest is the big hop, one seat curve (`docs/LOVABLE-PROMPT-28-MOTION.md`) | **shipped Nov 10** (`5202940`) |
+| 5 | QA in the lab and on bloqvia.app, phone and desktop, Motion on and off | **done Nov 10** (see below) |
 
 ## The rules
 
-"shipped" = on the site since Nov 9. "phase N" = comes in that phase.
+"shipped" = on the site (Nov 9 and 10).
 
 1. **Nothing moves at one speed** (shipped). Anything that starts or stops eases in and out. Travel speeds up, keeps a
    pace and slows down; he slows on tight bends and where he turns round.
@@ -52,12 +53,13 @@ The programme:
 11. **Never the same twice** (shipped). Moves he repeats (cheer, hop, peek, idle) pick from two or three versions and
     never the same one twice in a row. A waiting Bloq does something small every few seconds.
     *2–3 versions each · an idle beat every 4–8 s · a bigger one after 10 s.*
-12. **Turn round in 3D** (phase 3). A ¾ drawing sits between the front and the side; a turn goes side → ¾ → front → ¾ →
-    side. The light stays top-left whichever way he faces.
-    *Four views for the body and each hat: front, ¾, side, back.*
-13. **One way to travel** (phase 4). Every page moves him with the same walk (the pace above plus grounded steps) and the
-    same hop (the leap). No page slides him with its own CSS.
-    *Replaces six ways of moving today: walkTo, the map road, perchAt, jumpTo, the sign-in slide, the phone hop.*
+12. **Turn round in 3D** (shipped). The head, the hats, the ears, the backpack and the strap are drawn from the angle
+    he faces (`head3d.ts`, `hats3d.ts`, `body3d.ts`); a turn really turns, the head leading the body, through the ¾
+    view. The light stays top-left whichever way he faces.
+    *Walking on the map he is turned ¾ toward you; on a steep phone road he faces the block he is walking to.*
+13. **One way to travel** (shipped). Every page moves him with the same walk (the pace above plus grounded steps) and the
+    same hop (the leap), and lowers him onto a seat with the same curve (420 ms, `cubic-bezier(.3,.7,.4,1)`).
+    *walkTo, the map road, perchAt, jumpTo, the sign-in walk and the phone hop all go through the engine.*
 14. **Motion off means calm** (shipped). With the Motion switch off, every move jumps to its last frame: nothing
     travels, squashes or flaps, the mouth rests in a smile, and he is simply where he needs to be.
 
@@ -97,5 +99,22 @@ Average score before → now (my estimate):
 
 Code: `src/bloq/engine.ts` (hops, walk, cheers, sit/stand, idle beats, props, take, laugh, wave) and `src/bloq/Bloq.tsx`
 (`jump(kind?)`: "small", "happy" (default) or "big"). No page had to change: a plain `jump()` is the happy hop.
-Later, Lovable prompts (Phase 4): the quiz asks for the big hop and stops shaking the whole box; pages pass the line to
-`talk`; taps and arrivals use the small hop; every page lowers him onto a seat with the same curve.
+Phase 4 (Nov 10, `docs/LOVABLE-PROMPT-28-MOTION.md`, applied by Lovable in `5202940`): the quiz asks for the big hop and
+no longer shakes his box; every page passes the line to `talk`; taps are the small hop; the desktop tour lowers him onto
+a seat with the same curve.
+
+## Phase 3, shipped Nov 9
+
+The 3D Bloq, approved in the turnaround mock (`docs/design/turnaround/`, v4.13) and checked in `docs/design/motion-lab-p3/`:
+the head as a rounded slab with the face art laid on it, one inked crease, ear lights (hidden under the agent headset
+and the helmets), fifteen hats placed point by point from the turnaround, the backpack as a soft box with the strap over
+the shoulder nearer you, the idle hand holding the strap. Fixes after the first package: facing and the pointing
+shoulder, the back arm behind the body in profile, the beanie seam, the map road ¾ toward you, and (Nov 10) the facing
+on steep phone roads. Details in `src/bloq/README.md`.
+
+## Phase 5, checked Nov 10
+
+Adi walked bloqvia.app on his account, phone and desktop, Motion on and off: the quiz (hello hop, surprise take with the
+options shaking and his box still, big hop on a right answer), the taps, the map walks on the phone, the hero. Code
+sweep: the old 2D hat art left in `engine.ts` after Phase 3 removed (the hats are `hatArt.ts`), the dead mirror rule in
+`bloq.css` removed; strict TypeScript with unused-locals checks clean. Open items live in the hackathon list, not here.
