@@ -111,8 +111,10 @@ async function loadDao(daoId: string): Promise<DaoView> {
   const [balance, policy, last] = await Promise.all([views.accountBalance(daoId), views.daoPolicy(daoId), views.daoLastProposalId(daoId)]);
   const from = Math.max(0, last - 50);
   const proposals = last > 0 ? await views.daoProposals(daoId, from, 50) : [];
-  const council = policy.roles.filter((r) => typeof r.kind === "object" && "Group" in r.kind).flatMap((r) => (r.kind as { Group: string[] }).Group);
-  return { id: daoId, balance, council, threshold: policy.default_vote_policy.threshold, proposals: proposals.sort((a, b) => b.id - a.id) };
+  // the council only (the DAO also has the graduates and founders seat roles since Nov 10; those are shown by `seat`)
+  const groups = policy.roles.filter((r) => typeof r.kind === "object" && "Group" in r.kind);
+  const council = (groups.find((r) => r.name === "council") ?? groups[0])?.kind as { Group: string[] } | undefined;
+  return { id: daoId, balance, council: council?.Group ?? [], threshold: policy.default_vote_policy.threshold, proposals: proposals.sort((a, b) => b.id - a.id) };
 }
 
 async function refresh(): Promise<void> {
