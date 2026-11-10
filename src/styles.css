@@ -296,6 +296,22 @@
   .lab-stall .counter { position: relative; margin: -18px -16px 0; height: 26px; background: linear-gradient(var(--purple), var(--purple-d)); border-radius: 6px 6px 0 0; z-index: 3; box-shadow: 0 -2px 0 rgb(255 255 255 / .12) inset; }
   .lab-stall .treasury { display: flex; justify-content: space-between; gap: 10px; margin-top: 12px; font: 500 12px/1.4 "JetBrains Mono", ui-monospace, monospace; color: var(--lavender); }
   .lab-stall .treasury b { color: var(--lime); font-weight: 700; }
+  /* The stall's "Market · live" strip (prompt 29). */
+  .lab-stall .market { margin-top: 12px; display: grid; gap: 8px; padding: 12px 14px; border-radius: 16px; background: rgb(13 22 38 / .55); border: 1px solid rgb(247 244 235 / .1); }
+  .lab-stall .market .k { display: flex; align-items: center; gap: 8px; font: 600 10.5px/1 var(--font-display); letter-spacing: .16em; text-transform: uppercase; color: var(--lime); }
+  .lab-stall .market .k i { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 0 rgb(212 240 51 / .6); animation: lv-pulse 1.8s ease-in-out infinite; }
+  .lab-stall .market .line { font-size: 13.5px; color: var(--ivory); }
+  .lab-stall .market .line b { color: var(--lime); font-weight: 600; }
+  .lab-stall .market .line small { display: block; margin-top: 2px; font: 500 11px "JetBrains Mono", ui-monospace, monospace; color: var(--lavender); }
+  .lab-stall .market .line small a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+  .lab-stall .ff { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+  .lab-stall .ffbtn { appearance: none; border: 0; cursor: pointer; min-height: 40px; padding: 0 16px; border-radius: 999px; background: var(--lime); color: var(--navy); font: 600 13px/1 var(--font-display); display: inline-flex; align-items: center; gap: 8px; }
+  .lab-stall .ffbtn[disabled] { opacity: .7; cursor: default; }
+  .lab-stall .ffnote { font: 500 11.5px/1.4 "JetBrains Mono", ui-monospace, monospace; color: var(--lavender); }
+  .lab-stall .prog { height: 6px; border-radius: 999px; background: rgb(247 244 235 / .12); overflow: hidden; flex: 1 1 120px; min-width: 80px; }
+  .lab-stall .prog i { display: block; height: 100%; width: 0; background: var(--lime); transition: width .6s linear; }
+  @media (prefers-reduced-motion: reduce) { .lab-stall .market .k i { animation: none; } }
+  body.still .lab-stall .market .k i { animation: none; }
 
   .lv-splash { position: absolute; width: 9px; height: 9px; border-radius: 2px; border: 1.5px solid var(--ink); pointer-events: none; z-index: 4; }
 }

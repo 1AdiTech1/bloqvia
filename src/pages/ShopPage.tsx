@@ -8,7 +8,8 @@ import { PhoneShell } from "@/components/PhoneShell";
 import { RequireAccount } from "@/components/RequireAccount";
 import { bloqLine } from "@/components/Bloq";
 import { ItemIcon, itemLabel } from "@/components/GameBits";
-import { Bloq, SpeechBubble, talkMs, type BloqHandle, type BloqPose, type BloqProp, useMotionOff } from "@/bloq";
+import { Bloq, SpeechBubble, talkMs, type BloqHandle, type BloqPose, type BloqProp, useMotionOff, PriceHistory } from "@/bloq";
+import { useMarket, explorer, type Market, type ItemId } from "@/near";
 import { Web3Passport } from "@/components/lab/Web3Passport";
 import { CubeBurst } from "@/components/lab/CubeBurst";
 import { InventoryBar } from "@/components/lab/InventoryBar";
@@ -40,6 +41,36 @@ function ShopInner() {
   const [pose, setPose] = useState<BloqPose>("hold");
   const [reaction, setReaction] = useState<{ kind: "sell" | "buy" | "tap"; id: string; n: number } | null>(null);
   const timers = useRef<number[]>([]);
+  const market = useMarket();
+  const ff = market.fastForward, trader = market.trader;
+  const [ffNote, setFfNote] = useState<string>("six learners sign up and trade for a couple of minutes");
+  const fastForward = async () => {
+    const why = await market.startFastForward();
+    setFfNote(why ?? "starting: six learners are signing up…");
+  };
+  const last = ff?.log.length ? ff.log[ff.log.length - 1] : null;
+  useEffect(() => {
+    if (!ff) return;
+    if (ff.error) setFfNote(ff.error);
+    else if (ff.running && last) setFfNote(`round ${ff.round} of ${ff.rounds} · ${last.who} ${last.text}`);
+    else if (ff.finishedAt) setFfNote(`done · a day of trading · next run in ${ff.everyMin} min`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ff?.round, ff?.running, ff?.finishedAt, ff?.error]);
+  const live = market.data !== null;
+  const traderLine = !live
+    ? <>Bloq trades with whoever comes by. Prices follow one rule, in the contract.</>
+    : ff?.running && last
+    ? <><b>{last.who}</b> {last.text}.</>
+    : trader?.last
+      ? <>The trader {trader.last.kind === "sell" ? "sold" : "bought"} <b>{trader.last.amount} {itemLabel(trader.last.token_id)}</b> {trader.last.kind === "sell" ? "to" : "from"} Bloq for {trader.last.price} gold.</>
+      : trader?.on ? <>The trader is watching the prices: it sells above {trader.rules.sellAbove} gold and buys below {trader.rules.buyBelow}.</> : <>Bloq trades with whoever comes by. Prices follow one rule, in the contract.</>;
+  const traderAcct = trader?.accountId ? <a href={explorer.account(trader.accountId)} target="_blank" rel="noopener noreferrer">{trader.accountId}</a> : null;
+  const traderMeta = !live ? null
+    : ff?.running
+    ? <>{`fast-forward · round ${ff.round} of ${ff.rounds} · live on testnet`}{last?.txHash && <> · <a href={explorer.tx(last.txHash)} target="_blank" rel="noopener noreferrer">explorer</a></>}</>
+    : trader?.last
+      ? <>{traderAcct}{` · ${ago(trader.last.at)} · every trade on the `}{trader.last.txHash ? <a href={explorer.tx(trader.last.txHash)} target="_blank" rel="noopener noreferrer">explorer</a> : "explorer"}</>
+      : trader?.on ? <>{traderAcct}{` · next look in ${trader.rules.intervalMin} min`}</> : null;
   useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
 
   const lowest = [...bloq.prices].sort((a, b) => Number(a.bloq_stock) - Number(b.bloq_stock))[0];
@@ -117,6 +148,15 @@ function ShopInner() {
           <span>Treasury <b>{bloq.gold}</b> gold</span>
           <span>Shop <b>{bloq.shop_open ? "open" : "closed"}</b></span>
         </div>
+        <div className="market">
+          <div className="k"><i aria-hidden="true" />Market · live</div>
+          <div className="line">{traderLine}<small>{traderMeta}</small></div>
+          <div className="ff">
+            <Press onClick={() => void fastForward()} disabled={!live || !!ff?.running} className="ffbtn">{ff?.running ? "Trading…" : ff?.finishedAt && !ffNote ? "✓ Watched" : "▶ Watch a day of trading"}</Press>
+            <div className="prog" aria-hidden="true"><i style={{ width: `${ff ? (ff.round / ff.rounds) * 100 : 0}%` }} /></div>
+            <span className="ffnote">{ffNote}</span>
+          </div>
+        </div>
       </div>
 
       {!bloq.shop_open && (
@@ -128,7 +168,7 @@ function ShopInner() {
 
       <div className="mt-5 flex flex-col gap-3 dk:grid dk:grid-cols-3">
         {bloq.prices.map((p) => (
-          <TradeCard key={p.token_id} price={p} have={itemAmount(learner.items, p.token_id)} gold={Number(learner.gold)} shopOpen={bloq.shop_open} onTraded={onTraded} />
+          <TradeCard key={p.token_id} price={p} have={itemAmount(learner.items, p.token_id)} gold={Number(learner.gold)} shopOpen={bloq.shop_open} onTraded={onTraded} market={market} />
         ))}
       </div>
 
@@ -171,9 +211,19 @@ function ShopInner() {
   );
 }
 
+function ago(at: number, now: number = Date.now()) {
+  const s = Math.max(0, Math.round((now - at) / 1000));
+  if (s < 45) return "just now";
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} h ago`;
+  return `${Math.round(h / 24)} d ago`;
+}
+
 const ITEM_PROP: Record<string, BloqProp> = { "key-fragment": "key", "fuel-cell": "fuel", "contract-seal": "scroll" };
 
-function TradeCard({ price, have, gold, shopOpen, onTraded }: { price: ItemPrice; have: number; gold: number; shopOpen: boolean; onTraded: (id: string, kind: "sell" | "buy") => void }) {
+function TradeCard({ price, have, gold, shopOpen, onTraded, market }: { price: ItemPrice; have: number; gold: number; shopOpen: boolean; onTraded: (id: string, kind: "sell" | "buy") => void; market: Market }) {
   const game = useGame();
   const [qty, setQty] = useState(1);
   const [tip, setTip] = useState(false);
@@ -228,6 +278,7 @@ function TradeCard({ price, have, gold, shopOpen, onTraded }: { price: ItemPrice
           <p className="font-display text-2xl font-medium"><AnimatedNumber value={Number(price.sell_price)} className="-ml-1" /></p>
         </div>
       </div>
+      <PriceHistory points={market.history(id as ItemId)} change={market.change(id as ItemId)} className="mt-3" />
 
       <div className="mt-3 flex items-center gap-2 dk:flex-col dk:items-stretch">
         <div className="flex items-center rounded-full bg-muted dk:justify-between">
