@@ -5,12 +5,14 @@ import { startQuestScheduler } from "./quests.js";
 import { syncDailyBounty } from "./bounties.js";
 import { startSnapshots } from "./market.js";
 import { startTrader } from "./trader.js";
+import { scheduleFastForward, FF_AUTO_HOURS } from "./fastforward.js";
 
 const config = loadConfig();
 const ctx = createNearContext(config);
 startServer(ctx);
 startSnapshots(ctx);
 console.log(startTrader(ctx) ? `[relayer] NPC trader on (${process.env.TRADER_ACCOUNT_ID})` : "[relayer] TRADER_ACCOUNT_ID / TRADER_PRIVATE_KEY not set: NPC trader off");
+console.log(scheduleFastForward(ctx) ? `[relayer] fast-forward runs by itself every ${FF_AUTO_HOURS} h` : "[relayer] FF_AUTO_HOURS=0: fast-forward on the button only");
 if (config.ai) {
   startQuestScheduler(ctx, config.ai, config.ai.questModel, undefined, () => syncDailyBounty(ctx));
   console.log(`[relayer] daily quest agent on (${config.ai.questModel}); Ask Bloq model ${config.ai.chatModel}`);

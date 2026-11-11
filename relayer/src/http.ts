@@ -95,7 +95,7 @@ export async function handle(ctx: NearContext, req: IncomingMessage, res: Server
         now: Date.now(),
         snapshots: getSnapshots(),
         latest: latest(),
-        trader: { accountId: t.accountId, on: t.on, last: t.last, lastTick: t.lastTick, note: t.note, rules: { sellAbove: RULES.sellAbove.toString(), buyBelow: RULES.buyBelow.toString(), keepGold: RULES.keepGold.toString(), keepItems: RULES.keepItems.toString(), intervalMin: RULES.intervalMin } },
+        trader: { accountId: t.accountId, on: t.on, last: t.last, lastTick: t.lastTick, note: t.note, rules: { sellAbove: (t.lines?.sellAbove ?? 0n).toString(), buyBelow: (t.lines?.buyBelow ?? 0n).toString(), band: RULES.band.toString(), keepGold: RULES.keepGold.toString(), keepItems: RULES.keepItems.toString(), intervalMin: RULES.intervalMin } },
         fastForward: { ...ff, players: FF.players, everyMin: FF.everyMin },
       }, origin, allowed);
     }

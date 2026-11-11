@@ -48,6 +48,22 @@ export async function takeSnapshot(ctx: NearContext): Promise<Snapshot> {
 export function getSnapshots(): Snapshot[] { return thin(prune(snapshots)); }
 export function latest(): Snapshot | null { return snapshots[snapshots.length - 1] ?? null; }
 
+/**
+ * The day's average of Bloq's buy price, per item: the last 24 h of snapshots, or the newest point alone when the
+ * relayer is young. It is what the bots call a fair price (Nov 11): they sell a little under it and buy a little
+ * over it, each with its own idea of "a little", so the market moves around its own average instead of waiting
+ * for a line nobody crosses. Pure, tested. Null with no snapshot at all.
+ */
+export function dayAverage(list: Snapshot[], now = Date.now()): Record<string, bigint> | null {
+  const day = list.filter((s) => s.t >= now - 24 * 60 * 60 * 1000);
+  const use = day.length ? day : list.slice(-1);
+  if (!use.length) return null;
+  const sum = new Map<string, bigint>(), n = new Map<string, bigint>();
+  for (const s of use) for (const p of s.prices) { sum.set(p.token_id, (sum.get(p.token_id) ?? 0n) + BigInt(p.buy_price)); n.set(p.token_id, (n.get(p.token_id) ?? 0n) + 1n); }
+  return Object.fromEntries([...sum].map(([k, v]) => [k, v / n.get(k)!]));
+}
+export function fairPrices(): Record<string, bigint> | null { return dayAverage(snapshots); }
+
 /** One snapshot now, then one every SNAPSHOT_MIN minutes. */
 export function startSnapshots(ctx: NearContext, everyMs = SNAPSHOT_MIN * 60 * 1000): () => void {
   const tick = () => takeSnapshot(ctx).catch((e) => console.error(`[market] snapshot: ${(e as Error).message}`));
