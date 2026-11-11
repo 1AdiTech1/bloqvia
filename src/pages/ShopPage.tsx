@@ -299,6 +299,7 @@ function TradeCard({ price, have, gold, shopOpen, onTraded, market }: { price: I
   const game = useGame();
   const [qty, setQty] = useState(1);
   const [tip, setTip] = useState(false);
+  const [acting, setActing] = useState<"sell" | "buy" | null>(null);
   const tipBtn = useRef<HTMLButtonElement>(null);
   const tipPanel = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -317,15 +318,20 @@ function TradeCard({ price, have, gold, shopOpen, onTraded, market }: { price: I
   const stock = Number(price.bloq_stock);
 
   const act = async (fn: typeof game.sellToBloq, kind: "sell" | "buy") => {
+    setActing(kind);
     try {
       await fn(id, qty);
       onTraded(id, kind);
       setQty(1);
     } catch { /* coral toast shows the error */ }
+    finally { setActing(null); }
   };
 
   const canSell = shopOpen && have > 0 && !game.busy;
   const canBuy = shopOpen && stock > 0 && gold >= Number(price.sell_price) * qty && !game.busy;
+  const ownSell = shopOpen && have > 0;                                   // could sell, if nothing were in flight
+  const ownBuy = shopOpen && stock > 0 && gold >= Number(price.sell_price) * qty;
+  const other = game.busy && !acting;                                     // another card's trade is in flight
 
   return (
     <article className="lab-trade relative rounded-3xl bg-ivory p-4 text-navy shadow-lift">
@@ -364,14 +370,26 @@ function TradeCard({ price, have, gold, shopOpen, onTraded, market }: { price: I
       <PriceHistory points={market.history(id as ItemId)} change={market.change(id as ItemId)} className="mt-3" />
 
       <div className="mt-3 flex items-center gap-2 dk:flex-col dk:items-stretch">
-        <div className="flex items-center rounded-full bg-muted dk:justify-between">
+        <div className={cn("flex items-center rounded-full bg-muted dk:justify-between", acting && "opacity-35")}>
           <Press aria-label="Less" disabled={qty <= 1} className="flex items-center justify-center disabled:opacity-30" onClick={() => setQty((q) => Math.max(1, q - 1))}><Minus className="h-4 w-4" /></Press>
           <span className="w-5 text-center font-display font-semibold tabular-nums" aria-live="polite">{qty}</span>
           <Press aria-label="More" disabled={qty >= 9} className="flex items-center justify-center disabled:opacity-30" onClick={() => setQty((q) => Math.min(9, q + 1))}><Plus className="h-4 w-4" /></Press>
         </div>
         <div className="flex flex-1 gap-2 dk:flex-none">
-        <Press disabled={!canSell} onClick={() => act(game.sellToBloq, "sell")} className="flex-1 rounded-full border-2 border-navy font-semibold disabled:opacity-30">Sell</Press>
-        <Press disabled={!canBuy} onClick={() => act(game.buyFromBloq, "buy")} className="flex-1 rounded-full bg-navy font-semibold text-ivory disabled:opacity-30">Buy</Press>
+        <Press disabled={!canSell} onClick={() => act(game.sellToBloq, "sell")}
+          className={cn("flex-1 rounded-full border-2 font-semibold",
+            acting === "sell" ? "border-coral bg-coral text-navy animate-pulse motion-reduce:animate-none" : "border-navy",
+            acting === "buy" && "opacity-35",
+            other && ownSell ? "disabled:opacity-100" : "disabled:opacity-30")}>
+          {acting === "sell" ? "selling…" : "Sell"}
+        </Press>
+        <Press disabled={!canBuy} onClick={() => act(game.buyFromBloq, "buy")}
+          className={cn("flex-1 rounded-full font-semibold",
+            acting === "buy" ? "bg-lime text-navy animate-pulse motion-reduce:animate-none" : "bg-navy text-ivory",
+            acting === "sell" && "opacity-35",
+            other && ownBuy ? "disabled:opacity-100" : "disabled:opacity-30")}>
+          {acting === "buy" ? "buying…" : "Buy"}
+        </Press>
         </div>
       </div>
     </article>
