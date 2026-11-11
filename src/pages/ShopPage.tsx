@@ -373,10 +373,14 @@ function PriceCallCard({ tokenId }: { tokenId: ItemId }) {
   const mine = c.enabled ? c.mineFor(id as ItemId) : null;
   const result = c.enabled ? c.lastResultFor(id as ItemId) : null;
   const showResult = result !== null && result.round > seenRound;
+  useEffect(() => { if (showResult) void game.refresh().catch(() => {}); }, [showResult, result?.round]);
   const k = c.enabled ? crowd(c.rounds[id as ItemId]) : null;
   const closed = !!round && !round.open;
   const clock = showResult ? "settled" : round ? (round.open ? `${fmtClock(left)} left` : `${fmtClock(left)} to go`) : null;
-  const place = (side: CallSide) => { setTried(true); void c.place(id as ItemId, side, stake).catch(() => { /* c.error shows the chain's message */ }); };
+  const place = (side: CallSide) => {
+    setTried(true);
+    void c.place(id as ItemId, side, stake).then(() => game.refresh()).catch(() => { /* c.error shows the chain's message */ });
+  };
 
   if (!c.enabled) return null;
   return (
@@ -414,17 +418,23 @@ function PriceCallCard({ tokenId }: { tokenId: ItemId }) {
                 {c.busy ? (
                   <LabLoader size={22} label="Calling on chain…" />
                 ) : (
-                  <>
-                    <div className="grid grid-cols-3 justify-items-center gap-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="flex flex-col items-center gap-1.5">
                       <Press aria-label="More" disabled={closed || c.busy || game.busy} onClick={() => place("More")}
                         className="flex h-14 w-14 items-center justify-center rounded-full bg-navy text-lime shadow-[0_10px_20px_-12px_rgb(22_36_58/.8)] hover:bg-navy/90 disabled:opacity-50"><ArrowMore /></Press>
+                      <span className="font-mono text-[10.5px] leading-none text-muted-foreground" aria-hidden="true">more</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1.5">
                       <Press aria-label="Same" disabled={closed || c.busy || game.busy} onClick={() => place("Same")}
                         className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-navy/35 bg-card text-navy hover:bg-lavender-soft disabled:opacity-50"><ArrowSame /></Press>
+                      <span className="font-mono text-[10.5px] leading-none text-muted-foreground" aria-hidden="true">same</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1.5">
                       <Press aria-label="Less" disabled={closed || c.busy || game.busy} onClick={() => place("Less")}
                         className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-navy bg-card text-navy hover:bg-lavender-soft disabled:opacity-50"><ArrowLess /></Press>
+                      <span className="font-mono text-[10.5px] leading-none text-muted-foreground" aria-hidden="true">less</span>
                     </div>
-                    <div className="-mt-1 grid grid-cols-3 text-center font-mono text-[10.5px] text-muted-foreground" aria-hidden="true"><span>more</span><span>same</span><span>less</span></div>
-                  </>
+                  </div>
                 )}
                 <div className="mt-2 flex h-[38px] items-center justify-center gap-1 rounded-full bg-muted">
                   <Press aria-label="Less stake" disabled={closed || stake <= CALL_STAKE.min} onClick={() => setStake((s) => Math.max(CALL_STAKE.min, s - 5))} className="flex items-center justify-center disabled:opacity-30"><Minus className="h-4 w-4" /></Press>
