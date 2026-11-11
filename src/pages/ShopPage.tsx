@@ -57,18 +57,23 @@ function ShopInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ff?.round, ff?.running, ff?.finishedAt, ff?.error]);
   const live = market.data !== null;
+  const t = trader?.lastThought ?? null; // the agent's last look at the prices (prompt 31)
   const traderLine = !live
     ? <>Bloq trades with whoever comes by. Prices follow one rule, in the contract.</>
     : ff?.running && last
     ? <><b>{last.who}</b> {last.text}.</>
-    : trader?.last
+    : t && trader
+      ? <>The trader {t.move === "sell" ? "sold" : t.move === "buy" ? "bought" : t.overruled ? "was overruled and held" : "held"}: "{t.reason}"{t.move !== "hold" && trader.last && t.token_id ? <> — {trader.last.amount} {itemLabel(t.token_id)} at {trader.last.price} gold</> : null}</>
+      : trader?.last
       ? <>The trader {trader.last.kind === "sell" ? "sold" : "bought"} <b>{trader.last.amount} {itemLabel(trader.last.token_id)}</b> {trader.last.kind === "sell" ? "to" : "from"} Bloq for {trader.last.price} gold.</>
       : trader?.on ? <>The trader is watching the prices: it sells above {trader.rules.sellAbove} gold and buys below {trader.rules.buyBelow}.</> : <>Bloq trades with whoever comes by. Prices follow one rule, in the contract.</>;
   const traderAcct = trader?.accountId ? <a href={explorer.account(trader.accountId)} target="_blank" rel="noopener noreferrer">{trader.accountId}</a> : null;
   const traderMeta = !live ? null
     : ff?.running
     ? <>{`fast-forward · round ${ff.round} of ${ff.rounds} · live on testnet`}{last?.txHash && <> · <a href={explorer.tx(last.txHash)} target="_blank" rel="noopener noreferrer">explorer</a></>}</>
-    : trader?.last
+    : t && trader
+      ? <>{traderAcct}{` · thought on NEAR AI Cloud`}{t.generated_by.signature_kind === "provider_tee" ? " · signed in a TEE" : ""}{` · `}<a href="https://cloud.near.ai/verify" target="_blank" rel="noreferrer">Verify</a>{trader.last?.txHash && t.move !== "hold" ? <> · <a href={explorer.tx(trader.last.txHash)} target="_blank" rel="noopener noreferrer">explorer</a></> : null}{` · next look in ${trader.rules.intervalMin} min`}</>
+      : trader?.last
       ? <>{traderAcct}{` · ${ago(trader.last.at)} · every trade on the `}{trader.last.txHash ? <a href={explorer.tx(trader.last.txHash)} target="_blank" rel="noopener noreferrer">explorer</a> : "explorer"}</>
       : trader?.on ? <>{traderAcct}{` · next look in ${trader.rules.intervalMin} min`}</> : null;
   useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
@@ -150,7 +155,7 @@ function ShopInner() {
         </div>
         <div className="market">
           <div className="k"><i aria-hidden="true" />Market · live</div>
-          <div className="line">{traderLine}<small>{traderMeta}</small></div>
+          <div className="line">{traderLine}<small>{traderMeta}</small>{live && !(ff?.running && last) && t ? <small className="font-mono" style={{ fontSize: "10.5px" }}>allowed then: {t.allowed.join(" · ")}</small> : null}</div>
           <div className="ff">
             <Press onClick={() => void fastForward()} disabled={!live || !!ff?.running} className="ffbtn">{ff?.running ? "Trading…" : ff?.finishedAt && !ffNote ? "✓ Watched" : "▶ Watch a day of trading"}</Press>
             <div className="prog" aria-hidden="true"><i style={{ width: `${ff ? (ff.round / ff.rounds) * 100 : 0}%` }} /></div>
