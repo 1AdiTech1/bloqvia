@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Market During A Run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: the Market · live block while "Watch a day of trading" runs, three ways, at its real width. */
+:root { --navy:#16243a; --night:#131f33; --ivory:#f7f4eb; --lime:#d4f033; --lime-dim:#9fb326; --purple:#8b45d9; --lavender:#c9a6f3; --coral:#f5a58b; --panel:#23344f;
+  --display:"Space Grotesk",system-ui,sans-serif; --sans:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace; color-scheme:dark; }
+*{box-sizing:border-box} html{background:var(--night)}
+body{margin:0;background:var(--night);color:var(--ivory);font:15px/1.5 var(--sans);-webkit-font-smoothing:antialiased;padding-block:24px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:28px}
+h1{margin:0;font:600 28px/1.15 var(--display);letter-spacing:-.02em;text-wrap:balance} .lead{margin:6px 0 0;color:var(--lavender);max-width:80ch}
+.sec{display:grid;gap:12px;padding:20px;border-radius:26px;background:var(--panel);box-shadow:0 0 0 1px rgb(255 255 255/.06)}
+.sec h2{margin:0;font:600 20px/1.2 var(--display)} .sec>p{margin:0;color:var(--lavender);max-width:80ch}
+.stall{max-width:720px;margin:0 auto;width:100%;border-radius:0 0 26px 26px;background:#0f1a2c;padding:16px 16px 18px;box-shadow:0 0 0 1px rgb(255 255 255/.06)}
+.treasury{display:flex;justify-content:space-between;font:500 14px var(--mono);color:var(--lavender);margin-bottom:10px} .treasury b{color:var(--ivory)} .treasury .on{color:var(--lime)}
+.market{border-radius:18px;background:#101c30;border:1px solid rgb(255 255 255/.08);padding:14px 16px;display:grid;gap:10px}
+.market .k{display:flex;align-items:center;gap:8px;font:600 12px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--lime)} .market .k i{width:8px;height:8px;border-radius:999px;background:var(--lime)}
+.line{font:400 15px/1.5 var(--sans);display:grid;gap:3px} .line small{font:500 11px/1.5 var(--mono);color:var(--lavender)} .line b{font-weight:600;color:var(--lime)}
+.ff{display:flex;align-items:center;gap:14px;margin-top:4px} .ffbtn{border-radius:999px;background:var(--lime-dim);color:var(--navy);padding:10px 16px;font:600 14px var(--display)} .prog{flex:1;height:5px;border-radius:999px;background:rgb(255 255 255/.12);overflow:hidden} .prog i{display:block;height:100%;width:17%;background:var(--lime)} .ffnote{font:500 11px var(--mono);color:var(--lavender)}
+.voices{display:grid;gap:8px}
+.voice{display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px 12px;align-items:start;padding:10px 12px 10px 10px;border-radius:14px;background:rgb(255 255 255/.04)}
+.voice .ico{width:36px;height:36px;border-radius:999px;display:grid;place-items:center;background:var(--navy);border:1px solid rgb(255 255 255/.1)} .voice .ico svg{width:18px;height:18px}
+.patient{color:var(--lavender)} .bull{color:var(--lime)} .bear{color:var(--coral)}
+.voice .who{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;font:600 13px var(--display);color:var(--ivory)} .voice .did{font:500 12px var(--display);color:var(--lavender)}
+.voice p{margin:3px 0 0;font:400 14px/1.45 var(--sans);color:var(--ivory)} .voice small{display:block;margin-top:4px;font:500 10.5px/1.5 var(--mono);color:var(--lavender)}
+.foot{font:500 11px var(--mono);color:var(--lavender)}
+/* B · the rows shrink to chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:rgb(255 255 255/.05);border:1px solid rgb(255 255 255/.08);padding:5px 10px 5px 6px;font:600 12px var(--display);color:var(--ivory)}
+.chip .ico{width:22px;height:22px;border-radius:999px;display:grid;place-items:center;background:var(--navy)} .chip .ico svg{width:13px;height:13px} .chip em{font:500 11px var(--mono);color:var(--lavender);font-style:normal}
+.chips-k{font:500 10.5px var(--mono);color:var(--lavender);margin-right:2px;align-self:center}
+.cap{font:500 12px var(--mono);color:var(--lime)}
+.legend{display:grid;gap:4px;font-size:13px;color:var(--lavender)} .legend b{color:var(--ivory)}
+.note{font-size:13px;color:var(--lavender);margin:0}
+</style>
+<div class="wrap">
+  <div>
+    <h1>Market · live while a day of trading runs</h1>
+    <p class="lead">Not a bug: prompt 35 keeps the run's narration line alone on the stage, as before. Three ways to handle the two minutes of a run, at the block's real width. The run is the six scripted learners; the three traders are not part of it, they look again on their own clock.</p>
+  </div>
+
+  <div class="sec">
+    <h2>A · As now: the narration replaces the rows</h2>
+    <p>The block shrinks to the run line for two minutes; the three rows come back when it ends. Simple, but the traders vanish and the block jumps in height twice.</p>
+    <div class="stall"><div class="treasury"><span>Treasury <b>17207</b> gold</span><span>Shop <b class="on">open</b></span></div>
+    <div class="market"><div class="k"><i></i>Market · live</div>
+      <div class="line"><span><b>learner-8434…</b> finished quest 1: +100 gold and 3 Key Fragments.</span><small>fast-forward · round 1 of 6 · live on testnet</small></div>
+      <div class="ff"><span class="ffbtn">Trading…</span><span class="prog"><i></i></span></div><span class="ffnote">round 1 of 6 · learner-bfe4… signed up: a new NEAR account, the relayer paid</span>
+    </div></div>
+  </div>
+
+  <div class="sec">
+    <h2>B · The rows shrink to chips</h2>
+    <p>The narration takes the top line; the three traders fold into one row of chips (icon · name · what they last did) and unfold to the full rows when the run ends. The traders stay present, the block barely moves, and it's clear the run is the six learners, not them.</p>
+    <div class="stall"><div class="treasury"><span>Treasury <b>17207</b> gold</span><span>Shop <b class="on">open</b></span></div>
+    <div class="market"><div class="k"><i></i>Market · live</div>
+      <div class="line"><span><b>learner-8434…</b> finished quest 1: +100 gold and 3 Key Fragments.</span><small>fast-forward · round 1 of 6 · live on testnet</small></div>
+      <div class="chips" id="chips"><span class="chips-k">the traders ·</span></div>
+      <div class="ff"><span class="ffbtn">Trading…</span><span class="prog"><i></i></span></div><span class="ffnote">round 1 of 6 · learner-bfe4… signed up: a new NEAR account, the relayer paid</span>
+    </div></div>
+  </div>
+
+  <div class="sec">
+    <h2>C · The rows stay, the narration on top</h2>
+    <p>Nothing folds: the run line sits above the three full rows. Honest, but the block is tall and the eye has two things to read at once for two minutes.</p>
+    <div class="stall"><div class="treasury"><span>Treasury <b>17207</b> gold</span><span>Shop <b class="on">open</b></span></div>
+    <div class="market"><div class="k"><i></i>Market · live</div>
+      <div class="line"><span><b>learner-8434…</b> finished quest 1: +100 gold and 3 Key Fragments.</span><small>fast-forward · round 1 of 6 · live on testnet</small></div>
+      <div class="voices" id="voices"></div>
+      <div class="foot">three NPC traders, each an agent on NEAR AI Cloud that may only pick from the moves its rules allow · next look in 4 min</div>
+      <div class="ff"><span class="ffbtn">Trading…</span><span class="prog"><i></i></span></div><span class="ffnote">round 1 of 6 · learner-bfe4… signed up: a new NEAR account, the relayer paid</span>
+    </div></div>
+  </div>
+
+  <div class="sec">
+    <h2>What B asks of Lovable (prompt 36, only src/pages/ShopPage.tsx)</h2>
+    <div class="legend">
+      <span><b>Run in progress, two or more traders:</b> the narration line as today, then one <code>flex flex-wrap gap-1.5</code> row of chips, one per trader: the temper icon at 13 px in a 22 px navy disc, the name, and the "did" word from <code>TraderVoice</code> in mono lavender. No sentence, no proof line, no footer. When the run ends the full rows return.</span>
+      <span><b>One trader or none:</b> as today.</span>
+    </div>
+    <p class="note">My pick: B. Say A, B or C.</p>
+  </div>
+</div>
+<script>
+const AR = {
+  m: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6 4 4 6-6"/><path d="M14 9h6v6"/></svg>',
+  s: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"/><path d="m14 7 5 5-5 5"/></svg>',
+  l: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l6 6 4-4 6 6"/><path d="M20 9v6h-6"/></svg>'
+};
+const rows = [
+  { t:"patient", ico:AR.s, did:"held", acct:"learner-a43be056a428", reason:"I hold because key-fragment is closest to my sell line, with Bloq paying 42 against my 44 trigger, 2 gold short of the move I wait for.", allowed:"hold" },
+  { t:"bull", ico:AR.m, did:"bought 1 Contract Seal at 40", acct:"learner-76a6a88f858e", reason:"I buy a contract-seal because Bloq charges 40, 1 under the day's average of 41, and that is my dip.", allowed:"buy contract-seal, hold" },
+  { t:"bear", ico:AR.l, did:"held", acct:"learner-fce48e4e917a", reason:"I hold because key-fragment pays 42, at my 41 line, but I keep my last one and the rules allow no sale.", allowed:"hold" },
+];
+document.getElementById("chips").insertAdjacentHTML("beforeend", rows.map((r) => `<span class="chip"><span class="ico ${r.t}">${r.ico}</span>${r.t}<em>${r.did}</em></span>`).join(""));
+document.getElementById("voices").innerHTML = rows.map((r) => `<div class="voice"><span class="ico ${r.t}">${r.ico}</span><div><div class="who">${r.t}<span class="did">${r.did}</span></div><p>"${r.reason}"</p><small>${r.acct}.bloqvia.testnet · signed in a TEE · Verify · allowed then: ${r.allowed}</small></div></div>`).join("");
+</script>
+</html>
