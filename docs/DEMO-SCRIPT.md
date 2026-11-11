@@ -1,4 +1,4 @@
-# Demo video — script (2 min 55 s)
+# Demo video — script (3 min 05 s)
 
 One screen recording of https://bloqvia.app on a desktop browser, you narrating. No slides, no logo
 intro: the first frame is the app. Everything shown is a real testnet transaction, and the script
@@ -17,7 +17,7 @@ says so once, early, then lets the explorer links prove it.
   done" and "First graduate of the week" have room ("n of 50 claimed", not full).
 - Recorder: OBS or the browser's own (Chrome: `chrome://` → nothing special needed; on Windows
   `Win+G`). 1080p, 30 fps, microphone on, system sound off. Cursor visible.
-- Read the narration aloud twice. It is about 360 words; at a calm pace, with the clicks between them, that is 2 min 50 s. Do not
+- Read the narration aloud twice. It is about 390 words; at a calm pace, with the clicks between them, that is 3 min. Do not
   speed up to fit: cut a sentence instead.
 
 Mistakes are fine: every take makes a new account and costs nothing. Record the whole thing in
@@ -71,7 +71,7 @@ the answer, "Who wrote this quest" with the model and **Verify the signature**.*
 > enclave: it's signed, and anyone can verify the signature. The model writes text. It never
 > touches a reward, a price or a balance; the contract does that.
 
-### 1:25 — The living market (35 s)
+### 1:25 — The living market (45 s)
 
 **Shop** tab. *Bloq's prices, and under each a 24-hour curve; the "MARKET · LIVE" line with the
 NPC trader.*
@@ -88,7 +88,15 @@ Point at the **Market · live** line (the trader's last thought, with "thought o
 > only pick from the moves the rules allow; ask it for anything else and it's overruled. An agent
 > with a wallet, inside a cage it can't open.
 
-### 2:00 — Graduate, claim, vote (35 s)
+**= Same** on the Key Fragment card (the **Price call** block under the curve, stake left at 20).
+*The block flips to "Your call: same, from 44 · settles in m:ss"; the gold counter drops by 20.*
+
+> And every price is a question. I'm staking twenty gold that in ten minutes Bloq pays the same.
+> The contract remembers today's price, and when the round ends it reads its own rule and pays the
+> side that was right from the stakes of the sides that weren't. No house, no odds: a market on the
+> market.
+
+### 2:10 — Graduate, claim, vote (35 s)
 
 Finish the other two quests fast (you know the answers: **The Fuel System** → *False*,
 **Smart Agreements** → *A smart contract*; about 15 s, no narration, or say the line below over it).
@@ -107,7 +115,7 @@ link; "Recent on the board" lists the account.*
 > DAO. And a bounty board pays for what the chain can verify. I claim "first graduate"; the board
 > reads my record from the game contract and pays. No one approved it; no model was asked.
 
-### 2:35 — Founders propose (15 s)
+### 2:45 — Founders propose (15 s)
 
 Cut to the **founder window** (Missions tab). *"Founder seat" and **Propose a bounty**; in the
 list, a "Board · Approved" proposal, and on the board the bounty it created.*
@@ -115,7 +123,7 @@ list, a "Board · Approved" proposal, and on the board the bounty it created.*
 > Finish Season 2 and you're a founder: you propose what the cohort pays for, founders vote with
 > their own keys, and the DAO itself adds the bounty to the board. Learn, earn a seat, govern.
 
-### 2:50 — Close (5 s)
+### 3:00 — Close (5 s)
 
 Back to the first window, the On NEAR panel in frame.
 
@@ -128,7 +136,7 @@ Stop recording.
 - Trim: start on the landing page, end on the last word. Keep the one cut.
 - Export 1080p MP4. Upload unlisted to YouTube (title: "Bloqvia — NEAR Hackathon demo"), copy
   the link into the submission form and into `README.md` under the first paragraph:
-  `Demo video (2 min 55 s): <link>`.
+  `Demo video (3 min 05 s): <link>`.
 - Watch it once at 1× on a phone: the explorer link and the On NEAR panel must be readable.
 
 ## If something fails on camera
