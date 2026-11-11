@@ -93,22 +93,30 @@ export const THOUGHT_SCHEMA = {
   properties: {
     move: { type: "string", enum: ["sell", "buy", "hold"] },
     item: { type: "string", enum: [...ITEMS, "none"] },
-    reason: { type: "string", description: "One sentence, max 140 characters, in the first person, naming the number that decided it" },
+    reason: { type: "string", description: "One or two short sentences, under 180 characters, in the first person, naming the number that decided it" },
   },
 } as const;
-export const MAX_REASON = 140;
+export const MAX_REASON = 200;
+/** Cut a long reason at a word boundary, never mid-word. */
+export function trimReason(s: string, max = MAX_REASON): string {
+  const t = s.replace(/\s+/g, " ").trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max - 1);
+  const at = Math.max(cut.lastIndexOf(" "), cut.lastIndexOf(","), cut.lastIndexOf(";"));
+  return `${(at > max / 2 ? cut.slice(0, at) : cut).replace(/[\s,;—-]+$/, "")}…`;
+}
 /** The agent's rules, as the model reads them. The numbers are filled per tick. */
 export const TRADER_PROMPT = `You are the NPC trader in Bloq's shop in Bloqvia, a game on NEAR testnet. You hold a little gold and a few items and you trade with Bloq, whose prices come from a rule in the contract: the more of an item he holds, the less he pays. You cannot set prices, mint anything, or touch anyone else's balance. You may only pick a move from the list you are given, or hold. Pick the move a careful trader would, and say why in one sentence, in the first person, naming the number that decided it (a price against the day's average, or what you hold). Never answer with just "I hold": a hold has a reason too. Never mention money, dollars, investing or that anything has value outside the game. Answer only with the JSON object.`;
 
 /** The model's choice, checked against the rules: a move not in `allowed` is overruled and becomes a hold. Pure, tested. */
 export function judge(raw: unknown, allowed: Allowed[]): { move: "sell" | "buy" | "hold"; token_id: Item | null; reason: string; overruled: boolean; pick: Allowed | null } {
   const o = (raw ?? {}) as { move?: unknown; item?: unknown; reason?: unknown };
-  const reason = String(typeof o.reason === "string" ? o.reason : "").replace(/\s+/g, " ").trim().slice(0, MAX_REASON) || "No reason given.";
+  const reason = trimReason(String(typeof o.reason === "string" ? o.reason : "")) || "No reason given.";
   const move = o.move === "sell" || o.move === "buy" ? o.move : "hold";
   const item = (ITEMS as readonly string[]).includes(String(o.item)) ? (o.item as Item) : null;
   if (move === "hold") return { move, token_id: null, reason, overruled: false, pick: null };
   const pick = allowed.find((a) => a.kind === move && a.token_id === item) ?? null;
-  if (!pick) return { move: "hold", token_id: null, reason: `Wanted to ${move} ${item ?? "something"}; the rules did not allow it, so I hold. (${reason})`.slice(0, MAX_REASON + 60), overruled: true, pick: null };
+  if (!pick) return { move: "hold", token_id: null, reason: trimReason(`Wanted to ${move} ${item ?? "something"}; the rules did not allow it, so I hold. (${reason})`, MAX_REASON + 60), overruled: true, pick: null };
   return { move, token_id: pick.token_id, reason, overruled: false, pick };
 }
 

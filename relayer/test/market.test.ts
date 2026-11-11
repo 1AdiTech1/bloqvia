@@ -103,5 +103,7 @@ test("the trader that thinks: the agent may pick only a move the rules allow; an
   assert.equal(judge(null, allowed).move, "hold");
   assert.equal(judge({ move: "sell", item: "gold", reason: "x" }, allowed).overruled, true);
   assert.equal(judge({ move: "hold", item: "none", reason: " ".repeat(5) }, allowed).reason, "No reason given.");
-  assert.equal(judge({ move: "hold", item: "none", reason: "a".repeat(300) }, allowed).reason.length, 140);
+  const long = judge({ move: "hold", item: "none", reason: "word ".repeat(80) }, allowed).reason;
+  assert.ok(long.length <= 200 && long.endsWith("word…")); // cut at a word boundary, never mid-word
+  assert.equal(judge({ move: "hold", item: "none", reason: "a".repeat(300) }, allowed).reason.length, 200); // no space to cut at: hard cap
 });
