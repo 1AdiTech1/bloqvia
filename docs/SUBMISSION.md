@@ -16,22 +16,22 @@ when you press Submit. Corrections afterwards: nearhackathon.com/request-changes
 | Repository link | `https://github.com/1AdiTech1/bloqvia` — public, tagged `v1.0-hackathon` |
 | Website | `https://bloqvia.app` |
 | Demo post link | the X post below, once it is up |
-| What did you build? | the text under "What did you build?" (1934 characters, limit 2 000) |
+| What did you build? | the text under "What did you build?" (1971 characters, limit 2 000) |
 
 ## What did you build? (paste as is)
 
 Bloqvia is a game that teaches Web3 by playing it, for real, on NEAR testnet, with no wallet, no seed phrase and no gas for the player.
 
-Tap Create my account: a NEAR sub-account is created for you and a soulbound Passport NFT (NEP-171) minted to it. Every quest answer is a complete_lesson transaction signed by your own account, relayed as a NEP-366 meta-transaction; the contract checks the answer (lessons are stored as hashes) and writes the reward. The app shows each transaction with its explorer link, the block height and "Gas you paid: 0 NEAR".
+Tap Create my account: a NEAR sub-account is created for you and a soulbound Passport NFT (NEP-171) minted to it. Every quest answer is a complete_lesson transaction signed by your own account, relayed as a NEP-366 meta-transaction; the contract checks the answer against a hash and writes the reward. The app shows each transaction with its explorer link and "Gas you paid: 0 NEAR".
 
 What's in the window (Nov 1–14):
 - Four Rust contracts: core (quests, shop, graduation, Season 2 stamps), passport (stamps), streak (a community token that mints on kept days, burns on missed ones), bounties (a board that pays what the chain can verify). 72 tests.
-- A market that never sleeps: prices are a contract rule (the more Bloq holds, the less he pays); bots, an NPC trader with its own account and a fast-forward mode keep trading while nobody is online; the shop shows 24-hour curves of real trades.
-- An AI agent on NEAR AI Cloud (TEE, signed) writes a daily quest and answers "Ask Bloq". The model only writes text: no model output can reach a reward, a price or a balance.
+- A market that never sleeps: prices are a contract rule (the more Bloq holds, the less he pays); bots, a fast-forward mode and an NPC trader keep trading while nobody is online; the shop shows 24-hour curves. The trader is an agent on NEAR AI Cloud: it picks its move, with a signed one-line reason, only among moves its rules allow; anything else is overruled.
+- An AI agent on NEAR AI Cloud (TEE, signed) writes a daily quest and answers "Ask Bloq". No model output can reach a reward, a price or another player's balance.
 - A cohort DAO (Sputnik v2): the board pays small bounties itself, files medium claims as DAO proposals, leaves large ones to the DAO. The Passport is a vote: graduating seats you in the graduates role (you approve payments with your own key); the Season 2 stamp seats you in founders, who propose bounties the DAO itself adds to the board.
-- A relayer (Node, no framework) that creates accounts, relays, seats, and runs the market and the agent. 40 tests.
+- A relayer (Node, no framework) that creates accounts, relays, seats, and runs the market and the agent. 41 tests.
 
-The README is written for a judge: numbered "do X, see Y" steps for the hosted app and for a clean clone (cargo test, npm test, an offline economy simulation, a live run through the relayer), all true on submission day. Testnet only.
+The README is written for a judge: numbered "do X, see Y" steps for the hosted app and for a clean clone (cargo test, npm test, offline and live simulations), all true on submission day. Testnet only.
 
 ## The X post (demo post link)
 

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { prune, thin, dayAverage, KEEP_MS, MAX_POINTS, type Snapshot } from "../src/market.js";
-import { decide, lines, RULES } from "../src/trader.js";
+import { allowedMoves, decide, judge, lines, RULES } from "../src/trader.js";
 import { gate, plan, slack, LINES, type FFState } from "../src/fastforward.js";
 
 const snap = (t: number): Snapshot => ({ t, gold: "1000", shop_open: true, prices: [] });
@@ -84,4 +84,24 @@ test("the fast-forward's players trade around the day's average, each with its o
   assert.equal(plan("hoarder", mid, me, null, 2n)!.kind, "buy"); // no history: the price itself is the average
   assert.equal(plan("hoarder", cheap, { gold: 25n, items: items(1n, 1n, 1n) }, fair, 2n), null); // under the gold floor
   assert.equal(plan("seller", { ...dear, shop_open: false }, me, fair, 2n), null);
+});
+
+test("the trader that thinks: the agent may pick only a move the rules allow; anything else is overruled into a hold", () => {
+  const l = { sellAbove: 45n, buyBelow: 39n };
+  const pr = { shop_open: true, buy: items(46n, 40n, 43n), sell: items(47n, 41n, 44n), stock: items(50n, 60n, 0n) };
+  const mine = { gold: 100n, items: items(2n, 1n, 3n) };
+  const allowed = allowedMoves(pr, mine, l);
+  assert.deepEqual(allowed, [{ kind: "sell", token_id: "key-fragment", price: 46n }]); // fuel cell: last one; contract seal: 43 < 45; nothing cheap enough to buy
+  assert.deepEqual(allowedMoves({ ...pr, shop_open: false }, mine, l), []);
+  // a legal pick goes through with its reason
+  const ok = judge({ move: "sell", item: "key-fragment", reason: "Bloq pays 46, one over my line." }, allowed);
+  assert.equal(ok.pick?.token_id, "key-fragment"); assert.equal(ok.overruled, false); assert.equal(ok.reason, "Bloq pays 46, one over my line.");
+  // a move the rules do not allow is overruled: the trader holds and says so
+  const no = judge({ move: "buy", item: "fuel-cell", reason: "cheap" }, allowed);
+  assert.equal(no.move, "hold"); assert.equal(no.pick, null); assert.equal(no.overruled, true); assert.match(no.reason, /rules did not allow/);
+  // garbage from the model is a hold, never a trade
+  assert.equal(judge(null, allowed).move, "hold");
+  assert.equal(judge({ move: "sell", item: "gold", reason: "x" }, allowed).overruled, true);
+  assert.equal(judge({ move: "hold", item: "none", reason: " ".repeat(5) }, allowed).reason, "No reason given.");
+  assert.equal(judge({ move: "hold", item: "none", reason: "a".repeat(300) }, allowed).reason.length, 140);
 });

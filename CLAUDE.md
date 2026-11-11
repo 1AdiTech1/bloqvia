@@ -19,7 +19,7 @@ Tracks: games (primary), nfts, memecoins, social, open. Read `README.md` first, 
    `cd ../bloqvia-passport && cargo test` → expect 11 passed.
    `cd ../bloqvia-streak && cargo test` → expect 9 passed (Module A, merged).
    `cd ../bloqvia-bounties && cargo test` → expect 14 passed (Module B, merged Nov 5 after its on-chain proof).
-3. `cd relayer && npm i && npm test` → expect 40 passed.
+3. `cd relayer && npm i && npm test` → expect 41 passed.
    `cd ../scripts && npm i && npm test` → expect 2 passed.
 If any of these fail on a clean clone, stop and report the full output; do not
 "fix" by changing tests.
@@ -57,7 +57,10 @@ If any of these fail on a clean clone, stop and report the full output; do not
   that mint, move balances or change prices; the judges read for exactly that.
 - The AI (NEAR AI Cloud) only writes text: daily quests (hashed and seeded
   like any lesson) and Ask Bloq answers. No model output may ever reach a
-  reward, a price or a balance. Keep it that way.
+  reward, a price or another player's balance. Keep it that way. The one
+  deliberate exception (Nov 11): the NPC trader's agent chooses the trader's
+  own move, only among the moves `allowedMoves` in `relayer/src/trader.ts`
+  permits; it never sets a price and only the trader's own account moves.
 - The README is written for an AI judge: "do X, see Y" steps, no marketing.
   Every step in it must be true on a clean clone the day it is written.
 - Pre-hackathon code is baseline; everything we write is new in this window.

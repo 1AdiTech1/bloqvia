@@ -9,7 +9,13 @@
  * Its lines move with the market (Nov 11): it sells when Bloq pays RULES.band above the day's average price and buys
  * when he charges RULES.band under it. Fixed lines (55 / 40) left it waiting for a day once the prices settled between
  * them; a line relative to the average is crossed whenever the other players move the price, which is the point.
+ *
+ * The trader thinks (Nov 11): with a NEAR AI key, an agent on NEAR AI Cloud picks the move, with a one-line reason, but
+ * only among the moves the rules allow right now (`allowedMoves`); a move outside that list is overruled and the trader
+ * holds. The model never sets a price, never mints, never touches another account: it plays, like a person, inside caps
+ * it cannot change. The reason and the model's signature are shown on the shop. Without a key the rules decide alone.
  */
+import { chat, extractJson, fetchSignature, signatureMatches, type AiConfig } from "./ai.js";
 import type { KeyPairString } from "near-api-js";
 import { ITEMS, botFromKey, call, learner, prices, type Bot, type Item } from "./bots.js";
 import { afterTrade, fairPrices } from "./market.js";
@@ -27,12 +33,25 @@ export const RULES = {
   intervalMin: Number(process.env.TRADER_INTERVAL_MIN ?? 20),
 } as const;
 
-export interface TraderMove { kind: "sell" | "buy"; token_id: Item; amount: number; price: string; at: number; txHash: string }
+export interface TraderMove { kind: "sell" | "buy"; token_id: Item; amount: number; price: string; at: number; txHash: string; reason?: string }
+/** What the agent said at its last look, acted on or not. */
+export interface Thought {
+  at: number;
+  /** what it chose; "hold" when it chose nothing or was overruled */
+  move: "sell" | "buy" | "hold";
+  token_id: Item | null;
+  reason: string;
+  /** the moves the rules allowed at that moment, e.g. ["buy fuel-cell", "hold"] */
+  allowed: string[];
+  /** true when the model asked for a move the rules did not allow (the trader held instead) */
+  overruled: boolean;
+  generated_by: { provider: "NEAR AI Cloud"; model: string; chat_id: string; signature_kind: string | null };
+}
 /** The two lines as they stand now (the day's average ± band), the numbers the shop prints. */
 export interface TraderLines { sellAbove: bigint; buyBelow: bigint }
-export interface TraderState { accountId: string | null; on: boolean; last: TraderMove | null; lastTick: number | null; note: string; lines: TraderLines | null }
+export interface TraderState { accountId: string | null; on: boolean; mind: "ai" | "rules"; last: TraderMove | null; lastThought: Thought | null; lastTick: number | null; note: string; lines: TraderLines | null }
 
-const state: TraderState = { accountId: null, on: false, last: null, lastTick: null, note: "off: TRADER_ACCOUNT_ID / TRADER_PRIVATE_KEY not set", lines: null };
+const state: TraderState = { accountId: null, on: false, mind: "rules", last: null, lastThought: null, lastTick: null, note: "off: TRADER_ACCOUNT_ID / TRADER_PRIVATE_KEY not set", lines: null };
 export function traderState(): TraderState { return state; }
 
 /** The lines from a fair price: the average over the items of the day's average buy price. Pure, tested. */
@@ -53,15 +72,77 @@ export function decide(p: { shop_open: boolean; buy: Record<Item, bigint>; sell:
   return null;
 }
 
-export async function traderTick(ctx: NearContext, bot: Bot, log: (s: string) => void = console.log): Promise<TraderMove | null> {
+type Prices = { shop_open: boolean; buy: Record<Item, bigint>; sell: Record<Item, bigint>; stock: Record<Item, bigint> };
+type Mine = { gold: bigint; items: Record<Item, bigint> };
+export type Allowed = { kind: "sell" | "buy"; token_id: Item; price: bigint };
+
+/** Every move the rules allow right now (the agent may pick one of these, or hold). Pure, tested. */
+export function allowedMoves(p: Prices, mine: Mine, l: TraderLines): Allowed[] {
+  if (!p.shop_open) return [];
+  const out: Allowed[] = [];
+  for (const i of ITEMS) {
+    if (mine.items[i] > RULES.keepItems && p.buy[i] >= l.sellAbove) out.push({ kind: "sell", token_id: i, price: p.buy[i] });
+    if (p.sell[i] <= l.buyBelow && mine.gold - p.sell[i] >= RULES.keepGold && p.stock[i] >= 1n) out.push({ kind: "buy", token_id: i, price: p.sell[i] });
+  }
+  return out;
+}
+const label = (a: Allowed) => `${a.kind} ${a.token_id}`;
+
+export const THOUGHT_SCHEMA = {
+  type: "object", additionalProperties: false, required: ["move", "item", "reason"],
+  properties: {
+    move: { type: "string", enum: ["sell", "buy", "hold"] },
+    item: { type: "string", enum: [...ITEMS, "none"] },
+    reason: { type: "string", description: "One sentence, max 140 characters, in the first person, naming the number that decided it" },
+  },
+} as const;
+export const MAX_REASON = 140;
+/** The agent's rules, as the model reads them. The numbers are filled per tick. */
+export const TRADER_PROMPT = `You are the NPC trader in Bloq's shop in Bloqvia, a game on NEAR testnet. You hold a little gold and a few items and you trade with Bloq, whose prices come from a rule in the contract: the more of an item he holds, the less he pays. You cannot set prices, mint anything, or touch anyone else's balance. You may only pick a move from the list you are given, or hold. Pick the move a careful trader would, and say why in one sentence, in the first person, naming the number that decided it (a price against the day's average, or what you hold). Never mention money, dollars, investing or that anything has value outside the game. Answer only with the JSON object.`;
+
+/** The model's choice, checked against the rules: a move not in `allowed` is overruled and becomes a hold. Pure, tested. */
+export function judge(raw: unknown, allowed: Allowed[]): { move: "sell" | "buy" | "hold"; token_id: Item | null; reason: string; overruled: boolean; pick: Allowed | null } {
+  const o = (raw ?? {}) as { move?: unknown; item?: unknown; reason?: unknown };
+  const reason = String(typeof o.reason === "string" ? o.reason : "").replace(/\s+/g, " ").trim().slice(0, MAX_REASON) || "No reason given.";
+  const move = o.move === "sell" || o.move === "buy" ? o.move : "hold";
+  const item = (ITEMS as readonly string[]).includes(String(o.item)) ? (o.item as Item) : null;
+  if (move === "hold") return { move, token_id: null, reason, overruled: false, pick: null };
+  const pick = allowed.find((a) => a.kind === move && a.token_id === item) ?? null;
+  if (!pick) return { move: "hold", token_id: null, reason: `Wanted to ${move} ${item ?? "something"}; the rules did not allow it, so I hold. (${reason})`.slice(0, MAX_REASON + 60), overruled: true, pick: null };
+  return { move, token_id: pick.token_id, reason, overruled: false, pick };
+}
+
+async function think(ai: AiConfig, model: string, p: Prices, me: Mine, l: TraderLines, fair: Record<string, bigint> | null, allowed: Allowed[], log: (s: string) => void): Promise<Thought> {
+  const lines = ITEMS.map((i) => `${i}: Bloq pays ${p.buy[i]}, charges ${p.sell[i]}, holds ${p.stock[i]}; day average ${fair?.[i] ?? p.buy[i]}; I hold ${me.items[i]}`).join("\n");
+  const user = `My lines today: sell when Bloq pays ${l.sellAbove} or more, buy when he charges ${l.buyBelow} or less. I keep ${RULES.keepGold} gold and never sell my last item. I have ${me.gold} gold.\n${lines}\nMoves the rules allow right now: ${allowed.length ? allowed.map(label).join(", ") : "none"}; "hold" is always allowed.\nChoose.`;
+  const completion = await chat(ai, model, [{ role: "system", content: TRADER_PROMPT }, { role: "user", content: user }], { jsonSchema: { name: "bloqvia_trader", schema: THOUGHT_SCHEMA as unknown as Record<string, unknown> }, maxTokens: 400, temperature: 0.4, thinking: false });
+  let raw: unknown = null;
+  try { raw = JSON.parse(extractJson(completion.content)); } catch { raw = null; }
+  const j = judge(raw, allowed);
+  const sig = await fetchSignature(ai, completion).catch(() => null);
+  const verified = sig ? signatureMatches(completion, sig) : false;
+  log(`[trader] thought: ${j.move}${j.token_id ? ` ${j.token_id}` : ""}${j.overruled ? " (overruled)" : ""} — ${JSON.stringify(j.reason)} sig=${verified ? sig!.signature_kind : "none"}`);
+  return { at: Date.now(), move: j.move, token_id: j.token_id, reason: j.reason, allowed: [...allowed.map(label), "hold"], overruled: j.overruled, generated_by: { provider: "NEAR AI Cloud", model: completion.model, chat_id: completion.id, signature_kind: verified ? sig!.signature_kind : null } };
+}
+
+export async function traderTick(ctx: NearContext, bot: Bot, log: (s: string) => void = console.log, ai: { cfg: AiConfig; model: string } | null = null): Promise<TraderMove | null> {
   state.lastTick = Date.now();
   const [p, me] = await Promise.all([prices(ctx), learner(ctx, bot.accountId)]);
-  const l = lines(fairPrices(), p);
+  const fair = fairPrices();
+  const l = lines(fair, p);
   state.lines = l;
-  const d = decide(p, me, l);
-  if (!d) { state.note = p.shop_open ? `waiting: no price past the lines (${l.buyBelow} / ${l.sellAbove})` : "waiting: the shop is closed"; return null; }
+  const allowed = allowedMoves(p, me, l);
+  let d: Allowed | null = null, reason: string | undefined;
+  if (ai && p.shop_open) {
+    // the agent chooses among what the rules allow; a slip in the model (or the gateway) falls back to the rules
+    try { const t = await think(ai.cfg, ai.model, p, me, l, fair, allowed, log); state.lastThought = t; d = judge({ move: t.move, item: t.token_id ?? "none", reason: t.reason }, allowed).pick; reason = t.reason; }
+    catch (e) { log(`[trader] the agent did not answer (${(e as Error).message}); the rules decide`); d = decide(p, me, l); }
+  } else {
+    d = decide(p, me, l);
+  }
+  if (!d) { state.note = p.shop_open ? (reason ? `held: ${reason}` : `waiting: no price past the lines (${l.buyBelow} / ${l.sellAbove})`) : "waiting: the shop is closed"; return null; }
   const r = await call(ctx, bot, d.kind === "sell" ? "sell_to_bloq" : "buy_from_bloq", { token_id: d.token_id, amount: "1" });
-  const move: TraderMove = { kind: d.kind, token_id: d.token_id, amount: 1, price: d.price.toString(), at: Date.now(), txHash: r.txHash };
+  const move: TraderMove = { kind: d.kind, token_id: d.token_id, amount: 1, price: d.price.toString(), at: Date.now(), txHash: r.txHash, ...(reason ? { reason } : {}) };
   state.last = move; state.note = "";
   afterTrade(ctx);
   log(`[trader] ${d.kind} 1 ${d.token_id} at ${d.price} gold tx=${r.txHash}`);
@@ -73,8 +154,9 @@ export function startTrader(ctx: NearContext, env: NodeJS.ProcessEnv = process.e
   const accountId = env.TRADER_ACCOUNT_ID, key = env.TRADER_PRIVATE_KEY as KeyPairString | undefined;
   if (!accountId || !key) return null;
   const bot = botFromKey(ctx, accountId, key);
-  state.accountId = accountId; state.on = true; state.note = "starting";
-  const tick = () => traderTick(ctx, bot).catch((e) => { state.note = `error: ${(e as Error).message}`; console.error(`[trader] ${(e as Error).message}`); });
+  const ai = ctx.config.ai && env.TRADER_MIND !== "rules" ? { cfg: ctx.config.ai, model: env.TRADER_MODEL ?? ctx.config.ai.chatModel } : null;
+  state.accountId = accountId; state.on = true; state.mind = ai ? "ai" : "rules"; state.note = "starting";
+  const tick = () => traderTick(ctx, bot, console.log, ai).catch((e) => { state.note = `error: ${(e as Error).message}`; console.error(`[trader] ${(e as Error).message}`); });
   void tick();
   const id = setInterval(tick, RULES.intervalMin * 60 * 1000);
   return () => clearInterval(id);
