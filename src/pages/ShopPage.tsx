@@ -174,7 +174,10 @@ function ShopInner() {
 
       <div className="mt-5 flex flex-col gap-3 dk:grid dk:grid-cols-3">
         {bloq.prices.map((p) => (
-          <TradeCard key={p.token_id} price={p} have={itemAmount(learner.items, p.token_id)} gold={Number(learner.gold)} shopOpen={bloq.shop_open} onTraded={onTraded} market={market} />
+          <div key={p.token_id} className="flex min-w-0 flex-col gap-3">
+            <TradeCard price={p} have={itemAmount(learner.items, p.token_id)} gold={Number(learner.gold)} shopOpen={bloq.shop_open} onTraded={onTraded} market={market} />
+            <PriceCallCard tokenId={p.token_id as ItemId} />
+          </div>
         ))}
       </div>
 
@@ -231,17 +234,25 @@ const ITEM_PROP: Record<string, BloqProp> = { "key-fragment": "key", "fuel-cell"
 
 const fmtClock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
+const outcomeOf = (open: string, close: string | null): CallSide | null => {
+  if (close === null) return null;
+  const o = BigInt(open), c = BigInt(close);
+  return c > o ? "More" : c < o ? "Less" : "Same";
+};
 function resultLine(r: MyCall): string {
   const paid = Number(r.paid ?? 0), stake = Number(r.stake);
+  const right = outcomeOf(r.open_price, r.close_price) === r.side;
   if (paid > stake) return `You called it: +${paid - stake} gold`;
   if (r.paid === "0") return `Not this time: −${r.stake} gold`;
+  if (right) return `You called it: ${r.stake} gold back`;
   return `Nobody was right: ${r.stake} gold back`;
 }
-
 function resultSub(r: MyCall): string {
   const paid = Number(r.paid ?? 0), stake = Number(r.stake);
+  const right = outcomeOf(r.open_price, r.close_price) === r.side;
   if (paid > stake) return `your ${r.stake} back plus ${paid - stake} of the wrong sides' stakes`;
   if (r.paid === "0") return `the stake went to the right side`;
+  if (right) return `nobody was on a wrong side, so there was nothing to win`;
   return `everyone got the stake back`;
 }
 
@@ -264,12 +275,91 @@ function CrowdLine({ k }: { k: ReturnType<typeof crowd> }) {
 
 function TradeCard({ price, have, gold, shopOpen, onTraded, market }: { price: ItemPrice; have: number; gold: number; shopOpen: boolean; onTraded: (id: string, kind: "sell" | "buy") => void; market: Market }) {
   const game = useGame();
-  const c = useCalls();
   const [qty, setQty] = useState(1);
   const [tip, setTip] = useState(false);
+  const tipBtn = useRef<HTMLButtonElement>(null);
+  const tipPanel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!tip) return;
+    const down = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (tipPanel.current?.contains(t) || tipBtn.current?.contains(t)) return;
+      setTip(false);
+    };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { setTip(false); tipBtn.current?.focus(); } };
+    document.addEventListener("pointerdown", down);
+    document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("pointerdown", down); document.removeEventListener("keydown", key); };
+  }, [tip]);
   const id = price.token_id;
   const stock = Number(price.bloq_stock);
 
+  const act = async (fn: typeof game.sellToBloq, kind: "sell" | "buy") => {
+    try {
+      await fn(id, qty);
+      onTraded(id, kind);
+      setQty(1);
+    } catch { /* coral toast shows the error */ }
+  };
+
+  const canSell = shopOpen && have > 0 && !game.busy;
+  const canBuy = shopOpen && stock > 0 && gold >= Number(price.sell_price) * qty && !game.busy;
+
+  return (
+    <article className="lab-trade relative rounded-3xl bg-ivory p-4 text-navy shadow-lift">
+      <div className="lab-trade-head flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-navy text-lime">
+          <ItemIcon id={id} className="h-5 w-5" />
+        </span>
+        <div className="lab-trade-name min-w-0 flex-1">
+          <h3 className="font-display text-lg font-medium leading-tight">{itemLabel(id)}</h3>
+          <p className="text-xs text-muted-foreground">
+            You <strong className="text-navy">{have}</strong> · Bloq's stock <AnimatedNumber value={stock} className="font-semibold text-navy" />
+          </p>
+        </div>
+        <button ref={tipBtn} aria-label="How prices work" aria-expanded={tip} aria-controls={`price-tip-${id}`} onClick={() => setTip((t) => !t)} className="tap -mr-2 ml-auto flex shrink-0 items-center justify-center rounded-full text-navy/60">
+          <Info className="h-5 w-5" />
+        </button>
+      </div>
+
+      {tip && (
+        <div ref={tipPanel} id={`price-tip-${id}`} role="dialog" aria-label="How prices work"
+          className="bq-pop absolute left-[10px] right-[10px] top-[64px] z-30 rounded-[18px] bg-card px-4 py-3 text-sm leading-relaxed text-navy shadow-[0_22px_50px_rgb(0_0_0/.35),0_0_0_1px_#e3dccb]">
+          Bloq pays less for what he already has a lot of: price = 100 × 40 ÷ (40 + his stock). Nobody can change this rule by hand.
+        </div>
+      )}
+
+      <div className="lab-trade-prices mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-2xl bg-lavender-soft px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-navy/60">He pays</p>
+          <p className="font-display text-2xl font-medium"><AnimatedNumber value={Number(price.buy_price)} className="-ml-1" /></p>
+        </div>
+        <div className="rounded-2xl bg-navy px-3 py-2 text-ivory">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-lavender">He charges</p>
+          <p className="font-display text-2xl font-medium"><AnimatedNumber value={Number(price.sell_price)} className="-ml-1" /></p>
+        </div>
+      </div>
+      <PriceHistory points={market.history(id as ItemId)} change={market.change(id as ItemId)} className="mt-3" />
+
+      <div className="mt-3 flex items-center gap-2 dk:flex-col dk:items-stretch">
+        <div className="flex items-center rounded-full bg-muted dk:justify-between">
+          <Press aria-label="Less" disabled={qty <= 1} className="flex items-center justify-center disabled:opacity-30" onClick={() => setQty((q) => Math.max(1, q - 1))}><Minus className="h-4 w-4" /></Press>
+          <span className="w-5 text-center font-display font-semibold tabular-nums" aria-live="polite">{qty}</span>
+          <Press aria-label="More" disabled={qty >= 9} className="flex items-center justify-center disabled:opacity-30" onClick={() => setQty((q) => Math.min(9, q + 1))}><Plus className="h-4 w-4" /></Press>
+        </div>
+        <div className="flex flex-1 gap-2 dk:flex-none">
+        <Press disabled={!canSell} onClick={() => act(game.sellToBloq, "sell")} className="flex-1 rounded-full border-2 border-navy font-semibold disabled:opacity-30">Sell</Press>
+        <Press disabled={!canBuy} onClick={() => act(game.buyFromBloq, "buy")} className="flex-1 rounded-full bg-navy font-semibold text-ivory disabled:opacity-30">Buy</Press>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function PriceCallCard({ tokenId }: { tokenId: ItemId }) {
+  const game = useGame();
+  const c = useCalls();
+  const id = tokenId;
   const [stake, setStake] = useState<number>(CALL_STAKE.default);
   const [seenRound, setSeenRound] = useState(0);
   const [tried, setTried] = useState(false);
@@ -288,58 +378,10 @@ function TradeCard({ price, have, gold, shopOpen, onTraded, market }: { price: I
   const clock = showResult ? "settled" : round ? (round.open ? `${fmtClock(left)} left` : `${fmtClock(left)} to go`) : null;
   const place = (side: CallSide) => { setTried(true); void c.place(id as ItemId, side, stake).catch(() => { /* c.error shows the chain's message */ }); };
 
-  const act = async (fn: typeof game.sellToBloq, kind: "sell" | "buy") => {
-    try {
-      await fn(id, qty);
-      onTraded(id, kind);
-      setQty(1);
-    } catch { /* coral toast shows the error */ }
-  };
-
-  const canSell = shopOpen && have > 0 && !game.busy;
-  const canBuy = shopOpen && stock > 0 && gold >= Number(price.sell_price) * qty && !game.busy;
-
+  if (!c.enabled) return null;
   return (
-    <article className="lab-trade rounded-3xl bg-ivory p-4 text-navy shadow-lift">
-      <div className="lab-trade-head flex items-center gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-navy text-lime">
-          <ItemIcon id={id} className="h-5 w-5" />
-        </span>
-        <div className="lab-trade-name min-w-0 flex-1">
-          <h3 className="font-display text-lg font-medium leading-tight">{itemLabel(id)}</h3>
-          <p className="text-xs text-muted-foreground">
-            You <strong className="text-navy">{have}</strong> · Bloq's stock <AnimatedNumber value={stock} className="font-semibold text-navy" />
-          </p>
-        </div>
-        <button aria-label="How prices work" aria-expanded={tip} onClick={() => setTip((t) => !t)} onBlur={() => setTip(false)} className="tap -mr-2 ml-auto flex shrink-0 items-center justify-center rounded-full text-navy/60">
-          <Info className="h-5 w-5" />
-        </button>
-      </div>
-
-      <AnimatePresence>
-        {tip && (
-          <motion.div role="tooltip" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-            <p className="mt-3 rounded-2xl bg-navy p-3 text-sm leading-relaxed text-ivory">
-              Bloq pays less for what he already has a lot of: price = 100 × 40 ÷ (40 + his stock). Nobody can change this rule by hand.
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="lab-trade-prices mt-3 grid grid-cols-2 gap-2">
-        <div className="rounded-2xl bg-lavender-soft px-3 py-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-navy/60">He pays</p>
-          <p className="font-display text-2xl font-medium"><AnimatedNumber value={Number(price.buy_price)} className="-ml-1" /></p>
-        </div>
-        <div className="rounded-2xl bg-navy px-3 py-2 text-ivory">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-lavender">He charges</p>
-          <p className="font-display text-2xl font-medium"><AnimatedNumber value={Number(price.sell_price)} className="-ml-1" /></p>
-        </div>
-      </div>
-      <PriceHistory points={market.history(id as ItemId)} change={market.change(id as ItemId)} className="mt-3" />
-
-      {c.enabled && (
-        <div className="mt-3 grid gap-2 rounded-2xl border border-purple/20 bg-purple/5 p-3">
+    <section className="relative grid gap-2.5 rounded-3xl border border-purple/20 p-4 text-navy shadow-lift"
+      style={{ background: "linear-gradient(rgb(139 69 217 / .07), rgb(139 69 217 / .07)), #f7f4eb" }}>
           <div className="flex items-baseline justify-between">
             <span className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-purple-d">Price call</span>
             {clock && <span className="font-mono text-[10.5px] text-muted-foreground">{clock}</span>}
@@ -356,7 +398,7 @@ function TradeCard({ price, have, gold, shopOpen, onTraded, market }: { price: I
           ) : mine ? (
             <>
               <div className="flex items-center justify-between gap-2 text-[13px]">
-                <span>Your call: <b className="font-display font-semibold">{mine.side.toLowerCase()}</b>, from {mine.open_price}</span>
+                <span>Your call: <b className="inline-flex items-center gap-1 align-middle font-display font-semibold"><SideArrow side={mine.side} /> {mine.side.toLowerCase()}</b>, from {mine.open_price}</span>
                 <span className="rounded-full bg-lavender-soft px-3 py-1 text-xs font-semibold">settles in {fmtClock(left)}</span>
               </div>
               <CrowdLine k={k} />
@@ -372,11 +414,17 @@ function TradeCard({ price, have, gold, shopOpen, onTraded, market }: { price: I
                 {c.busy ? (
                   <LabLoader size={22} label="Calling on chain…" />
                 ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    <Press disabled={closed || c.busy || game.busy} onClick={() => place("More")} className="min-h-[38px] rounded-full bg-navy text-[13px] font-semibold text-lime disabled:opacity-50">▲ More</Press>
-                    <Press disabled={closed || c.busy || game.busy} onClick={() => place("Same")} className="min-h-[38px] rounded-full border-2 border-navy/40 text-[13px] font-semibold text-navy disabled:opacity-50">= Same</Press>
-                    <Press disabled={closed || c.busy || game.busy} onClick={() => place("Less")} className="min-h-[38px] rounded-full border-2 border-navy text-[13px] font-semibold text-navy disabled:opacity-50">▼ Less</Press>
-                  </div>
+                  <>
+                    <div className="grid grid-cols-3 justify-items-center gap-2">
+                      <Press aria-label="More" disabled={closed || c.busy || game.busy} onClick={() => place("More")}
+                        className="flex h-14 w-14 items-center justify-center rounded-full bg-navy text-lime shadow-[0_10px_20px_-12px_rgb(22_36_58/.8)] hover:bg-navy/90 disabled:opacity-50"><ArrowMore /></Press>
+                      <Press aria-label="Same" disabled={closed || c.busy || game.busy} onClick={() => place("Same")}
+                        className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-navy/35 bg-card text-navy hover:bg-lavender-soft disabled:opacity-50"><ArrowSame /></Press>
+                      <Press aria-label="Less" disabled={closed || c.busy || game.busy} onClick={() => place("Less")}
+                        className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-navy bg-card text-navy hover:bg-lavender-soft disabled:opacity-50"><ArrowLess /></Press>
+                    </div>
+                    <div className="-mt-1 grid grid-cols-3 text-center font-mono text-[10.5px] text-muted-foreground" aria-hidden="true"><span>more</span><span>same</span><span>less</span></div>
+                  </>
                 )}
                 <div className="mt-2 flex h-[38px] items-center justify-center gap-1 rounded-full bg-muted">
                   <Press aria-label="Less stake" disabled={closed || stake <= CALL_STAKE.min} onClick={() => setStake((s) => Math.max(CALL_STAKE.min, s - 5))} className="flex items-center justify-center disabled:opacity-30"><Minus className="h-4 w-4" /></Press>
@@ -397,20 +445,12 @@ function TradeCard({ price, have, gold, shopOpen, onTraded, market }: { price: I
               </button>
             </div>
           )}
-        </div>
-      )}
-
-      <div className="mt-3 flex items-center gap-2 dk:flex-col dk:items-stretch">
-        <div className="flex items-center rounded-full bg-muted dk:justify-between">
-          <Press aria-label="Less" disabled={qty <= 1} className="flex items-center justify-center disabled:opacity-30" onClick={() => setQty((q) => Math.max(1, q - 1))}><Minus className="h-4 w-4" /></Press>
-          <span className="w-5 text-center font-display font-semibold tabular-nums" aria-live="polite">{qty}</span>
-          <Press aria-label="More" disabled={qty >= 9} className="flex items-center justify-center disabled:opacity-30" onClick={() => setQty((q) => Math.min(9, q + 1))}><Plus className="h-4 w-4" /></Press>
-        </div>
-        <div className="flex flex-1 gap-2 dk:flex-none">
-        <Press disabled={!canSell} onClick={() => act(game.sellToBloq, "sell")} className="flex-1 rounded-full border-2 border-navy font-semibold disabled:opacity-30">Sell</Press>
-        <Press disabled={!canBuy} onClick={() => act(game.buyFromBloq, "buy")} className="flex-1 rounded-full bg-navy font-semibold text-ivory disabled:opacity-30">Buy</Press>
-        </div>
-      </div>
-    </article>
+    </section>
   );
 }
+
+const ARROW = { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.4, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true } as const;
+const ArrowMore = (p: { width?: number; height?: number }) => <svg {...ARROW} {...p}><path d="M4 17l6-6 4 4 6-6" /><path d="M14 9h6v6" /></svg>;
+const ArrowSame = (p: { width?: number; height?: number }) => <svg {...ARROW} {...p}><path d="M4 12h15" /><path d="m14 7 5 5-5 5" /></svg>;
+const ArrowLess = (p: { width?: number; height?: number }) => <svg {...ARROW} {...p}><path d="M4 7l6 6 4-4 6 6" /><path d="M20 9v6h-6" /></svg>;
+const SideArrow = ({ side }: { side: CallSide }) => side === "More" ? <ArrowMore width={14} height={14} /> : side === "Less" ? <ArrowLess width={14} height={14} /> : <ArrowSame width={14} height={14} />;
