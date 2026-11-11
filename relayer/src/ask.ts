@@ -12,7 +12,8 @@
  * memory (one relayer instance).
  */
 import { chat, extractJson, fetchSignature, signatureMatches, type AiConfig, type ChatMessage } from "./ai.js";
-import { PolicyError, RateLimiter } from "./policy.js";
+import { DailyCap, PolicyError, RateLimiter } from "./policy.js";
+export { DailyCap };
 import { CHAPTER_PREFIX, DAILY_PREFIX } from "./quests.js";
 import { view, type NearContext } from "./near.js";
 
@@ -115,25 +116,6 @@ export function buildMessages(question: string, questContext: string | null): Ch
   ];
 }
 
-/** Daily cap on model calls, reset at UTC midnight. */
-export class DailyCap {
-  private day = "";
-  private used = 0;
-  constructor(private readonly max: number) {}
-  take(now = new Date()): void {
-    const d = now.toISOString().slice(0, 10);
-    if (d !== this.day) {
-      this.day = d;
-      this.used = 0;
-    }
-    if (this.used >= this.max) throw new PolicyError("Bloq has answered enough for today; try again tomorrow", 429);
-    this.used += 1;
-  }
-  get remaining(): number {
-    return Math.max(0, this.max - this.used);
-  }
-}
-
 interface LessonWithText {
   lesson: { lesson_id: string; title: string };
   bonus: boolean;
@@ -163,7 +145,7 @@ export interface AskBloq {
 
 export function createAskBloq(ctx: NearContext, ai: AiConfig, model: string, opts: { dailyCap?: number; log?: (s: string) => void } = {}): AskBloq {
   const perAsker = new RateLimiter(PER_ASKER_PER_HOUR, 60 * 60_000);
-  const cap = new DailyCap(opts.dailyCap ?? 400);
+  const cap = new DailyCap(opts.dailyCap ?? 400, "Bloq has answered enough for today; try again tomorrow");
   const cache = { at: 0, items: [] as LessonWithText[] };
   const log = opts.log ?? console.log;
 

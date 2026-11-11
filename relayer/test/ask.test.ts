@@ -27,7 +27,7 @@ test("the knowledge and the prompt keep money out and the quest answers in", () 
 });
 
 test("the daily cap resets at UTC midnight", () => {
-  const cap = new DailyCap(2);
+  const cap = new DailyCap(2, "Bloq has answered enough for today; try again tomorrow");
   const d1 = new Date("2026-11-05T10:00:00Z");
   cap.take(d1);
   cap.take(d1);

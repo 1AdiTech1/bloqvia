@@ -97,6 +97,7 @@ export async function chat(cfg: AiConfig, model: string, messages: ChatMessage[]
   const raw = JSON.stringify(body);
   const res = await fetch(`${cfg.baseUrl}/chat/completions`, {
     method: "POST",
+    signal: AbortSignal.timeout(90_000), // a hung request must not hang /ask or the quest tick (Nov 11)
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${cfg.apiKey}`,
@@ -138,6 +139,7 @@ export async function chat(cfg: AiConfig, model: string, messages: ChatMessage[]
 export async function fetchSignature(cfg: AiConfig, completion: Completion, algo = "ecdsa"): Promise<Signature | null> {
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const res = await fetch(`${cfg.baseUrl}/signature/${encodeURIComponent(completion.id)}?signing_algo=${algo}`, {
+      signal: AbortSignal.timeout(30_000),
       headers: { Accept: "application/json", Authorization: `Bearer ${cfg.apiKey}` },
     });
     if (res.status === 404) {

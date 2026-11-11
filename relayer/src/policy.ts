@@ -85,13 +85,27 @@ export function isVote(args: Uint8Array | string): boolean {
   }
 }
 
+/** A global cap per UTC day (registrations, model calls). In memory: fine for one relayer instance. */
+export class DailyCap {
+  private day = "";
+  private used = 0;
+  constructor(private readonly max: number, private readonly message = "Today's allowance is used up; tomorrow again") {}
+  take(now = new Date()): void {
+    const d = now.toISOString().slice(0, 10);
+    if (d !== this.day) { this.day = d; this.used = 0; }
+    if (this.used >= this.max) throw new PolicyError(this.message, 429);
+    this.used += 1;
+  }
+  get remaining(): number { return Math.max(0, this.max - this.used); }
+}
+
 /** Sliding-window rate limit per sender. In memory: fine for one relayer instance. */
 export class RateLimiter {
   private readonly hits = new Map<string, number[]>();
-  constructor(private readonly max: number, private readonly windowMs: number) {}
+  constructor(private readonly max: number, private readonly windowMs: number, private readonly message = "Too many requests, slow down") {}
   check(key: string, now = Date.now()): void {
     const list = (this.hits.get(key) ?? []).filter((t) => now - t < this.windowMs);
-    if (list.length >= this.max) throw new PolicyError("Too many requests, slow down", 429);
+    if (list.length >= this.max) throw new PolicyError(this.message, 429);
     list.push(now);
     this.hits.set(key, list);
   }

@@ -253,7 +253,11 @@ export async function generateDailyQuest(ctx: NearContext, ai: AiConfig, model: 
   };
   await ctx.relayer.callFunction({ contractId: ctx.config.coreContractId, methodName: "add_lesson", args: { lesson }, gas: GAS_30, deposit: ZERO });
   const text = publicText(quest, completion, new Date());
-  await ctx.relayer.callFunction({ contractId: ctx.config.coreContractId, methodName: "set_lesson_text", args: { lesson_id: lessonId, text }, gas: GAS_30, deposit: ZERO });
+  // the lesson exists from here on, so its text must land: three tries, loudly if all fail (the quest is lost otherwise)
+  for (let i = 1; ; i++) {
+    try { await ctx.relayer.callFunction({ contractId: ctx.config.coreContractId, methodName: "set_lesson_text", args: { lesson_id: lessonId, text }, gas: GAS_30, deposit: ZERO }); break; }
+    catch (e) { if (i >= 3) { log(`[quest] ${lessonId} seeded WITHOUT its text after 3 tries: ${(e as Error).message}`); throw e; } await new Promise((r) => setTimeout(r, 2000 * i)); }
+  }
   log(`[quest] ${lessonId} "${quest.title}" seeded (model ${completion.model}, signature ${sig ? sig.signature_kind : "none"})`);
 
   const { answer: _answer, ...pub } = quest;

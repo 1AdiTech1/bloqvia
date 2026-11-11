@@ -29,7 +29,7 @@ What's in the window (Nov 1–14):
 - A market that never sleeps: prices are a contract rule (the more Bloq holds, the less he pays); bots, an NPC trader with its own account and a fast-forward mode keep trading while nobody is online; the shop shows 24-hour curves of real trades.
 - An AI agent on NEAR AI Cloud (TEE, signed) writes a daily quest and answers "Ask Bloq". The model only writes text: no model output can reach a reward, a price or a balance.
 - A cohort DAO (Sputnik v2): the board pays small bounties itself, files medium claims as DAO proposals, leaves large ones to the DAO. The Passport is a vote: graduating seats you in the graduates role (you approve payments with your own key); the Season 2 stamp seats you in founders, who propose bounties the DAO itself adds to the board.
-- A relayer (Node, no framework) that creates accounts, relays, seats, and runs the market and the agent. 37 tests.
+- A relayer (Node, no framework) that creates accounts, relays, seats, and runs the market and the agent. 40 tests.
 
 The README is written for a judge: numbered "do X, see Y" steps for the hosted app and for a clean clone (cargo test, npm test, an offline economy simulation, a live run through the relayer), all true on submission day. Testnet only.
 

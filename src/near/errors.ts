@@ -18,6 +18,12 @@ const RULES: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
   // The relayer (which pays everyone's gas) can't cover the transaction.
   [/NotEnoughBalance|NotEnoughAllowance|"balance"[\s\S]*"cost"/, () =>
     "The relayer that pays your gas is low on test NEAR. Try again in a few minutes."],
+  // An account made before a method was added to the learner key (claim_bounty, Nov 5; the vote key, Nov 10).
+  [/Access key does not allow method|AccessKeyDoesNotExist|MethodNameMismatch/, () =>
+    "This account was created before this feature existed, so its key cannot use it; a new account can."],
+  // Selling more of an item than you hold (NEP-245 refuses the transfer).
+  [/does not have enough balance of ([a-z-]+) to withdraw (\d+)/, (m) =>
+    `You don't have ${m[2]} ${label(m[1])} to sell.`],
   // A contract refused the call on purpose: show its own reason.
   [/Smart contract panicked:\s*([^"\\}]+)/, (m) => tidy(m[1] ?? "")],
   [/FunctionCallError[\s\S]*?"ExecutionError"\s*:\s*"([^"]+)"/, (m) => tidy(m[1] ?? "")],
@@ -28,6 +34,11 @@ const RULES: Array<[RegExp, (m: RegExpMatchArray) => string]> = [
     "The NEAR service is busy right now. Try again in a moment."],
   [/InvalidNonce|nonce/i, () => "Two actions crossed on the way to NEAR. Try once more."],
 ];
+
+function label(tokenId: string | undefined): string {
+  const names: Record<string, string> = { "key-fragment": "Key Fragments", "fuel-cell": "Fuel Cells", "contract-seal": "Contract Seals", gold: "gold" };
+  return names[tokenId ?? ""] ?? (tokenId ?? "of those");
+}
 
 function short(account: string | undefined): string {
   if (!account) return "A game contract";

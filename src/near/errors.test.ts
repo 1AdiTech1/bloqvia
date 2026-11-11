@@ -14,3 +14,10 @@ describe("isWrongAnswer", () => {
     expect(isWrongAnswer("Unknown lesson.")).toBe(false);
   });
 });
+
+describe("old keys and over-selling", () => {
+  it("read as plain sentences", () => {
+    expect(humanError(new Error("Access key does not allow method claim_bounty"))).toMatch(/created before this feature existed/);
+    expect(humanError(new Error("transfer: Balance of the sender is insufficient. The account learner-x.bloqvia.testnet does not have enough balance of contract-seal to withdraw 4 (has 3)"))).toBe("You don't have 4 Contract Seals to sell.");
+  });
+});

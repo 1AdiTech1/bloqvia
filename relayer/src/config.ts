@@ -15,6 +15,8 @@ export interface RelayerConfig {
   adminToken: string | null;
   /** The cohort's Sputnik DAO (Module B): seats for graduates and founders, votes relayed to it (seats.ts). */
   daoId: string;
+  /** Abuse limits (Nov 11): registrations per IP per hour, registrations per UTC day, relays per IP per minute. */
+  limits: { registerPerIpPerHour: number; registerPerDay: number; relayPerIpPerMin: number };
 }
 
 function required(name: string): string {
@@ -53,5 +55,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): RelayerConfig 
         }
       : null,
     adminToken: env.ADMIN_TOKEN?.trim() || null,
+    limits: {
+      registerPerIpPerHour: Number(env.REGISTER_PER_IP_PER_HOUR ?? 6),
+      registerPerDay: Number(env.REGISTER_PER_DAY ?? 400),
+      relayPerIpPerMin: Number(env.RELAY_PER_IP_PER_MIN ?? 120),
+    },
   };
 }

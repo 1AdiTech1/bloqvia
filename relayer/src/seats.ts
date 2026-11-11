@@ -78,6 +78,31 @@ export async function ensureSeat(ctx: NearContext, accountId: string, seat: Seat
   }
 }
 
+/** The seats the chain's record earns that the DAO does not show yet. Pure, tested. */
+export function seatsDue(policy: DaoPolicy, accountId: string, learner: { graduated: boolean; completed: string[] }): Seat[] {
+  const has = seatsOf(policy, accountId), due: Seat[] = [];
+  if (learner.graduated && !has.graduate) due.push("graduates");
+  if (SEASON2_CHAPTERS.every((id) => learner.completed.includes(id)) && !has.founder) due.push("founders");
+  return due;
+}
+
+/**
+ * Seat an account the chain says has earned it (Nov 11): the relayer seats on the call it relays, but a learner who
+ * graduated before the roles existed, or whose seating failed, would otherwise read "No seat yet" for ever. Called by
+ * GET /seat, so the first look at the Missions page repairs it; idempotent and cheap once seated.
+ */
+export async function reconcileSeats(ctx: NearContext, accountId: string, log: (s: string) => void = console.log): Promise<DaoPolicy> {
+  const policy = await getPolicy(ctx);
+  const seats = seatsOf(policy, accountId);
+  if (seats.graduate && seats.founder) return policy;
+  const l = await withRetry(() => view<{ registered: boolean; graduated: boolean; completed: string[] }>(ctx, ctx.config.coreContractId, "get_learner", { account_id: accountId }));
+  if (!l.registered) return policy;
+  const due = seatsDue(policy, accountId, l);
+  if (!due.length) return policy;
+  for (const seat of due) await ensureSeat(ctx, accountId, seat, log);
+  return getPolicy(ctx);
+}
+
 /** Called after a relayed call went through: a graduation seats a graduate; the third chapter seats a founder. */
 export function afterLearnerCall(ctx: NearContext, accountId: string, calls: { method: string; args: Record<string, unknown> }[], log: (s: string) => void = console.log): void {
   const run = async () => {

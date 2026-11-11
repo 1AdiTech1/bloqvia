@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { DelegateAction, KeyPair, KeyType, Signature, actions, teraToGas } from "near-api-js";
 import type { SignedDelegate } from "near-api-js";
 import { PolicyError, assertAllowed, isVote } from "../src/policy.js";
-import { SEAT_ROLES, members, seatsOf, withSeatRoles, type DaoPolicy } from "../src/seats.js";
+import { SEAT_ROLES, members, seatsDue, seatsOf, withSeatRoles, type DaoPolicy } from "../src/seats.js";
 
 const DAO = "bloqvia-dao.sputnik-v2.testnet", CORE = "core.bloqvia.testnet";
 function delegate(receiverId: string, method: string, args: Record<string, unknown>, n = 1): SignedDelegate {
@@ -51,4 +51,14 @@ test("the two seat roles are added to the policy without touching the council, a
   assert.deepEqual(seatsOf(p2, "learner-1.bloqvia.testnet"), { graduate: true, founder: false });
   assert.deepEqual(seatsOf(p2, "nobody.testnet"), { graduate: false, founder: false });
   assert.equal(SEAT_ROLES.graduates.vote_policy["transfer"]!.threshold, "1");
+});
+
+test("seats due: what the chain earned and the DAO does not show yet", () => {
+  const policy: DaoPolicy = { roles: [{ name: "graduates", kind: { Group: ["a.testnet"] }, permissions: [], vote_policy: {} }, { name: "founders", kind: { Group: [] }, permissions: [], vote_policy: {} }], default_vote_policy: { weight_kind: "RoleWeight", quorum: "0", threshold: "1" }, proposal_bond: "1", proposal_period: "1", bounty_bond: "1", bounty_forgiveness_period: "1" };
+  const season2 = ["chapter-ownership", "chapter-transactions", "chapter-defi"];
+  assert.deepEqual(seatsDue(policy, "b.testnet", { graduated: false, completed: [] }), []); // not graduated: nothing
+  assert.deepEqual(seatsDue(policy, "b.testnet", { graduated: true, completed: [] }), ["graduates"]); // an old graduate
+  assert.deepEqual(seatsDue(policy, "a.testnet", { graduated: true, completed: [] }), []); // already seated
+  assert.deepEqual(seatsDue(policy, "a.testnet", { graduated: true, completed: season2 }), ["founders"]); // seated graduate who finished Season 2
+  assert.deepEqual(seatsDue(policy, "b.testnet", { graduated: true, completed: season2 }), ["graduates", "founders"]);
 });
