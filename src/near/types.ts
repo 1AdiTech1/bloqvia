@@ -133,3 +133,10 @@ export interface DaoPolicy {
 /** POST /propose (founders): a new bounty for the board, filed by the relayer as a DAO FunctionCall proposal. */
 export interface ProposeInput { title: string; description: string; tier: "Small" | "Medium" | "Large"; requirement: "Graduated" | { PassportLevel: { min: number } } | { QuestCompleted: { lesson_id: string } }; reward_near: string; max_claims: number }
 export interface ProposeResult { proposalId: number; url: string }
+
+/** The price call (Nov 11): one learner's call in one ten-minute round on one item. */
+export type CallSide = "More" | "Same" | "Less";
+export interface PriceCall { account_id: string; side: CallSide; stake: string; open_price: string }
+export interface CallRound { token_id: string; round: number; seconds_left: number; open: boolean; settled: boolean; close_price: string | null; more_stake: string; same_stake: string; less_stake: string; calls: PriceCall[] }
+export interface MyCall { token_id: string; round: number; side: CallSide; stake: string; open_price: string; settled: boolean; close_price: string | null; paid: string | null }
+export interface CallRef { token_id: string; round: number }

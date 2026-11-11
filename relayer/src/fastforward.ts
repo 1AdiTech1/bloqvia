@@ -13,7 +13,7 @@ import { fairPrices, takeSnapshot } from "./market.js";
 import type { NearContext } from "./near.js";
 
 export const FF = {
-  players: Number(process.env.FF_PLAYERS ?? 6),
+  players: Number(process.env.FF_PLAYERS ?? 4),
   rounds: 6,
   everyMin: Number(process.env.FF_EVERY_MIN ?? 10),
   dailyCap: Number(process.env.FF_DAILY_CAP ?? 24),
@@ -134,7 +134,7 @@ export function startFastForward(ctx: NearContext, log: (s: string) => void = co
  * and daily cap as the button, so the curves move overnight too. Six accounts at 0.01 NEAR each per run: ~0.4 NEAR a
  * day at the default of every four hours.
  */
-export const FF_AUTO_HOURS = Number(process.env.FF_AUTO_HOURS ?? 4);
+export const FF_AUTO_HOURS = Number(process.env.FF_AUTO_HOURS ?? 2);
 export function scheduleFastForward(ctx: NearContext, hours = FF_AUTO_HOURS, log: (s: string) => void = console.log): (() => void) | null {
   if (!(hours > 0)) return null;
   const tick = () => { try { startFastForward(ctx, log); log("[fastforward] scheduled run started"); } catch (e) { log(`[fastforward] scheduled run skipped: ${(e as Error).message}`); } };

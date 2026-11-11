@@ -22,7 +22,7 @@ import { relay } from "./relay.js";
 import { generateDailyQuest } from "./quests.js";
 import { syncDailyBounty } from "./bounties.js";
 import { getSnapshots, latest } from "./market.js";
-import { traderState, RULES } from "./trader.js";
+import { traderState, tradersState, RULES } from "./trader.js";
 import { ffState, startFastForward, FF } from "./fastforward.js";
 import { reconcileSeats, seatsOf } from "./seats.js";
 import { hasKey } from "./accounts.js";
@@ -63,6 +63,11 @@ function send(res: ServerResponse, status: number, body: unknown, origin: string
 }
 
 let askBloq: AskBloq | null = null;
+
+/** One trader as /market shows it: its temperament, last move and thought, and its lines as numbers. */
+function traderView(t: ReturnType<typeof traderState>) {
+  return { accountId: t.accountId, on: t.on, mind: t.mind, temper: t.temper, temperLine: t.temperLine, last: t.last, lastThought: t.lastThought, lastTick: t.lastTick, note: t.note, rules: { sellAbove: (t.lines?.sellAbove ?? 0n).toString(), buyBelow: (t.lines?.buyBelow ?? 0n).toString(), band: RULES.band.toString(), keepGold: RULES.keepGold.toString(), keepItems: RULES.keepItems.toString(), intervalMin: RULES.intervalMin } };
+}
 
 /** The client's address: the first hop of x-forwarded-for behind Railway's proxy, else the socket. */
 export function clientIp(req: IncomingMessage): string {
@@ -114,7 +119,8 @@ export async function handle(ctx: NearContext, req: IncomingMessage, res: Server
         now: Date.now(),
         snapshots: getSnapshots(),
         latest: latest(),
-        trader: { accountId: t.accountId, on: t.on, mind: t.mind, last: t.last, lastThought: t.lastThought, lastTick: t.lastTick, note: t.note, rules: { sellAbove: (t.lines?.sellAbove ?? 0n).toString(), buyBelow: (t.lines?.buyBelow ?? 0n).toString(), band: RULES.band.toString(), keepGold: RULES.keepGold.toString(), keepItems: RULES.keepItems.toString(), intervalMin: RULES.intervalMin } },
+        trader: traderView(t),
+        traders: tradersState().map(traderView),
         fastForward: { ...ff, players: FF.players, everyMin: FF.everyMin },
       }, origin, allowed);
     }

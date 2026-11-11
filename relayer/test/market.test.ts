@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { prune, thin, dayAverage, KEEP_MS, MAX_POINTS, type Snapshot } from "../src/market.js";
-import { allowedMoves, decide, judge, lines, RULES } from "../src/trader.js";
+import { allowedMoves, decide, judge, lines, RULES, TEMPERS } from "../src/trader.js";
 import { gate, plan, slack, LINES, type FFState } from "../src/fastforward.js";
 
 const snap = (t: number): Snapshot => ({ t, gold: "1000", shop_open: true, prices: [] });
@@ -106,4 +106,17 @@ test("the trader that thinks: the agent may pick only a move the rules allow; an
   const long = judge({ move: "hold", item: "none", reason: "word ".repeat(80) }, allowed).reason;
   assert.ok(long.length <= 200 && long.endsWith("word…")); // cut at a word boundary, never mid-word
   assert.equal(judge({ move: "hold", item: "none", reason: "a".repeat(300) }, allowed).reason.length, 200); // no space to cut at: hard cap
+});
+
+test("three temperaments on the same prices: the bull buys the dip, the bear sells the rise, the patient one waits", () => {
+  const fair = { "key-fragment": 44n, "fuel-cell": 40n, "contract-seal": 42n }; // average 42
+  const p = { shop_open: true, buy: items(43n, 40n, 42n), sell: items(44n, 41n, 43n), stock: items(50n, 60n, 50n) };
+  const mine = { gold: 200n, items: items(3n, 3n, 3n) };
+  const [patient, bull, bear] = TEMPERS;
+  assert.deepEqual(lines(fair, p, patient), { sellAbove: 45n, buyBelow: 39n });
+  assert.deepEqual(lines(fair, p, bull), { sellAbove: 45n, buyBelow: 41n });
+  assert.deepEqual(lines(fair, p, bear), { sellAbove: 43n, buyBelow: 39n });
+  assert.deepEqual(allowedMoves(p, mine, lines(fair, p, patient)), []); // nothing is 3 away
+  assert.deepEqual(allowedMoves(p, mine, lines(fair, p, bull)).map((a) => `${a.kind} ${a.token_id}`), ["buy fuel-cell"]); // 41 ≤ 41
+  assert.deepEqual(allowedMoves(p, mine, lines(fair, p, bear)).map((a) => `${a.kind} ${a.token_id}`), ["sell key-fragment"]); // 43 ≥ 43
 });

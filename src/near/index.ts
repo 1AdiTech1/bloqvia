@@ -8,6 +8,8 @@ export type { LearnerSigner } from "./signer";
 export { useBloqvia } from "./useBloqvia";
 export type { Bloqvia, BloqviaState, TxEntry } from "./useBloqvia";
 export { useStreak } from "./useStreak";
+export { useCalls, crowd, crowdLeans, CALL_STAKE } from "./useCalls";
+export type { CallsStore, CallsState } from "./useCalls";
 export { useDailyQuests, parseDailyQuest } from "./useDailyQuests";
 export { useChapters, parseChapter, season2Done, SEASON2_CHAPTERS, SEASON2_STAMP } from "./useChapters";
 export { useAskBloq } from "./useAskBloq";

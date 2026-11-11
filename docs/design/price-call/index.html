@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Price Call Mock</title>
+<meta name="description" content="Mock of the price call on Bloq's shop: under each trade card's curve, a question on the price in ten minutes, the crowd's answer, and the result.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root { --navy:#16243a; --navy-2:#22324c; --ivory:#f7f4eb; --lime:#d4f033; --lime-d:#a6c21a; --purple:#8b45d9; --purple-d:#6630b3; --lavender:#c9a6f3; --lavender-soft:#efe7fb; --card:#fffdf7; --muted:#ece8dc; --muted-fg:#4f5b6e; --border:#ddd8c9; --coral:#f5a58b;
+  --display:"Space Grotesk",system-ui,sans-serif; --sans:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace; color-scheme: dark; }
+*{box-sizing:border-box} html{background:#131f33} body{margin:0;background:#131f33;color:var(--ivory);font:15px/1.5 var(--sans);-webkit-font-smoothing:antialiased;padding:24px 16px 72px}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:28px}
+h1{margin:0;font:600 28px/1.15 var(--display);letter-spacing:-.02em} .lead{margin:6px 0 0;color:var(--lavender);max-width:90ch}
+.sec{display:grid;gap:12px;padding:20px;border-radius:26px;background:#23344f;box-shadow:0 0 0 1px rgb(255 255 255/.06)}
+.sec h2{margin:0;font:600 20px/1.2 var(--display)} .sec p{margin:0;color:var(--lavender)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;align-items:start}
+.frame{background:var(--navy);border-radius:18px;padding:14px;box-shadow:0 0 0 1px rgb(255 255 255/.08)}
+.cap{font:500 12px var(--mono);color:var(--lime);margin-bottom:10px}
+.trade{border-radius:24px;background:var(--ivory);color:var(--navy);padding:16px;box-shadow:0 20px 44px -18px rgb(22 36 58/.4);container-type:inline-size}
+.thead{display:flex;align-items:center;gap:12px} .ico{width:44px;height:44px;flex:none;border-radius:16px;background:var(--navy);color:var(--lime);display:grid;place-items:center;font:700 14px var(--display)}
+.tname h3{margin:0;font:500 18px/1.2 var(--display)} .tname p{margin:2px 0 0;font-size:12px;color:var(--muted-fg)} .tname strong{color:var(--navy)}
+.prices{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pr{border-radius:16px;padding:8px 12px} .pr.pay{background:var(--lavender-soft)} .pr.ch{background:var(--navy);color:var(--ivory)}
+.pr small{display:block;font:600 11px/1.4 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:rgb(22 36 58/.6)} .pr.ch small{color:var(--lavender)}
+.pr b{display:block;font:500 24px/1.2 var(--display)}
+.hist{margin-top:10px;display:grid;gap:4px} .hist .lbl{display:flex;justify-content:space-between;font:600 12px var(--display)} .hist .lbl span{font:500 10.5px var(--mono);color:#5a8a00}
+.hist svg{width:100%;height:44px;display:block}
+/* NEW: the price call block */
+.call{margin-top:10px;border-radius:16px;background:rgb(139 69 217/.08);border:1px solid rgb(139 69 217/.18);padding:10px 12px;display:grid;gap:8px}
+.call .k{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font:600 10.5px/1 var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--purple-d)}
+.call .k span{font:500 10.5px var(--mono);letter-spacing:0;text-transform:none;color:var(--muted-fg)}
+.call .q{font:500 14px/1.35 var(--display);color:var(--navy)}
+.call .side{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center} @container (max-width:300px){.call .side{grid-template-columns:1fr 1fr}.call .stake{grid-column:1/-1;justify-content:center}}
+.cb{min-height:38px;border-radius:999px;display:grid;place-items:center;font:600 13px var(--display);border:2px solid var(--navy)}
+.cb.up{background:var(--navy);color:var(--lime)} .cb.dn{color:var(--navy)}
+.stake{display:flex;align-items:center;gap:4px;border-radius:999px;background:var(--muted);height:38px;padding:0 8px;font:600 12px var(--display)} .stake b{min-width:22px;text-align:center}
+.crowd{display:grid;gap:4px} .crowd .bar{height:6px;border-radius:999px;background:rgb(22 36 58/.12);overflow:hidden} .crowd .bar i{display:block;height:100%;background:var(--purple)}
+.crowd small{font:500 10.5px/1.4 var(--mono);color:var(--muted-fg)}
+.mine{display:flex;justify-content:space-between;gap:8px;align-items:center;font:500 13px var(--sans)} .mine b{font:600 13px var(--display)}
+.pill{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:600 12px var(--display)} .pill.lime{background:var(--lime);color:var(--navy)} .pill.soft{background:var(--lavender-soft);color:var(--navy)} .pill.coral{background:var(--coral);color:var(--navy)}
+.res{display:grid;gap:4px} .res b{font:600 15px var(--display)} .res small{font:500 10.5px var(--mono);color:var(--muted-fg)}
+.acts{margin-top:12px;display:flex;align-items:center;gap:8px} .qty{display:flex;align-items:center;border-radius:999px;background:var(--muted);height:40px;padding:0 6px;gap:6px;font:600 14px var(--display)} .qty span{width:28px;text-align:center}
+.btn{flex:1;min-height:40px;border-radius:999px;font:600 14px var(--display);display:grid;place-items:center} .btn.sell{border:2px solid var(--navy)} .btn.buy{background:var(--navy);color:var(--ivory)}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;background:rgb(212 240 51/.14);color:var(--lime);font:600 10.5px var(--display);letter-spacing:.1em;text-transform:uppercase;margin-right:6px}
+.note{font-size:13px;color:var(--lavender);margin:0}
+</style>
+<div class="wrap">
+  <div>
+    <h1>The price call — mock</h1>
+    <p class="lead">Under the curve on every trade card: one question on Bloq's price in ten minutes, two buttons, a stake, and what the crowd thinks. Four states of the same block, left to right: open and nobody called yet; your call placed; the result (won, lost, unmoved); the window closed.</p>
+  </div>
+  <div class="sec">
+    <h2>What changes</h2>
+    <p><span class="tag">1</span>A <b>Price call</b> block under "He pays · 24 h" on each trade card. Headline question, <b>More</b> / <b>Less</b>, a stake of 10 to 50 gold (default 20), the clock of the round.</p>
+    <p><span class="tag">2</span>The crowd line: a thin bar and "62 % of the gold says more · 3 calls" — the pool as the crowd's expectation. Hidden until someone calls.</p>
+    <p><span class="tag">3</span>After your call: "Your call: more, from 44 · settles in 6:12". After settlement: "You called it: +18 gold", "Not this time: −20 gold" or "Price didn't move: 20 gold back", with the close price, shown once.</p>
+    <p><span class="tag">4</span>In the last three minutes of a round calls close: "Calls open again in 2:50"; the buttons are disabled, the crowd line stays.</p>
+    <p class="note">The contract decides everything (`calls.rs`): one call per item per round, stakes 10–50, settlement by the price rule, winners split the losers' stakes. No house money. The relayer settles a minute after the round ends.</p>
+  </div>
+  <div class="sec">
+    <h2>The four states (card width as on desktop)</h2>
+    <div class="grid" id="g"></div>
+  </div>
+</div>
+<script>
+const spark = () => { const w=160,h=44, vals=[42,42,43,43,44,44,44,45,45,44,44,44]; const mn=Math.min(...vals),mx=Math.max(...vals),r=Math.max(1,mx-mn); const pts=vals.map((v,i)=>[i/(vals.length-1)*w,h-4-(v-mn)/r*(h-10)]); const d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" "); const l=pts.at(-1); return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d} L${w} ${h} L0 ${h} Z" fill="rgb(139 69 217 / .12)"/><path d="${d}" fill="none" stroke="#6630b3" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${l[0]}" cy="${l[1]}" r="3" fill="#d4f033" stroke="#16243a" stroke-width="1.5"/></svg>`; };
+const head = `<div class="thead"><span class="ico">KF</span><div class="tname"><h3>Key Fragment</h3><p>You <strong>6</strong> · Bloq's stock <strong>49</strong></p></div></div>
+<div class="prices"><div class="pr pay"><small>He pays</small><b>44</b></div><div class="pr ch"><small>He charges</small><b>45</b></div></div>
+<div class="hist"><div class="lbl">He pays · 24 h <span>▲ +2 today</span></div>${spark()}</div>`;
+const foot = `<div class="acts"><div class="qty"><span>−</span><span>1</span><span>+</span></div><div class="btn sell">Sell</div><div class="btn buy">Buy</div></div>`;
+const states = [
+ ["A · open, nobody called yet", `<div class="call"><div class="k">Price call <span>6:12 left</span></div>
+   <div class="q">In 10 min, will Bloq pay more or less for Key Fragments?</div>
+   <div class="side"><div class="cb up">▲ More</div><div class="cb dn">▼ Less</div><div class="stake">−<b>20</b>+<small>gold</small></div></div>
+   <div class="crowd"><small>No calls yet this round. Be the first.</small></div></div>`],
+ ["B · your call placed", `<div class="call"><div class="k">Price call <span>6:12 left</span></div>
+   <div class="mine"><span>Your call: <b>more</b>, from 44</span><span class="pill soft">settles in 6:12</span></div>
+   <div class="crowd"><div class="bar"><i style="width:62%"></i></div><small>62 % of the gold says more · 3 calls · 70 gold in play</small></div></div>`],
+ ["C · results (three outcomes, shown once)", `<div class="call"><div class="k">Price call <span>settled</span></div>
+   <div class="res"><b>You called it: +18 gold</b><small>44 → 45 · your 20 back plus 18 of the other side's stakes · <u>explorer</u></small></div></div>
+   <div class="call" style="margin-top:8px"><div class="k">Price call <span>settled</span></div>
+   <div class="res"><b>Not this time: −20 gold</b><small>44 → 43 · the stake went to the other side</small></div></div>
+   <div class="call" style="margin-top:8px"><div class="k">Price call <span>settled</span></div>
+   <div class="res"><b>Price didn't move: 20 gold back</b><small>44 → 44 · nobody wins a tie</small></div></div>`],
+ ["D · the window is closed (last 3 min)", `<div class="call"><div class="k">Price call <span>2:50 to go</span></div>
+   <div class="q" style="color:#4f5b6e">Calls open again in 2:50.</div>
+   <div class="side" style="opacity:.45"><div class="cb up">▲ More</div><div class="cb dn">▼ Less</div><div class="stake">−<b>20</b>+<small>gold</small></div></div>
+   <div class="crowd"><div class="bar"><i style="width:38%"></i></div><small>38 % of the gold says more · 5 calls · 140 gold in play</small></div></div>`],
+];
+document.getElementById("g").innerHTML = states.map(([cap, body]) => `<div class="frame"><div class="cap">${cap}</div><article class="trade">${head}${body}${foot}</article></div>`).join("");
+</script>
+</html>

@@ -31,6 +31,7 @@ use near_sdk_contract_tools::mt::{
     MetadataController, Nep245, Nep245Controller, Nep245Metadata, Nep245Mint, Nep245Transfer,
 };
 
+pub mod calls;
 pub mod pricing;
 pub use pricing::PricingParams;
 
@@ -687,7 +688,7 @@ impl Contract {
             .unwrap_or_else(|e| env::panic_str(&format!("mint: {e}")));
     }
 
-    fn move_tokens(
+    pub(crate) fn move_tokens(
         &mut self,
         from: &AccountId,
         to: &AccountId,
@@ -769,7 +770,7 @@ fn hex(bytes: &[u8]) -> String {
 }
 
 /// NEP-297 structured event under the `bloqvia` standard.
-fn log_event(event: &str, data: &near_sdk::serde_json::Value) {
+pub(crate) fn log_event(event: &str, data: &near_sdk::serde_json::Value) {
     let payload = near_sdk::serde_json::json!({
         "standard": "bloqvia",
         "version": "1.0.0",
@@ -803,10 +804,15 @@ mod tests {
     }
 
     fn as_caller(caller: AccountId) {
+        as_caller_at(caller, 0);
+    }
+
+    fn as_caller_at(caller: AccountId, timestamp_ns: u64) {
         let mut ctx = VMContextBuilder::new();
         ctx.current_account_id("core.bloqvia.testnet".parse().unwrap())
             .signer_account_id(caller.clone())
-            .predecessor_account_id(caller);
+            .predecessor_account_id(caller)
+            .block_timestamp(timestamp_ns);
         testing_env!(ctx.build());
     }
 
@@ -1270,5 +1276,131 @@ mod tests {
         add_daily(&mut c, "daily-2026-11-06");
         as_caller(owner());
         c.set_lesson_text("daily-2026-11-06".into(), "x".repeat(MAX_LESSON_TEXT_BYTES + 1));
+    }
+
+    // ---- the price call (calls.rs) ----
+    const NS: u64 = 1_000_000_000;
+    const ROUND: u64 = calls::ROUND_SECONDS * NS;
+
+    fn bob() -> AccountId {
+        accounts(4)
+    }
+
+    /// alice and bob registered, each with 100 gold from lesson-1 (3 key fragments too). Time: start of round 1.
+    fn two_players() -> Contract {
+        let mut c = deployed();
+        as_caller(owner());
+        let _ = c.register_learner(bob());
+        for who in [alice(), bob()] {
+            as_caller_at(who, ROUND);
+            let _ = c.complete_lesson("lesson-1".into(), "Public Key".into());
+        }
+        c
+    }
+
+    #[test]
+    fn a_call_moves_the_stake_to_the_contract_and_remembers_the_price() {
+        let mut c = two_players();
+        as_caller_at(alice(), ROUND + 10 * NS);
+        let r = c.place_call(ITEMS[0].into(), calls::Side::More, U128(30));
+        assert_eq!(r.round, 1);
+        assert_eq!(c.balance_of(GOLD, &alice()), 70);
+        assert_eq!(c.balance_of(GOLD, &"core.bloqvia.testnet".parse::<AccountId>().unwrap()), 30);
+        let v = c.get_price_calls(ITEMS[0].into(), None);
+        assert_eq!(v.calls.len(), 1);
+        assert_eq!(v.more_stake.0, 30);
+        assert_eq!(v.calls[0].open_price.0, pricing::buy_price(&params(), 5)); // Bloq holds 5 of them
+        assert!(v.open);
+        let mine = c.get_my_calls(alice(), None);
+        assert_eq!(mine.len(), 1);
+        assert!(!mine[0].settled);
+    }
+
+    #[test]
+    fn the_right_side_takes_the_losers_stakes_when_the_round_settles() {
+        let mut c = two_players();
+        as_caller_at(alice(), ROUND + 10 * NS);
+        c.place_call(ITEMS[0].into(), calls::Side::Less, U128(40)); // alice: Bloq will pay less
+        as_caller_at(bob(), ROUND + 20 * NS);
+        c.place_call(ITEMS[0].into(), calls::Side::More, U128(20)); // bob: more
+        // alice sells 2 key fragments: Bloq's stock rises, his price falls
+        as_caller_at(alice(), ROUND + 30 * NS);
+        c.sell_to_bloq(ITEMS[0].into(), U128(2));
+        let alice_before = c.balance_of(GOLD, &alice());
+        // the round ends; anyone settles
+        as_caller_at(owner(), 2 * ROUND + 5 * NS);
+        let close = c.settle_calls(ITEMS[0].into(), 1).unwrap();
+        assert_eq!(close.0, pricing::buy_price(&params(), 7));
+        assert_eq!(c.balance_of(GOLD, &alice()), alice_before + 40 + 20); // her stake back plus bob's
+        assert_eq!(c.balance_of(GOLD, &bob()), 80); // bob lost his 20
+        assert_eq!(c.balance_of(GOLD, &"core.bloqvia.testnet".parse::<AccountId>().unwrap()), 0);
+        let mine = c.get_my_calls(bob(), Some(vec![calls::CallRef { token_id: ITEMS[0].into(), round: 1 }]));
+        assert_eq!(mine[0].paid.unwrap().0, 0);
+        assert!(mine[0].settled);
+        assert!(c.get_my_calls(alice(), None).is_empty()); // settled calls leave the open list
+        // settling twice changes nothing
+        assert_eq!(c.settle_calls(ITEMS[0].into(), 1).unwrap().0, close.0);
+        assert_eq!(c.balance_of(GOLD, &alice()), alice_before + 60);
+    }
+
+    #[test]
+    fn an_unmoved_price_pays_whoever_called_same_and_refunds_when_nobody_did() {
+        let mut c = two_players();
+        as_caller_at(alice(), ROUND + 10 * NS);
+        c.place_call(ITEMS[0].into(), calls::Side::More, U128(10));
+        as_caller_at(bob(), ROUND + 20 * NS);
+        c.place_call(ITEMS[0].into(), calls::Side::Same, U128(10));
+        as_caller_at(owner(), 2 * ROUND);
+        c.settle_calls(ITEMS[0].into(), 1);
+        assert_eq!(c.balance_of(GOLD, &alice()), 90); // nothing moved: "more" lost
+        assert_eq!(c.balance_of(GOLD, &bob()), 110); // "same" took it
+        // the next round: alice alone says "more", nothing moves, nobody was right: her stake comes back
+        as_caller_at(alice(), 2 * ROUND + 10 * NS);
+        c.place_call(ITEMS[0].into(), calls::Side::More, U128(10));
+        as_caller_at(owner(), 3 * ROUND);
+        c.settle_calls(ITEMS[0].into(), 2);
+        assert_eq!(c.balance_of(GOLD, &alice()), 90);
+    }
+
+    #[test]
+    #[should_panic(expected = "This round is closing")]
+    fn calls_close_seven_minutes_into_the_round() {
+        let mut c = two_players();
+        as_caller_at(alice(), ROUND + calls::CALL_WINDOW_SECONDS * NS);
+        c.place_call(ITEMS[0].into(), calls::Side::More, U128(10));
+    }
+
+    #[test]
+    #[should_panic(expected = "One call per item per round")]
+    fn one_call_per_item_per_round() {
+        let mut c = two_players();
+        as_caller_at(alice(), ROUND + 10 * NS);
+        c.place_call(ITEMS[0].into(), calls::Side::More, U128(10));
+        c.place_call(ITEMS[0].into(), calls::Side::Less, U128(10));
+    }
+
+    #[test]
+    #[should_panic(expected = "Stake between 10 and 50 gold")]
+    fn the_stake_is_capped() {
+        let mut c = two_players();
+        as_caller_at(alice(), ROUND + 10 * NS);
+        c.place_call(ITEMS[0].into(), calls::Side::More, U128(51));
+    }
+
+    #[test]
+    #[should_panic(expected = "The round is still running")]
+    fn a_running_round_cannot_be_settled() {
+        let mut c = two_players();
+        as_caller_at(alice(), ROUND + 10 * NS);
+        c.place_call(ITEMS[0].into(), calls::Side::More, U128(10));
+        c.settle_calls(ITEMS[0].into(), 1);
+    }
+
+    #[test]
+    #[should_panic(expected = "Not a registered learner")]
+    fn only_learners_call() {
+        let mut c = deployed();
+        as_caller_at(bob(), ROUND);
+        c.place_call(ITEMS[0].into(), calls::Side::More, U128(10));
     }
 }

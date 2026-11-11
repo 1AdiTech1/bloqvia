@@ -15,11 +15,11 @@ Tracks: games (primary), nfts, memecoins, social, open. Read `README.md` first, 
 
 1. `npx skills add near/agent-skills` — the official NEAR agent skills; read
    `near-smart-contracts`, `near-api-js`, `near-cli-rs` before touching those areas.
-2. `cd contracts/bloqvia-core && cargo test` → expect 38 passed.
+2. `cd contracts/bloqvia-core && cargo test` → expect 51 passed.
    `cd ../bloqvia-passport && cargo test` → expect 11 passed.
    `cd ../bloqvia-streak && cargo test` → expect 9 passed (Module A, merged).
    `cd ../bloqvia-bounties && cargo test` → expect 14 passed (Module B, merged Nov 5 after its on-chain proof).
-3. `cd relayer && npm i && npm test` → expect 41 passed.
+3. `cd relayer && npm i && npm test` → expect 42 passed.
    `cd ../scripts && npm i && npm test` → expect 2 passed.
 If any of these fail on a clean clone, stop and report the full output; do not
 "fix" by changing tests.
@@ -69,9 +69,10 @@ If any of these fail on a clean clone, stop and report the full output; do not
 
 | Task | Command | Expect |
 | --- | --- | --- |
-| Contract tests | `cargo test` in each crate | 38 / 11 / 9 / 14 passed |
+| Contract tests | `cargo test` in each crate | 51 / 11 / 9 / 14 passed |
 | Build wasm | `cargo near build non-reproducible-wasm` in each crate | `target/near/*.wasm` |
 | Deploy + seed (Adi's go-ahead) | `./contracts/deploy/deploy-testnet.sh` (reads `relayer/.env`) | `get_bloq`, `get_lessons` print |
+| Redeploy core keeping state (Adi's go-ahead; Nov 11, the price call) | `./contracts/deploy/redeploy-core.sh` | balances before = after; `get_call_round` prints |
 | Deploy Module A (Adi's go-ahead) | `./contracts/deploy/deploy-streak.sh` (after the line above) | `get_streak_contract`, `get_streak` print |
 | Create the DAO (Adi's go-ahead, once) | `COUNCIL=a.testnet,b.testnet ./contracts/deploy/create-dao.sh` | `get_policy` prints; `bloqvia-dao.sputnik-v2.testnet` exists |
 | Deploy Module B (Adi's go-ahead) | `./contracts/deploy/deploy-bounties.sh` (after deploy-testnet.sh) | `get_bounties_contract`, `get_config`, `get_bounties` print |
@@ -83,7 +84,7 @@ If any of these fail on a clean clone, stop and report the full output; do not
 | Live proof | `cd scripts && npm run simulate -- --players 4 --rounds 3` | prices move in `get_bloq` |
 | Module B proof | `cd scripts && npm run bounty:claim -- --relayer http://localhost:8787 --bounty 1` | a fresh learner graduates and claims; `claim: Paid`, balance up by the reward |
 | Reopen used-up bounties (Adi's go-ahead) | `cd scripts && set -a && source ../relayer/.env && set +a && npm run bounty:reopen -- --apply` (without `--apply`: dry run) | fully claimed bounties closed and re-added with room; the open list printed |
-| Make the NPC trader's account (once, Adi's go-ahead) | `cd scripts && npm run trader:create -- --relayer http://localhost:8787` | the account, its three quests done, two lines for `relayer/.env` and Railway |
+| Make an NPC trader's account (three times, Adi's go-ahead; rename the lines TRADER2_*/TRADER3_* for the bull and the bear) | `cd scripts && npm run trader:create -- --relayer http://localhost:8787` | the account, its three quests done, two lines for `relayer/.env` and Railway |
 | DAO seat roles (once, Adi's go-ahead) | `cd scripts && set -a && source ../relayer/.env && set +a && npm run dao:roles -- --apply` (without `--apply`: dry run; `--seat <account> <graduates\|founders>` seats one by hand) | the ChangePolicy proposal approved; `get_policy` lists graduates and founders |
 | Fast-forward now | `curl -s -X POST localhost:8787/fastforward` then `curl -s localhost:8787/market` | `{ started: true }`; `/market` shows round, log and snapshots |
 | Try to break it (seven refusals) | `cd scripts && npm run attack -- --relayer https://relay.bloqvia.app` | ✓ on all seven, exit 0; a ✗ is a bug |

@@ -7,8 +7,8 @@ import { CALL_GAS_TGAS, CLAIM_GAS_TGAS, VOTE_GAS_TGAS, NEAR_CONFIG } from "./con
 import { relayerApi } from "./relayer";
 import type { LearnerSigner } from "./signer";
 import type {
-  BloqView, BountiesConfig, Bounty, Claim, DaoPolicy, DaoProposal, ItemPrice, LearnerView, LessonPublic, LessonWithText, MemberView,
-  PassportView, PricingParams, RelayResult, StreakView,
+  BloqView, BountiesConfig, Bounty, CallRef, CallRound, CallSide, Claim, DaoPolicy, DaoProposal, ItemPrice, LearnerView, LessonPublic, LessonWithText, MemberView,
+  MyCall, PassportView, PricingParams, RelayResult, StreakView,
 } from "./types";
 
 const provider = new JsonRpcProvider({ url: NEAR_CONFIG.rpcUrl });
@@ -38,6 +38,12 @@ export const views = {
   /** Module B: null when core has no bounty board set (module not deployed). */
   bountiesContract: () => view<string | null>(NEAR_CONFIG.coreContractId, "get_bounties_contract"),
   bountiesConfig: (boardId: string) => view<BountiesConfig>(boardId, "get_config"),
+  /** The price call (Nov 11): the current (or a given) round of calls on one item. */
+  priceCalls: (tokenId: string, round?: number) => view<CallRound>(NEAR_CONFIG.coreContractId, "get_price_calls", round === undefined ? { token_id: tokenId } : { token_id: tokenId, round }),
+  /** The caller's open calls, plus the given settled ones (so a result can be shown once). */
+  myCalls: (accountId: string, rounds?: CallRef[]) => view<MyCall[]>(NEAR_CONFIG.coreContractId, "get_my_calls", rounds ? { account_id: accountId, rounds } : { account_id: accountId }),
+  /** [round, seconds_left, open] */
+  callRound: () => view<[number, number, boolean]>(NEAR_CONFIG.coreContractId, "get_call_round"),
   bounties: (boardId: string) => view<Bounty[]>(boardId, "get_bounties", { limit: 100 }),
   claimsFor: (boardId: string, accountId: string) => view<Claim[]>(boardId, "get_claims_for", { account_id: accountId }),
   recentClaims: (boardId: string) => view<Claim[]>(boardId, "get_recent_claims", {}),
@@ -78,6 +84,8 @@ export const game = {
   checkIn: (signer: LearnerSigner) => send(signer, "check_in", {}),
   /** Module B: claim a bounty; core forwards to the board, which checks the requirement against core. */
   claimBounty: (signer: LearnerSigner, bountyId: number) => send(signer, "claim_bounty", { bounty_id: bountyId }, CLAIM_GAS_TGAS),
+  /** The price call (Nov 11): stake gold on Bloq paying More, the Same or Less for an item at the end of the round. */
+  placeCall: (signer: LearnerSigner, tokenId: string, side: CallSide, stake: number) => send(signer, "place_call", { token_id: tokenId, side, stake: String(stake) }),
   /** The Passport's vote (Nov 10): act_proposal on the cohort DAO, signed with the account's second key. */
   voteDao: async (signer: LearnerSigner, proposalId: number, approve: boolean): Promise<RelayResult> => {
     const payload = await signer.signDelegate(NEAR_CONFIG.daoId, [call("act_proposal", { id: proposalId, action: approve ? "VoteApprove" : "VoteReject" }, VOTE_GAS_TGAS)]);
