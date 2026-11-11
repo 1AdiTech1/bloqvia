@@ -78,7 +78,9 @@ function ShopInner() {
       ? <>{traderAcct}{` · ${ago(trader.last.at)} · every trade on the `}{trader.last.txHash ? <a href={explorer.tx(trader.last.txHash)} target="_blank" rel="noopener noreferrer">explorer</a> : "explorer"}</>
       : trader?.on ? <>{traderAcct}{` · next look in ${trader.rules.intervalMin} min`}</> : null;
   const traders = market.data?.traders;
-  const voices = live && !(ff?.running && last) && traders && traders.length > 1 ? traders : null;
+  const running = !!(ff?.running && last);
+  const voices = live && !running && traders && traders.length > 1 ? traders : null;
+  const chips = live && running && traders && traders.length > 1 ? traders : null;
   useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
 
   const lowest = [...bloq.prices].sort((a, b) => Number(a.bloq_stock) - Number(b.bloq_stock))[0];
@@ -168,7 +170,15 @@ function ShopInner() {
               </small>
             </>
           ) : (
-            <div className="line">{traderLine}<small>{traderMeta}</small>{live && !(ff?.running && last) && t ? <small className="font-mono" style={{ fontSize: "10.5px" }}>allowed then: {t.allowed.join(" · ")}</small> : null}</div>
+            <>
+              <div className="line">{traderLine}<small>{traderMeta}</small>{live && !running && t ? <small className="font-mono" style={{ fontSize: "10.5px" }}>allowed then: {t.allowed.join(" · ")}</small> : null}</div>
+              {chips && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="mr-0.5 font-mono text-lavender" style={{ fontSize: "10.5px" }}>the traders ·</span>
+                  {chips.map((tr) => <TraderChip key={tr.accountId ?? tr.temper} tr={tr} />)}
+                </div>
+              )}
+            </>
           )}
           <div className="ff">
             <Press onClick={() => void fastForward()} disabled={!live || !!ff?.running} className="ffbtn">{ff?.running ? "Trading…" : ff?.finishedAt && !ffNote ? "✓ Watched" : "▶ Watch a day of trading"}</Press>
@@ -478,14 +488,20 @@ const ArrowSame = (p: { width?: number; height?: number }) => <svg {...ARROW} {.
 const ArrowLess = (p: { width?: number; height?: number }) => <svg {...ARROW} {...p}><path d="M4 7l6 6 4-4 6 6" /><path d="M20 9v6h-6" /></svg>;
 const SideArrow = ({ side }: { side: CallSide }) => side === "More" ? <ArrowMore width={14} height={14} /> : side === "Less" ? <ArrowLess width={14} height={14} /> : <ArrowSame width={14} height={14} />;
 
-/** One trader of the three (prompt 35): its icon, its name, what it did, its sentence, its proof line. */
-function TraderVoice({ tr }: { tr: TraderView }) {
+/** What a trader last did, in words — shared by TraderVoice (prompt 35) and TraderChip (prompt 36). */
+function traderDid(tr: TraderView): string {
   const t = tr.lastThought;
-  const did = t
+  return t
     ? t.move === "sell" || t.move === "buy"
       ? `${t.move === "sell" ? "sold" : "bought"} 1 ${itemLabel(t.token_id ?? tr.last?.token_id ?? "")}${tr.last?.price ? ` at ${tr.last.price}` : ""}`
       : t.overruled ? "overruled, held" : "held"
     : tr.last ? `${tr.last.kind === "sell" ? "sold" : "bought"} ${tr.last.amount} ${itemLabel(tr.last.token_id)} at ${tr.last.price}` : tr.on ? "watching" : "off";
+}
+
+/** One trader of the three (prompt 35): its icon, its name, what it did, its sentence, its proof line. */
+function TraderVoice({ tr }: { tr: TraderView }) {
+  const t = tr.lastThought;
+  const did = traderDid(tr);
   const sentence = t ? `"${t.reason}"` : tr.note;
   const tone = tr.temper === "bull" ? "text-lime" : tr.temper === "bear" ? "text-coral" : "text-lavender";
   const Arrow = tr.temper === "bull" ? ArrowMore : tr.temper === "bear" ? ArrowLess : ArrowSame;
@@ -506,5 +522,18 @@ function TraderVoice({ tr }: { tr: TraderView }) {
         </small>
       </div>
     </div>
+  );
+}
+
+/** One trader folded small (prompt 36): icon, name, what it last did — shown while a day of trading runs. */
+function TraderChip({ tr }: { tr: TraderView }) {
+  const tone = tr.temper === "bull" ? "text-lime" : tr.temper === "bear" ? "text-coral" : "text-lavender";
+  const Arrow = tr.temper === "bull" ? ArrowMore : tr.temper === "bear" ? ArrowLess : ArrowSame;
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-ivory/10 bg-ivory/5 py-1 pl-1.5 pr-2.5 font-display text-[12px] font-semibold text-ivory">
+      <span className={cn("flex h-[22px] w-[22px] items-center justify-center rounded-full bg-navy", tone)} aria-hidden="true"><Arrow width={13} height={13} /></span>
+      {tr.temper ?? "trader"}
+      <em className="font-mono not-italic text-lavender" style={{ fontSize: "11px" }}>{traderDid(tr)}</em>
+    </span>
   );
 }
