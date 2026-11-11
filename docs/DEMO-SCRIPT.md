@@ -88,8 +88,8 @@ Point at the **Market · live** line (the trader's last thought, with "thought o
 > only pick from the moves the rules allow; ask it for anything else and it's overruled. An agent
 > with a wallet, inside a cage it can't open.
 
-**= Same** on the Key Fragment card (the **Price call** block under the curve, stake left at 20).
-*The block flips to "Your call: same, from 44 · settles in m:ss"; the gold counter drops by 20.*
+The **→ same** key on the **Price call** card under the Key Fragment card (stake left at 20).
+*The card flips to "Your call: → same, from 44 · settles in m:ss"; the gold in the bag drops by 20.*
 
 > And every price is a question. I'm staking twenty gold that in ten minutes Bloq pays the same.
 > The contract remembers today's price, and when the round ends it reads its own rule and pays the

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Market Three Voices</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: the shop's "Market · live" block at its real width, as it is now and with the three traders each speaking. */
+:root { --navy:#16243a; --navy-soft:#1c2b44; --night:#131f33; --ivory:#f7f4eb; --lime:#d4f033; --purple:#8b45d9; --purple-d:#6630b3; --lavender:#c9a6f3; --lavender-soft:#efe7fb; --muted-fg:#4f5b6e; --coral:#f5a58b; --panel:#23344f;
+  --display:"Space Grotesk",system-ui,sans-serif; --sans:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace; color-scheme:dark; }
+*{box-sizing:border-box} html{background:var(--night)}
+body{margin:0;background:var(--night);color:var(--ivory);font:15px/1.5 var(--sans);-webkit-font-smoothing:antialiased;padding-block:24px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:28px}
+h1{margin:0;font:600 28px/1.15 var(--display);letter-spacing:-.02em;text-wrap:balance} .lead{margin:6px 0 0;color:var(--lavender);max-width:80ch}
+.sec{display:grid;gap:12px;padding:20px;border-radius:26px;background:var(--panel);box-shadow:0 0 0 1px rgb(255 255 255/.06)}
+.sec h2{margin:0;font:600 20px/1.2 var(--display)} .sec>p{margin:0;color:var(--lavender);max-width:80ch}
+.cap{font:500 12px var(--mono);color:var(--lime)} .cap.bad{color:var(--coral)}
+.stall{max-width:720px;margin:0 auto;width:100%;border-radius:0 0 26px 26px;background:#0f1a2c;padding:16px 16px 18px;box-shadow:0 0 0 1px rgb(255 255 255/.06)}
+.stall .treasury{display:flex;justify-content:space-between;font:500 14px var(--mono);color:var(--lavender);margin-bottom:10px} .stall .treasury b{color:var(--ivory)} .stall .treasury .on{color:var(--lime)}
+.market{border-radius:18px;background:#101c30;border:1px solid rgb(255 255 255/.08);padding:14px 16px;display:grid;gap:10px}
+.market .k{display:flex;align-items:center;gap:8px;font:600 12px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--lime)} .market .k i{width:8px;height:8px;border-radius:999px;background:var(--lime)}
+.market .line{font:400 15px/1.5 var(--sans);color:var(--ivory);display:grid;gap:3px} .market .line small{font:500 11px/1.5 var(--mono);color:var(--lavender)} .market .line small a{color:var(--lavender)} .market .line b{font-weight:600}
+.ff{display:flex;align-items:center;gap:14px;margin-top:4px} .ffbtn{border-radius:999px;background:var(--lime);color:var(--navy);padding:10px 16px;font:600 14px var(--display)} .prog{flex:1;height:5px;border-radius:999px;background:rgb(255 255 255/.12)} .ffnote{font:500 11px var(--mono);color:var(--lavender)}
+/* the three voices */
+.voices{display:grid;gap:8px}
+.voice{display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px 12px;align-items:start;padding:10px 12px 10px 10px;border-radius:14px;background:rgb(255 255 255/.04)}
+.voice .ico{width:36px;height:36px;border-radius:999px;display:grid;place-items:center;background:var(--navy);color:var(--lime);border:1px solid rgb(255 255 255/.1)} .voice .ico svg{width:18px;height:18px}
+.voice.bull .ico{color:var(--lime)} .voice.bear .ico{color:var(--coral)} .voice.patient .ico{color:var(--lavender)}
+.voice .who{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;font:600 13px var(--display)} .voice .who em{font:500 11px var(--mono);color:var(--lavender);font-style:normal}
+.voice .who .did{font:500 12px var(--display);color:var(--lime)} .voice.held .who .did{color:var(--lavender)}
+.voice p{margin:3px 0 0;font:400 14px/1.45 var(--sans);color:var(--ivory)} .voice p b{font-weight:600}
+.voice small{display:block;margin-top:4px;font:500 10.5px/1.5 var(--mono);color:var(--lavender)} .voice small a{color:var(--lavender)}
+.foot{font:500 11px var(--mono);color:var(--lavender)}
+.legend{display:grid;gap:4px;font-size:13px;color:var(--lavender)} .legend b{color:var(--ivory)}
+.note{font-size:13px;color:var(--lavender);margin:0}
+@media (max-width:480px){.voice{grid-template-columns:30px minmax(0,1fr)} .voice .ico{width:30px;height:30px}}
+</style>
+<div class="wrap">
+  <div>
+    <h1>Market · live: three voices</h1>
+    <p class="lead">The block on the shop, at its real width. Now it quotes whichever trader thought last and lists the other two as a word in brackets. After: each trader has its own row, its temper, what it did, its sentence, and its proof line. Nothing below the block changes.</p>
+  </div>
+
+  <div class="sec">
+    <h2>Now</h2>
+    <p>One quote, no name; "3 traders · patient (holds) · bull (holds) · bear (holds)" is all the other two get.</p>
+    <div class="stall"><div class="treasury"><span>Treasury <b>17207</b> gold</span><span>Shop <b class="on">open</b></span></div>
+    <div class="market"><div class="k"><i></i>Market · live</div>
+      <div class="line">The trader held: "I hold because key-fragment's sell price of 42 is exactly at my 41-or-more line but the rules allow no moves right now, leaving me 0 gold from acting."
+        <small><a>learner-fce48e4e917a.bloqvia.testnet</a> · thought on NEAR AI Cloud · signed in a TEE · <a>Verify</a> · next look in 5 min</small>
+        <small>allowed then: hold</small>
+        <small>3 traders · patient (holds) · bull (holds) · bear (holds)</small></div>
+      <div class="ff"><span class="ffbtn">▶ Watch a day of trading</span><span class="prog"></span></div><span class="ffnote">six learners sign up and trade for a couple of minutes</span>
+    </div></div>
+  </div>
+
+  <div class="sec">
+    <h2>After</h2>
+    <p>Three rows in the order they look (patient, bull, bear). Each: an icon and the temper's name, what it did at its last look (bought / sold / held / overruled), its one sentence, and the mono proof line: account · signed in a TEE · Verify · allowed then · explorer for a trade. One shared footer: when the next look is.</p>
+    <div class="stall"><div class="treasury"><span>Treasury <b>17207</b> gold</span><span>Shop <b class="on">open</b></span></div>
+    <div class="market"><div class="k"><i></i>Market · live</div>
+      <div class="voices" id="voices"></div>
+      <div class="foot">three NPC traders, each an agent on NEAR AI Cloud that may only pick from the moves its rules allow · next look in 5 min</div>
+      <div class="ff"><span class="ffbtn">▶ Watch a day of trading</span><span class="prog"></span></div><span class="ffnote">six learners sign up and trade for a couple of minutes</span>
+    </div></div>
+  </div>
+
+  <div class="sec">
+    <h2>While a day of trading runs</h2>
+    <p>Unchanged: the three rows give way to the one line that narrates the run ("<b>Mara</b> sold 2 Fuel Cells at 40."), as today, and come back when it ends.</p>
+  </div>
+
+  <div class="sec">
+    <h2>What Lovable changes (prompt 35, only src/pages/ShopPage.tsx)</h2>
+    <div class="legend">
+      <span><b>Source.</b> <code>market.data?.traders</code> (every configured trader: <code>temper</code>, <code>temperLine</code>, <code>accountId</code>, <code>last</code>, <code>lastThought</code>, <code>note</code>, <code>rules.intervalMin</code>). When it has 2 or more entries and no fast-forward is running, render the rows instead of today's single <code>traderLine</code>/<code>traderMeta</code>; with one trader or none, today's line stays.</span>
+      <span><b>Row.</b> Icon by temper (→ patient in lavender, ↗ bull in lime, ↘ bear in coral; the same drawn arrows as the price call keys at 18 px), the temper name, the verb from <code>lastThought.move</code> and <code>overruled</code>, the sentence from <code>lastThought.reason</code> (or <code>note</code> before the first thought), then the mono line.</span>
+      <span><b>Footer.</b> One line: "three NPC traders, each an agent on NEAR AI Cloud that may only pick from the moves its rules allow · next look in N min".</span>
+      <span><b>Unchanged.</b> The treasury line, the Watch button, the fast-forward line, the old <code>3 traders · …</code> line goes.</span>
+    </div>
+    <p class="note">Say "go" and I write prompt 35.</p>
+  </div>
+</div>
+<script>
+const AR = {
+  m: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6 4 4 6-6"/><path d="M14 9h6v6"/></svg>',
+  s: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"/><path d="m14 7 5 5-5 5"/></svg>',
+  l: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l6 6 4-4 6 6"/><path d="M20 9v6h-6"/></svg>'
+};
+const rows = [
+  { t:"patient", ico:AR.s, did:"held", cls:"held", acct:"learner-a43be056a428", reason:"I hold because key-fragment is closest to my sell line, with Bloq paying 42 against my 44 trigger, just 2 gold short of the move I wait for.", allowed:"hold", tx:null },
+  { t:"bull", ico:AR.m, did:"bought 1 Contract Seal at 40", cls:"", acct:"learner-76a6a88f858e", reason:"I buy a contract-seal because Bloq charges 40, 1 under the day's average of 41, and that is my dip.", allowed:"buy contract-seal, hold", tx:"GNFng2…" },
+  { t:"bear", ico:AR.l, did:"held", cls:"held", acct:"learner-fce48e4e917a", reason:"I hold because key-fragment pays 42, at my 41 line, but I keep my last one and the rules allow no sale.", allowed:"hold", tx:null },
+];
+document.getElementById("voices").innerHTML = rows.map((r) => `<div class="voice ${r.t} ${r.cls}"><span class="ico">${r.ico}</span><div>
+  <div class="who">${r.t}<span class="did">${r.did}</span></div>
+  <p>"${r.reason}"</p>
+  <small><a>${r.acct}.bloqvia.testnet</a> · signed in a TEE · <a>Verify</a> · allowed then: ${r.allowed}${r.tx ? ` · <a>explorer</a>` : ""}</small></div></div>`).join("");
+</script>
+</html>

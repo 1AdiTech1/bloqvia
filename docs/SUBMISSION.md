@@ -31,7 +31,7 @@ What's in the window (Nov 1–14):
 - A cohort DAO (Sputnik v2): the board pays small bounties itself and files medium claims as proposals. The Passport is a vote: graduating seats you in the graduates role (you approve payments with your own key); the Season 2 stamp seats you in founders, who propose bounties the DAO adds to the board.
 - A relayer (Node, no framework): accounts, relaying, seats, the market, the agents. 42 tests.
 
-The README is written for a judge: numbered "do X, see Y" steps for the hosted app and for a clean clone (cargo test, npm test, simulations, and `npm run attack`: seven things that must be refused, refused), all true on submission day. Testnet only.
+The README is written for a judge: numbered "do X, see Y" steps for the hosted app and for a clean clone (cargo test, npm test, simulations, and `npm run attack`: nine things that must be refused, refused), all true on submission day. Testnet only.
 
 ## The X post (demo post link)
 
@@ -50,7 +50,7 @@ Reply to your own post with the repo link and the YouTube link, so the post itse
 1. Keys rotated (NEAR_AI_API_KEY, ADMIN_TOKEN) and Railway redeployed; `/health` ok.
 2. `git log -p --all | grep -E "ed25519:[1-9A-HJ-NP-Za-km-z]{60,}" | grep -vc "ed25519:5KqX9vTn"` prints 0.
 3. Video uploaded; its link in README.md under the first paragraph; committed.
-4. `git tag v1.0-hackathon && git push origin v1.0-hackathon`.
+4. `git tag -f v1.0-hackathon && git push -f origin v1.0-hackathon` (the tag already exists from Nov 11; this moves it to the final commit).
 5. Repo public: GitHub → Settings → General → Danger Zone → Change visibility → Public.
 6. Open https://github.com/1AdiTech1/bloqvia in a private window: README renders, no 404.
 7. X post up; copy its link.
