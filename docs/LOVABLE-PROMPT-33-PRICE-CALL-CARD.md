@@ -1,7 +1,7 @@
 # Lovable prompt 33 — the price call as its own card, round buttons, the info popover
 
-Only `src/pages/ShopPage.tsx` changes. Mock: `docs/design/price-call/buttons.html` (section 1 for the
-layout, section 2 · "2 · round" for the buttons). Everything prompt 32 built keeps working; this moves
+Only `src/pages/ShopPage.tsx` changes. Mock: `docs/design/price-call/buttons.html` (section 1 the
+desktop layout with the (i) panel open, section 2 the phone, section 3 every other state). Everything prompt 32 built keeps working; this moves
 it, redraws three buttons, fixes two sentences and one popover. Don't remove or change anything this
 prompt doesn't name.
 

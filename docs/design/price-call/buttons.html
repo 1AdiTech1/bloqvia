@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: the shop's three trade cards as shipped, each with its price call moved OUT of the card into its own block underneath; then the icon-only buttons up close. */
+/* Layout: the final shop, desktop then phone: each trade card as shipped, its price call as a sibling card under it, round icon buttons, the (i) as a floating panel. */
 :root { --navy:#16243a; --navy-2:#22324c; --ivory:#f7f4eb; --ivory-2:#fffdf7; --lime:#d4f033; --lime-d:#a6c21a; --lime-ink:#5a8a00; --purple:#8b45d9; --purple-d:#6630b3; --lavender:#c9a6f3; --lavender-soft:#efe7fb; --muted:#ece8dc; --muted-fg:#4f5b6e; --coral:#f5a58b; --frame:#131f33; --panel:#23344f;
   --display:"Space Grotesk",system-ui,sans-serif; --sans:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace; color-scheme:dark; }
 *{box-sizing:border-box} html{background:var(--frame)}
@@ -16,26 +16,29 @@ h1{margin:0;font:600 28px/1.15 var(--display);letter-spacing:-.02em;text-wrap:ba
 .sec{display:grid;gap:12px;padding:20px;border-radius:26px;background:var(--panel);box-shadow:0 0 0 1px rgb(255 255 255/.06)}
 .sec h2{margin:0;font:600 20px/1.2 var(--display)} .sec>p{margin:0;color:var(--lavender);max-width:80ch}
 .shop{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start}
-.col{display:grid;gap:10px;min-width:0}
+.col{display:grid;gap:12px;min-width:0;align-content:start}
+.phone{width:min(100%,372px);margin:0 auto;border-radius:34px;background:var(--navy);padding:18px 14px;box-shadow:0 0 0 1px rgb(255 255 255/.1),0 30px 60px -30px rgb(0 0 0/.8);display:grid;gap:12px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px;align-items:start}
 .frame{background:var(--navy);border-radius:18px;padding:14px;box-shadow:0 0 0 1px rgb(255 255 255/.08);display:grid;gap:10px;min-width:0}
 .cap{font:500 12px var(--mono);color:var(--lime)} .cap b{color:var(--ivory);font-weight:700}
 .why{margin:0;font-size:13px;color:var(--lavender)}
-.trade{border-radius:24px;background:var(--ivory);color:var(--navy);padding:16px;box-shadow:0 20px 44px -18px rgb(22 36 58/.4);min-width:0}
+.trade{position:relative;border-radius:24px;background:var(--ivory);color:var(--navy);padding:16px;box-shadow:0 20px 44px -18px rgb(22 36 58/.4);min-width:0}
 .thead{display:flex;align-items:center;gap:12px} .ico{width:44px;height:44px;flex:none;border-radius:16px;background:var(--navy);color:var(--lime);display:grid;place-items:center;font:700 14px var(--display)}
-.tname h3{margin:0;font:500 18px/1.2 var(--display)} .tname p{margin:2px 0 0;font-size:12px;color:var(--muted-fg)} .tname strong{color:var(--navy)}
+.tname{flex:1;min-width:0} .tname h3{margin:0;font:500 18px/1.2 var(--display)} .tname p{margin:2px 0 0;font-size:12px;color:var(--muted-fg)} .tname strong{color:var(--navy)}
+.info{width:40px;height:40px;margin-right:-8px;border-radius:999px;display:grid;place-items:center;color:rgb(22 36 58/.6)} .info.on{background:rgb(22 36 58/.06);color:var(--navy)}
+.pop{position:absolute;left:10px;right:10px;top:64px;z-index:30;border-radius:18px;background:var(--ivory-2);padding:12px 16px;font:400 14px/1.55 var(--sans);color:var(--navy);box-shadow:0 22px 50px rgb(0 0 0/.35),0 0 0 1px #e3dccb}
 .prices{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .pr{border-radius:16px;padding:8px 12px} .pr.pay{background:var(--lavender-soft)} .pr.ch{background:var(--navy);color:var(--ivory)}
 .pr small{display:block;font:600 11px/1.4 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:rgb(22 36 58/.6)} .pr.ch small{color:var(--lavender)}
 .pr b{display:block;font:500 24px/1.2 var(--display)}
-.hist{margin-top:10px;display:grid;gap:4px} .hist .lbl{display:flex;justify-content:space-between;font:600 12px var(--display)} .hist .lbl span{font:500 10.5px var(--mono);color:var(--lime-ink)}
+.hist{margin-top:10px;display:grid;gap:4px} .hist .lbl{display:flex;justify-content:space-between;font:600 12px var(--display)} .hist .lbl span{font:500 10.5px var(--mono);color:var(--lime-ink)} .hist .lbl span.dn{color:#b0532f}
 .hist svg{width:100%;height:44px;display:block}
 .acts{margin-top:12px;display:flex;align-items:center;gap:8px} .qty{display:flex;align-items:center;border-radius:999px;background:var(--muted);height:40px;padding:0 6px;gap:6px;font:600 14px var(--display)} .qty span{width:28px;text-align:center}
 .btn{flex:1;min-height:40px;border-radius:999px;font:600 14px var(--display);display:grid;place-items:center} .btn.sell{border:2px solid var(--navy)} .btn.buy{background:var(--navy);color:var(--ivory)}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer} button:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
 
-/* the price call, now its own card under the trade card */
-.call{border-radius:24px;background:var(--ivory);color:var(--navy);padding:14px 16px 16px;box-shadow:0 20px 44px -18px rgb(22 36 58/.4);display:grid;gap:10px;min-width:0;border:1px solid rgb(139 69 217/.22);background:linear-gradient(rgb(139 69 217/.07),rgb(139 69 217/.07)) var(--ivory)}
+/* the price call card */
+.call{border-radius:24px;color:var(--navy);padding:14px 16px 16px;box-shadow:0 20px 44px -18px rgb(22 36 58/.4);display:grid;gap:10px;min-width:0;border:1px solid rgb(139 69 217/.22);background:linear-gradient(rgb(139 69 217/.07),rgb(139 69 217/.07)) #f7f4eb}
 .call .k{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font:600 10.5px/1 var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--purple-d)}
 .call .k span{font:500 10.5px var(--mono);letter-spacing:0;text-transform:none;color:var(--muted-fg)}
 .call .q{font:500 14px/1.35 var(--display);color:var(--navy)}
@@ -45,58 +48,58 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 svg.ar{display:block;flex:none}
 .mine{display:flex;justify-content:space-between;gap:8px;align-items:center;font:500 13px var(--sans)} .mine b{font:600 13px var(--display);display:inline-flex;align-items:center;gap:4px;vertical-align:middle}
 .pill{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:600 12px var(--display);background:var(--lavender-soft);color:var(--navy)}
+.res{display:grid;gap:4px} .res b{font:600 15px var(--display)} .res small{font:500 10.5px var(--mono);color:var(--muted-fg)} .res .ok{justify-self:start;margin-top:4px;min-height:30px;padding:0 12px;border-radius:999px;border:1.5px solid rgb(22 36 58/.25);font:600 12px var(--display)}
+.err{display:flex;gap:8px;align-items:flex-start;border-radius:16px;border-left:4px solid var(--coral);background:rgb(245 165 139/.15);padding:10px 12px;font:400 13px/1.5 var(--sans)} .err span{flex:1}
+.busy{display:flex;align-items:center;justify-content:center;gap:10px;height:56px;font:600 12px var(--display);color:var(--muted-fg)} .busy i{width:22px;height:22px;border-radius:999px;border:3px solid rgb(22 36 58/.15);border-top-color:var(--navy);animation:spin 1s linear infinite} @keyframes spin{to{transform:rotate(360deg)}}
 
-/* the three buttons, icons only. Same roles as shipped: More filled navy with lime, Same the soft outline, Less the strong outline. */
-.sides{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.side{height:52px;border-radius:999px;display:grid;place-items:center;transition:transform .12s,box-shadow .12s}
+/* round icon buttons */
+.sides{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;justify-items:center}
+.side{width:56px;height:56px;border-radius:999px;display:grid;place-items:center;transition:transform .12s,background .12s}
 .side svg{width:26px;height:26px}
 .side.m{background:var(--navy);color:var(--lime);box-shadow:0 10px 20px -12px rgb(22 36 58/.8)}
 .side.s{border:2px solid rgb(22 36 58/.35);color:var(--navy);background:var(--ivory-2)}
 .side.l{border:2px solid var(--navy);color:var(--navy);background:var(--ivory-2)}
 .side:hover{transform:translateY(-1px)} .side.m:hover{background:var(--navy-2)} .side.s:hover,.side.l:hover{background:var(--lavender-soft)}
-.side:active{transform:translateY(0)}
 .lab{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;font:500 10.5px var(--mono);color:var(--muted-fg);margin-top:-4px}
-/* variant 2: round */
-.sides.round{justify-items:center} .sides.round .side{width:56px;height:56px}
-/* variant 3: tonal, no outlines */
-.sides.tonal .side.m{background:var(--navy);color:var(--lime)} .sides.tonal .side.s{border:0;background:var(--lavender-soft);color:var(--purple-d)} .sides.tonal .side.l{border:0;background:rgb(22 36 58/.1);color:var(--navy)}
 .dim{opacity:.45;pointer-events:none}
-@media (prefers-reduced-motion:reduce){.side{transition:none}}
+@media (prefers-reduced-motion:reduce){.side{transition:none}.busy i{animation:none}}
 .legend{display:grid;gap:4px;font-size:13px;color:var(--lavender)} .legend b{color:var(--ivory)}
 .note{font-size:13px;color:var(--lavender);margin:0}
 </style>
 <div class="wrap">
   <div>
-    <h1>The price call, moved out of the card</h1>
-    <p class="lead">Same block as shipped today, two changes: it leaves the trade card and becomes its own card underneath each of the three (Key Fragment, Fuel Cell, Contract Seal), and the three buttons lose their text. Big drawn arrows, 52 px tall, with the word under each in the small mono the shop already uses for the crowd line. The stake and the crowd line stay as they are.</p>
+    <h1>The price call: final</h1>
+    <p class="lead">What prompt 33 asks Lovable for, drawn once. The trade card is exactly as shipped and ends with its curve and Sell / Buy. Under it, the price call is its own card. The three sides are round keys with drawn arrows and the words under them. The (i) opens a panel over the card, like the Community streak's. The settled sentence tells "you were right, nobody was wrong" from "nobody was right".</p>
   </div>
 
   <div class="sec">
-    <h2>1 · The shop, desktop width</h2>
-    <p>Each column: the trade card exactly as it is now (its "He pays · 24 h" curve ends the card again), then the price call card. The purple tint and border tie the two without merging them.</p>
+    <h2>1 · Desktop, the three columns</h2>
+    <p>Left: the (i) open over the Key Fragment card, and the call open with no callers yet. Middle: your call placed, the crowd in. Right: a settled round, the corrected sentence.</p>
     <div class="shop" id="shop"></div>
   </div>
 
   <div class="sec">
-    <h2>2 · The buttons up close</h2>
-    <p>Three ways to draw the same three buttons. All keep today's roles: More filled navy with the lime arrow, Same the soft outline, Less the strong outline. Pick one; the layout above uses the first.</p>
-    <div class="grid" id="buttons"></div>
+    <h2>2 · Phone</h2>
+    <p>One column: trade card, its call card, then the next item. Nothing else moves.</p>
+    <div class="phone" id="phone"></div>
   </div>
 
   <div class="sec">
-    <h2>3 · The other states, in the new card</h2>
-    <p>Unchanged from prompt 32, shown so you can see them in the new card: your call placed, the window closed.</p>
+    <h2>3 · The other states of the call card</h2>
+    <p>Same card, the states prompt 32 defined, redrawn with the round keys. Nothing changes in their logic.</p>
     <div class="grid" id="states"></div>
   </div>
 
   <div class="sec">
-    <h2>What changes for Lovable (prompt 33)</h2>
+    <h2>What Lovable changes (prompt 33, only src/pages/ShopPage.tsx)</h2>
     <div class="legend">
-      <span><b>Where.</b> The price call block leaves <code>TradeCard</code> and renders as a sibling card right under each trade card, same width, same radius and shadow as the trade card, with the purple tint and border.</span>
-      <span><b>Buttons.</b> Icon-only, 52 px tall, drawn SVG arrows (26 px): ↗ more, → same, ↘ less. <code>aria-label</code> "More", "Same", "Less". Under the row, the three words in the 10.5 px mono.</span>
-      <span><b>Everything else</b> (question, stake 10–50, crowd line, states B/C/D, LabLoader while busy, errors, the ticking clock) stays exactly as built.</span>
+      <span><b>1 · Where.</b> The price call block leaves <code>TradeCard</code>; a new <code>PriceCallCard</code> renders as a sibling right under each trade card (same radius and shadow, ivory with the purple tint and border).</span>
+      <span><b>2 · Buttons.</b> Three 56 px round keys, drawn SVG arrows at 26 px (↗ more, → same, ↘ less), <code>aria-label</code>s, the three words under the row in the 10.5 px mono. The same arrow in the "Your call" line.</span>
+      <span><b>3 · The sentence.</b> Right side, nobody wrong: "You called it: 20 gold back · 43 → 43 · nobody was on a wrong side, so there was nothing to win". Only when nobody was right: "Nobody was right: 20 gold back · everyone got the stake back".</span>
+      <span><b>4 · The (i).</b> The trade card's "How prices work" floats over the card (absolute, z-30, <code>bq-pop</code>), closes on a tap outside, Escape, or the button; the prices never move. This is now the rule for every (i) in the app (docs/design/README.md).</span>
+      <span><b>Unchanged.</b> The question, stake 10–50, crowd bar and line, states B/C/D, LabLoader while busy, the coral error box, the ticking clock, the traders line.</span>
     </div>
-    <p class="note">Say which button style (1 pill, 2 round, 3 tonal) and "go", and I'll write the prompt.</p>
+    <p class="note">Say "go" and I send prompt 33.</p>
   </div>
 </div>
 <script>
@@ -105,37 +108,61 @@ const AR = {
   s: '<svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"/><path d="m14 7 5 5-5 5"/></svg>',
   l: '<svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l6 6 4-4 6 6"/><path d="M20 9v6h-6"/></svg>'
 };
+const small = (svg) => svg.replace('class="ar"', 'class="ar" style="width:14px;height:14px"');
 const minus='<svg class="ar" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 8h8"/></svg>';
 const plus='<svg class="ar" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 4v8M4 8h8"/></svg>';
-const spark = (vals, up) => { const w=160,h=44; const mn=Math.min(...vals),mx=Math.max(...vals),r=Math.max(1,mx-mn); const pts=vals.map((v,i)=>[i/(vals.length-1)*w,h-4-(v-mn)/r*(h-10)]); const d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" "); const l=pts.at(-1); return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d} L${w} ${h} L0 ${h} Z" fill="rgb(139 69 217 / .12)"/><path d="${d}" fill="none" stroke="#6630b3" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${l[0]}" cy="${l[1]}" r="3" fill="#d4f033" stroke="#16243a" stroke-width="1.5"/></svg>`; };
+const infoIco='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>';
+const xIco='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+const spark = (vals) => { const w=160,h=44; const mn=Math.min(...vals),mx=Math.max(...vals),r=Math.max(1,mx-mn); const pts=vals.map((v,i)=>[i/(vals.length-1)*w,h-4-(v-mn)/r*(h-10)]); const d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" "); const l=pts.at(-1); return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d} L${w} ${h} L0 ${h} Z" fill="rgb(139 69 217 / .12)"/><path d="${d}" fill="none" stroke="#6630b3" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${l[0]}" cy="${l[1]}" r="3" fill="#d4f033" stroke="#16243a" stroke-width="1.5"/></svg>`; };
 const ITEMS = [
-  { id:"KF", name:"Key Fragment", plural:"Key Fragments", you:6, stock:49, pay:44, ch:45, vals:[42,42,43,43,44,44,44,45,45,44,44,44], chg:"▲ +2 today" },
-  { id:"FC", name:"Fuel Cell", plural:"Fuel Cells", you:2, stock:61, pay:39, ch:40, vals:[41,41,40,40,40,39,39,38,39,39,39,39], chg:"▼ −2 today" },
-  { id:"CS", name:"Contract Seal", plural:"Contract Seals", you:1, stock:38, pay:51, ch:52, vals:[50,50,50,51,51,51,51,52,51,51,51,51], chg:"▲ +1 today" },
+  { id:"KF", name:"Key Fragment", plural:"Key Fragments", you:3, stock:52, pay:43, ch:44, vals:[42,42,43,43,44,44,44,45,45,44,44,43], chg:"▲ +1 today" },
+  { id:"FC", name:"Fuel Cell", plural:"Fuel Cells", you:0, stock:59, pay:40, ch:41, vals:[41,41,40,40,40,39,39,38,39,39,40,40], chg:"▼ −1 today", dn:true },
+  { id:"CS", name:"Contract Seal", plural:"Contract Seals", you:0, stock:60, pay:40, ch:41, vals:[44,44,43,43,42,42,41,41,40,40,40,40], chg:"▼ −4 today", dn:true },
 ];
-const trade = (it) => `<article class="trade"><div class="thead"><span class="ico">${it.id}</span><div class="tname"><h3>${it.name}</h3><p>You <strong>${it.you}</strong> · Bloq's stock <strong>${it.stock}</strong></p></div></div>
+const trade = (it, popOpen=false) => `<article class="trade"><div class="thead"><span class="ico">${it.id}</span><div class="tname"><h3>${it.name}</h3><p>You <strong>${it.you}</strong> · Bloq's stock <strong>${it.stock}</strong></p></div><button class="info${popOpen?' on':''}" aria-label="How prices work" aria-expanded="${popOpen}" data-pop>${infoIco}</button></div>
+${popOpen ? `<div class="pop" role="dialog" aria-label="How prices work">Bloq pays less for what he already has a lot of: price = 100 × 40 ÷ (40 + his stock). Nobody can change this rule by hand.</div>` : ''}
 <div class="prices"><div class="pr pay"><small>He pays</small><b>${it.pay}</b></div><div class="pr ch"><small>He charges</small><b>${it.ch}</b></div></div>
-<div class="hist"><div class="lbl">He pays · 24 h <span>${it.chg}</span></div>${spark(it.vals)}</div>
+<div class="hist"><div class="lbl">He pays · 24 h <span class="${it.dn?'dn':''}">${it.chg}</span></div>${spark(it.vals)}</div>
 <div class="acts"><div class="qty"><span>−</span><span>1</span><span>+</span></div><div class="btn sell">Sell</div><div class="btn buy">Buy</div></div></article>`;
-const sides = (cls="") => `<div class="sides ${cls}"><button class="side m" aria-label="More">${AR.m}</button><button class="side s" aria-label="Same">${AR.s}</button><button class="side l" aria-label="Less">${AR.l}</button></div><div class="lab"><span>more</span><span>same</span><span>less</span></div>`;
+const sides = () => `<div class="sides"><button class="side m" aria-label="More">${AR.m}</button><button class="side s" aria-label="Same">${AR.s}</button><button class="side l" aria-label="Less">${AR.l}</button></div><div class="lab" aria-hidden="true"><span>more</span><span>same</span><span>less</span></div>`;
 const stake = `<div class="stake"><button aria-label="Less stake">${minus}</button><b>20</b><button aria-label="More stake">${plus}</button><small>gold</small></div>`;
-const crowdBar = (m,s,l,calls,gold,lead) => `<div class="crowd"><div class="bar"><i class="m" style="width:${m}%"></i><i class="s" style="width:${s}%"></i><i class="l" style="width:${l}%"></i></div><small>${lead} % of the gold says ${['more','same','less'][[m,s,l].indexOf(Math.max(m,s,l))]} · ${calls} calls · ${gold} gold in play</small></div>`;
+const crowdBar = (m,s,l,calls,gold) => { const lead=Math.max(m,s,l); return `<div class="crowd"><div class="bar"><i class="m" style="width:${m}%"></i><i class="s" style="width:${s}%"></i><i class="l" style="width:${l}%"></i></div><small>${lead} % of the gold says ${['more','same','less'][[m,s,l].indexOf(lead)]} · ${calls} call${calls===1?'':'s'} · ${gold} gold in play</small></div>`; };
 const crowdNone = `<div class="crowd"><small>No calls yet this round. Be the first.</small></div>`;
-const k = (t="6:12 left") => `<div class="k">Price call <span>${t}</span></div>`;
+const k = (t="4:41 left") => `<div class="k">Price call <span>${t}</span></div>`;
 const q = (it) => `<div class="q">In 10 min, will Bloq pay more, the same or less for ${it.plural}?</div>`;
-const callOpen = (it, crowd, cls="") => `<section class="call">${k()}${q(it)}${sides(cls)}${stake}${crowd}</section>`;
+const callA = (it, crowd) => `<section class="call">${k()}${q(it)}${sides()}${stake}${crowd}</section>`;
+const callB = (it, side, from, crowd) => `<section class="call">${k()}<div class="mine"><span>Your call: <b>${small(AR[side])}${{m:'more',s:'same',l:'less'}[side]}</b>, from ${from}</span><span class="pill">settles in 4:41</span></div>${crowd}</section>`;
+const callC = (line, sub) => `<section class="call">${k("settled")}<div class="res"><b>${line}</b><small>${sub}</small><button class="ok">OK</button></div></section>`;
+const callD = (crowd) => `<section class="call">${k("2:50 to go")}<div class="q" style="color:var(--muted-fg)">Calls open again in 2:50.</div><div class="dim" style="display:grid;gap:10px">${sides()}${stake}</div>${crowd}</section>`;
 
-document.getElementById("shop").innerHTML = ITEMS.map((it,i) => `<div class="col">${trade(it)}${callOpen(it, i===0 ? crowdNone : i===1 ? crowdBar(62,24,14,3,70,62) : crowdBar(20,55,25,4,90,55))}</div>`).join("");
+/* 1 · desktop */
+document.getElementById("shop").innerHTML =
+  `<div class="col">${trade(ITEMS[0], true)}${callA(ITEMS[0], crowdNone)}</div>` +
+  `<div class="col">${trade(ITEMS[1])}${callB(ITEMS[1], 's', 40, crowdBar(62,24,14,3,70))}</div>` +
+  `<div class="col">${trade(ITEMS[2])}${callC("You called it: 20 gold back", "40 → 40 · nobody was on a wrong side, so there was nothing to win")}</div>`;
 
+/* 2 · phone */
+document.getElementById("phone").innerHTML = `${trade(ITEMS[0])}${callA(ITEMS[0], crowdNone)}${trade(ITEMS[1])}${callB(ITEMS[1], 's', 40, crowdBar(62,24,14,3,70))}`;
+
+/* 3 · states */
 const frame = (cap, why, body) => `<div class="frame"><div class="cap">${cap}</div><p class="why">${why}</p>${body}</div>`;
-const it = ITEMS[0];
-document.getElementById("buttons").innerHTML =
-  frame("1 · pills, full width", "Today's shapes, text gone, arrows at 26 px. The row reads as one control.", callOpen(it, crowdNone)) +
-  frame("2 · round", "Three 56 px circles, centred. More air, more like keys on a pad.", callOpen(it, crowdNone, "round")) +
-  frame("3 · tonal, no outlines", "Fills instead of strokes: navy, lavender, navy-at-10 %. Softest of the three.", callOpen(it, crowdNone, "tonal"));
-
 document.getElementById("states").innerHTML =
-  frame("B · your call placed", "The arrow of your side sits in the line.", `<section class="call">${k()}<div class="mine"><span>Your call: <b>${AR.s.replace('class="ar"','class="ar" style="width:16px;height:16px"')}same</b>, from 44</span><span class="pill">settles in 6:12</span></div>${crowdBar(62,24,14,3,70,62)}</section>`) +
-  frame("D · the window is closed (last 3 min)", "Buttons and stake at 45 %, the crowd line stays.", `<section class="call">${k("2:50 to go")}<div class="q" style="color:var(--muted-fg)">Calls open again in 2:50.</div><div class="dim" style="display:grid;gap:10px">${sides()}${stake}</div>${crowdBar(38,30,32,5,140,38)}</section>`);
+  frame("C · won", "The right side splits the wrong sides' stakes.", callC("You called it: +18 gold", "43 → 45 · your 20 back plus 18 of the wrong sides' stakes")) +
+  frame("C · lost", "", callC("Not this time: −20 gold", "43 → 42 · the stake went to the right side")) +
+  frame("C · nobody right", "Everyone called more or less; the price did not move.", callC("Nobody was right: 20 gold back", "43 → 43 · everyone got the stake back")) +
+  frame("D · the window is closed (last 3 min)", "Keys and stake at 45 %, the crowd line stays.", callD(crowdBar(38,30,32,5,140))) +
+  frame("busy · calling on chain", "The keys give way to the LabLoader; the stake stays.", `<section class="call">${k()}${q(ITEMS[0])}<div class="busy"><i></i>Calling on chain…</div>${stake}${crowdNone}</section>`) +
+  frame("error · an old account", "The coral box inside the card, once.", `<section class="call">${k()}${q(ITEMS[0])}${sides()}${stake}${crowdNone}<div class="err"><span>Your account's key doesn't allow this move. It was created before the price call existed; a new account can call.</span>${xIco}</div></section>`);
+
+/* the (i) toggles its panel */
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-pop]");
+  const open = document.querySelector(".pop");
+  if (b) { const card = b.closest(".trade"); const has = card.querySelector(".pop"); document.querySelectorAll(".pop").forEach((p) => p.remove()); document.querySelectorAll(".info.on").forEach((i) => { i.classList.remove("on"); i.setAttribute("aria-expanded","false"); });
+    if (!has) { b.classList.add("on"); b.setAttribute("aria-expanded","true"); b.closest(".thead").insertAdjacentHTML("afterend", `<div class="pop" role="dialog" aria-label="How prices work">Bloq pays less for what he already has a lot of: price = 100 × 40 ÷ (40 + his stock). Nobody can change this rule by hand.</div>`); }
+    return; }
+  if (open && !e.target.closest(".pop")) { open.remove(); document.querySelectorAll(".info.on").forEach((i) => { i.classList.remove("on"); i.setAttribute("aria-expanded","false"); }); }
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { document.querySelectorAll(".pop").forEach((p) => p.remove()); document.querySelectorAll(".info.on").forEach((i) => { i.classList.remove("on"); i.setAttribute("aria-expanded","false"); }); } });
 </script>
 </html>
