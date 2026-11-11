@@ -72,7 +72,7 @@ function ShopInner() {
     : ff?.running
     ? <>{`fast-forward · round ${ff.round} of ${ff.rounds} · live on testnet`}{last?.txHash && <> · <a href={explorer.tx(last.txHash)} target="_blank" rel="noopener noreferrer">explorer</a></>}</>
     : t && trader
-      ? <>{traderAcct}{` · thought on NEAR AI Cloud`}{t.generated_by.signature_kind === "provider_tee" ? " · signed in a TEE" : ""}{` · `}<a href="https://cloud.near.ai/verify" target="_blank" rel="noreferrer">Verify</a>{trader.last?.txHash && t.move !== "hold" ? <> · <a href={explorer.tx(trader.last.txHash)} target="_blank" rel="noopener noreferrer">explorer</a></> : null}{` · next look in ${trader.rules.intervalMin} min`}</>
+      ? <>{traderAcct}{` · thought on NEAR AI Cloud`}{t.generated_by.signature_kind === "provider_tee" ? " · signed in a TEE" : ""}{` · `}<a href={`https://cloud.near.ai/verify?model=${encodeURIComponent(t.generated_by.model)}`} target="_blank" rel="noreferrer">Verify</a>{trader.last?.txHash && t.move !== "hold" ? <> · <a href={explorer.tx(trader.last.txHash)} target="_blank" rel="noopener noreferrer">explorer</a></> : null}{` · next look in ${trader.rules.intervalMin} min`}</>
       : trader?.last
       ? <>{traderAcct}{` · ${ago(trader.last.at)} · every trade on the `}{trader.last.txHash ? <a href={explorer.tx(trader.last.txHash)} target="_blank" rel="noopener noreferrer">explorer</a> : "explorer"}</>
       : trader?.on ? <>{traderAcct}{` · next look in ${trader.rules.intervalMin} min`}</> : null;
