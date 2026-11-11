@@ -19,7 +19,7 @@ Tracks: games (primary), nfts, memecoins, social, open. Read `README.md` first, 
    `cd ../bloqvia-passport && cargo test` → expect 11 passed.
    `cd ../bloqvia-streak && cargo test` → expect 9 passed (Module A, merged).
    `cd ../bloqvia-bounties && cargo test` → expect 14 passed (Module B, merged Nov 5 after its on-chain proof).
-3. `cd relayer && npm i && npm test` → expect 42 passed.
+3. `cd relayer && npm i && npm test` → expect 43 passed.
    `cd ../scripts && npm i && npm test` → expect 2 passed.
 If any of these fail on a clean clone, stop and report the full output; do not
 "fix" by changing tests.

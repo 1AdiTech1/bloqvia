@@ -14,6 +14,11 @@
  * only among the moves the rules allow right now (`allowedMoves`); a move outside that list is overruled and the trader
  * holds. The model never sets a price, never mints, never touches another account: it plays, like a person, inside caps
  * it cannot change. The reason and the model's signature are shown on the shop. Without a key the rules decide alone.
+ *
+ * The restock rule (Nov 11, evening): a trader that has no spare of an item buys it back on a RESTOCK_BAND dip, and a
+ * trader too short of gold to buy anything sells on a RESTOCK_BAND rise. Without it the bear sold down to its last
+ * item and the bull spent down to its floor within a day, and both then held forever; with it they keep trading, still
+ * only inside their lines, still only accepting or refusing Bloq's prices.
  */
 import { chat, extractJson, fetchSignature, signatureMatches, type AiConfig } from "./ai.js";
 import type { KeyPairString } from "near-api-js";
@@ -47,8 +52,10 @@ export interface Thought {
   overruled: boolean;
   generated_by: { provider: "NEAR AI Cloud"; model: string; chat_id: string; signature_kind: string | null };
 }
-/** The two lines as they stand now (the day's average ± band), the numbers the shop prints. */
-export interface TraderLines { sellAbove: bigint; buyBelow: bigint }
+/** The two lines as they stand now (the day's average ± band), the numbers the shop prints, and the average they hang on. */
+export interface TraderLines { sellAbove: bigint; buyBelow: bigint; ref: bigint }
+/** The restock rule's band: with no spare of an item, buy it back this close to the average; short of gold, sell this close. */
+export const RESTOCK_BAND = 1n;
 /**
  * Three temperaments (Nov 11), so the traders disagree on the same prices: the patient one waits for a 3-gold move
  * either way; the bull buys on a 1-gold dip and sells only 3 up; the bear sells on a 1-gold rise and buys only 3 down.
@@ -77,20 +84,30 @@ export function traderState(): TraderState {
 /** The lines from a fair price (the average over the items of the day's average buy price) and a temperament. Pure, tested. */
 export function lines(fair: Record<string, bigint> | null, p: { buy: Record<Item, bigint> }, temper: Temper = TEMPERS[0]!): TraderLines {
   const ref = fair && ITEMS.every((i) => fair[i] !== undefined) ? ITEMS.reduce((a, i) => a + fair[i]!, 0n) / BigInt(ITEMS.length) : ITEMS.reduce((a, i) => a + p.buy[i], 0n) / BigInt(ITEMS.length);
-  return { sellAbove: ref + temper.sellBand, buyBelow: ref - temper.buyBand };
+  return { sellAbove: ref + temper.sellBand, buyBelow: ref - temper.buyBand, ref };
+}
+
+/** Short of gold: no buy would keep the floor, so the trader sells on a RESTOCK_BAND rise instead of its own band. */
+export function shortOfGold(p: { sell: Record<Item, bigint> }, mine: { gold: bigint }): boolean {
+  return !ITEMS.some((i) => mine.gold - p.sell[i] >= RULES.keepGold);
+}
+/** The lines that apply to one item now: the temper's, tightened to RESTOCK_BAND where the restock rule applies. */
+export function linesFor(item: Item, p: { sell: Record<Item, bigint> }, mine: { gold: bigint; items: Record<Item, bigint> }, l: TraderLines): { sellAbove: bigint; buyBelow: bigint; restock: boolean; refill: boolean } {
+  const restock = mine.items[item] <= RULES.keepItems, refill = shortOfGold(p, mine);
+  const min = (a: bigint, b: bigint) => (a < b ? a : b), max = (a: bigint, b: bigint) => (a > b ? a : b);
+  return { sellAbove: refill ? min(l.sellAbove, l.ref + RESTOCK_BAND) : l.sellAbove, buyBelow: restock ? max(l.buyBelow, l.ref - RESTOCK_BAND) : l.buyBelow, restock, refill };
 }
 
 /** What the trader would do now, from prices, its lines and what it holds. Pure, so it is tested. */
-export function decide(p: { shop_open: boolean; buy: Record<Item, bigint>; sell: Record<Item, bigint> }, mine: { gold: bigint; items: Record<Item, bigint> }, l: TraderLines): { kind: "sell" | "buy"; token_id: Item; price: bigint } | null {
-  if (!p.shop_open) return null;
-  // sell: the item Bloq pays most for, if above the line and we can spare one
-  const sellable = ITEMS.filter((i) => mine.items[i] > RULES.keepItems && p.buy[i] >= l.sellAbove).sort((a, b) => Number(p.buy[b] - p.buy[a]));
-  if (sellable[0]) return { kind: "sell", token_id: sellable[0], price: p.buy[sellable[0]] };
-  // buy: the item Bloq charges least for, if below the line and we keep our floor
-  const buyable = ITEMS.filter((i) => p.sell[i] <= l.buyBelow && mine.gold - p.sell[i] >= RULES.keepGold).sort((a, b) => Number(p.sell[a] - p.sell[b]));
-  if (buyable[0]) return { kind: "buy", token_id: buyable[0], price: p.sell[buyable[0]] };
-  return null;
+export function decide(p: { shop_open: boolean; buy: Record<Item, bigint>; sell: Record<Item, bigint>; stock?: Record<Item, bigint> }, mine: { gold: bigint; items: Record<Item, bigint> }, l: TraderLines): { kind: "sell" | "buy"; token_id: Item; price: bigint } | null {
+  const allowed = allowedMoves({ ...p, stock: p.stock ?? items(99n) }, mine, l);
+  // sell: the item Bloq pays most for; else buy: the item he charges least for
+  const sells = allowed.filter((a) => a.kind === "sell").sort((a, b) => Number(b.price - a.price));
+  if (sells[0]) return sells[0];
+  const buys = allowed.filter((a) => a.kind === "buy").sort((a, b) => Number(a.price - b.price));
+  return buys[0] ?? null;
 }
+const items = (n: bigint): Record<Item, bigint> => ({ "key-fragment": n, "fuel-cell": n, "contract-seal": n });
 
 type Prices = { shop_open: boolean; buy: Record<Item, bigint>; sell: Record<Item, bigint>; stock: Record<Item, bigint> };
 type Mine = { gold: bigint; items: Record<Item, bigint> };
@@ -101,8 +118,9 @@ export function allowedMoves(p: Prices, mine: Mine, l: TraderLines): Allowed[] {
   if (!p.shop_open) return [];
   const out: Allowed[] = [];
   for (const i of ITEMS) {
-    if (mine.items[i] > RULES.keepItems && p.buy[i] >= l.sellAbove) out.push({ kind: "sell", token_id: i, price: p.buy[i] });
-    if (p.sell[i] <= l.buyBelow && mine.gold - p.sell[i] >= RULES.keepGold && p.stock[i] >= 1n) out.push({ kind: "buy", token_id: i, price: p.sell[i] });
+    const li = linesFor(i, p, mine, l);
+    if (mine.items[i] > RULES.keepItems && p.buy[i] >= li.sellAbove) out.push({ kind: "sell", token_id: i, price: p.buy[i] });
+    if (p.sell[i] <= li.buyBelow && mine.gold - p.sell[i] >= RULES.keepGold && p.stock[i] >= 1n) out.push({ kind: "buy", token_id: i, price: p.sell[i] });
   }
   return out;
 }
@@ -142,7 +160,11 @@ export function judge(raw: unknown, allowed: Allowed[]): { move: "sell" | "buy" 
 
 async function think(ai: AiConfig, model: string, p: Prices, me: Mine, l: TraderLines, fair: Record<string, bigint> | null, allowed: Allowed[], log: (s: string) => void, temper: Temper = TEMPERS[0]!): Promise<Thought> {
   const lines = ITEMS.map((i) => `${i}: Bloq pays ${p.buy[i]}, charges ${p.sell[i]}, holds ${p.stock[i]}; day average ${fair?.[i] ?? p.buy[i]}; I hold ${me.items[i]}`).join("\n");
-  const user = `I am the ${temper.name} trader: I ${temper.line}. My lines today: sell when Bloq pays ${l.sellAbove} or more, buy when he charges ${l.buyBelow} or less. I keep ${RULES.keepGold} gold and never sell my last item. I have ${me.gold} gold.\n${lines}\nMoves the rules allow right now: ${allowed.length ? allowed.map(label).join(", ") : "none"}; "hold" is always allowed.\n${allowed.length ? "Choose, and say which number decided it." : "Only a hold is possible: say which item is closest to one of my lines and by how many gold, so a reader sees what you are waiting for."}`;
+  const restocking = ITEMS.filter((i) => linesFor(i, p, me, l).restock);
+  const refill = shortOfGold(p, me);
+  const restockLine = restocking.length ? ` I have no spare ${restocking.join(" or ")}, so I buy it back when Bloq charges ${l.ref - RESTOCK_BAND} or less.` : "";
+  const refillLine = refill ? ` I am short of gold, so I sell when Bloq pays ${l.ref + RESTOCK_BAND} or more.` : "";
+  const user = `I am the ${temper.name} trader: I ${temper.line}. My lines today: sell when Bloq pays ${l.sellAbove} or more, buy when he charges ${l.buyBelow} or less.${restockLine}${refillLine} I keep ${RULES.keepGold} gold and never sell my last item. I have ${me.gold} gold.\n${lines}\n${allowed.length ? `Moves the rules allow right now: ${allowed.map(label).join(", ")}; "hold" is always allowed.\nChoose, and say which number decided it.` : `No move is allowed right now; only a hold. Say which item is closest to one of my lines and by how many gold, so a reader sees what you are waiting for.`}`;
   const completion = await chat(ai, model, [{ role: "system", content: TRADER_PROMPT }, { role: "user", content: user }], { jsonSchema: { name: "bloqvia_trader", schema: THOUGHT_SCHEMA as unknown as Record<string, unknown> }, maxTokens: 400, temperature: 0.4, thinking: false });
   let raw: unknown = null;
   try { raw = JSON.parse(extractJson(completion.content)); } catch { raw = null; }
