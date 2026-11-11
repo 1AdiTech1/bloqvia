@@ -58,24 +58,24 @@ type Move = { kind: "sell" | "buy"; token_id: Item; amount: bigint; price: bigin
 export function plan(strategy: Strategy, p: Prices, me: { gold: bigint; items: Record<Item, bigint> }, fair: Record<string, bigint> | null = null, s: bigint = 2n): Move {
   if (!p.shop_open) return null;
   const ref = (it: Item) => fair?.[it] ?? p.buy[it];
-  // the item Bloq pays best for, relative to its average, and the one he charges least for, relative to its average
-  const dearest = [...ITEMS].sort((a, b) => Number((p.buy[b] - ref(b)) - (p.buy[a] - ref(a))))[0]!;
-  const cheapest = [...ITEMS].sort((a, b) => Number((p.sell[a] - ref(a)) - (p.sell[b] - ref(b))))[0]!;
   const canBuy = (it: Item) => { const n = (me.gold - LINES.keepGold) / p.sell[it]; return n < p.stock[it] ? n : p.stock[it]; };
   const spare = (it: Item) => (me.items[it] > 1n ? me.items[it] - 1n : 0n);
+  // among what it can spare, the item Bloq pays best for relative to its average; among what it can afford, the one he charges least for
+  const dearest = ITEMS.filter((it) => spare(it) > 0n).sort((a, b) => Number((p.buy[b] - ref(b)) - (p.buy[a] - ref(a))))[0];
+  const cheapest = ITEMS.filter((it) => canBuy(it) >= 1n).sort((a, b) => Number((p.sell[a] - ref(a)) - (p.sell[b] - ref(b))))[0];
   if (strategy === "seller") {
     // sells what it can spare as long as Bloq pays no more than `s` under the average
-    if (p.buy[dearest] >= ref(dearest) - s && spare(dearest) > 0n) return { kind: "sell", token_id: dearest, amount: spare(dearest), price: p.buy[dearest] };
+    if (dearest && p.buy[dearest] >= ref(dearest) - s) return { kind: "sell", token_id: dearest, amount: spare(dearest), price: p.buy[dearest] };
     return null;
   }
   if (strategy === "hoarder") {
     // buys the relatively cheapest item as long as Bloq charges no more than `s` over the average, while the gold lasts
-    if (p.sell[cheapest] <= ref(cheapest) + s && canBuy(cheapest) >= 1n) return { kind: "buy", token_id: cheapest, amount: canBuy(cheapest) < LINES.maxBuy ? canBuy(cheapest) : LINES.maxBuy, price: p.sell[cheapest] };
+    if (cheapest && p.sell[cheapest] <= ref(cheapest) + s) return { kind: "buy", token_id: cheapest, amount: canBuy(cheapest) < LINES.maxBuy ? canBuy(cheapest) : LINES.maxBuy, price: p.sell[cheapest] };
     return null;
   }
   // trader: one unit at a time; sells when Bloq pays `s` over the average, else buys when he charges `s` under it
-  if (p.buy[dearest] >= ref(dearest) + s && spare(dearest) > 0n) return { kind: "sell", token_id: dearest, amount: 1n, price: p.buy[dearest] };
-  if (p.sell[cheapest] <= ref(cheapest) - s && canBuy(cheapest) >= 1n) return { kind: "buy", token_id: cheapest, amount: 1n, price: p.sell[cheapest] };
+  if (dearest && p.buy[dearest] >= ref(dearest) + s) return { kind: "sell", token_id: dearest, amount: 1n, price: p.buy[dearest] };
+  if (cheapest && p.sell[cheapest] <= ref(cheapest) - s) return { kind: "buy", token_id: cheapest, amount: 1n, price: p.sell[cheapest] };
   return null;
 }
 

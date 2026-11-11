@@ -78,6 +78,9 @@ test("the fast-forward's players trade around the day's average, each with its o
   // the item is picked relative to its own average
   const skew = { ...mid, buy: items(45n, 47n, 45n), sell: items(46n, 48n, 46n) };
   assert.equal(plan("seller", skew, me, fair, 2n)!.token_id, "fuel-cell");
+  // sells what it still has, not the item it would like to sell: 1 Key Fragment and 1 Fuel Cell left, 3 Contract Seals
+  assert.deepEqual(plan("seller", skew, { gold: 300n, items: items(1n, 1n, 3n) }, fair, 2n), { kind: "sell", token_id: "contract-seal", amount: 2n, price: 45n });
+  assert.equal(plan("seller", mid, { gold: 300n, items: items(1n, 1n, 1n) }, fair, 2n), null); // nothing to spare
   assert.equal(plan("hoarder", mid, me, null, 2n)!.kind, "buy"); // no history: the price itself is the average
   assert.equal(plan("hoarder", cheap, { gold: 25n, items: items(1n, 1n, 1n) }, fair, 2n), null); // under the gold floor
   assert.equal(plan("seller", { ...dear, shop_open: false }, me, fair, 2n), null);
