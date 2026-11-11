@@ -10,7 +10,6 @@ import { bloqLine } from "@/components/Bloq";
 import { ItemIcon, itemLabel } from "@/components/GameBits";
 import { Bloq, SpeechBubble, talkMs, type BloqHandle, type BloqPose, type BloqProp, useMotionOff, PriceHistory } from "@/bloq";
 import { useMarket, useCalls, crowd, crowdLeans, CALL_STAKE, explorer, type Market, type ItemId, type CallSide, type MyCall, type TraderView } from "@/near";
-import { LabLoader } from "@/components/LabLoader";
 import { Web3Passport } from "@/components/lab/Web3Passport";
 import { CubeBurst } from "@/components/lab/CubeBurst";
 import { InventoryBar } from "@/components/lab/InventoryBar";
@@ -379,6 +378,13 @@ function TradeCard({ price, have, gold, shopOpen, onTraded, market }: { price: I
   );
 }
 
+/** The busy look of each price call key, in that side's colour. */
+const COLOR = {
+  More: { ring: "border-t-[#5a8a00] border-r-[#5a8a00]", word: "text-[#5a8a00]" },
+  Same: { ring: "border-t-purple border-r-purple", word: "text-purple-d" },
+  Less: { ring: "border-t-[#b0532f] border-r-[#b0532f]", word: "text-[#b0532f]" },
+} as const;
+
 function PriceCallCard({ tokenId }: { tokenId: ItemId }) {
   const game = useGame();
   const c = useCalls();
@@ -386,6 +392,7 @@ function PriceCallCard({ tokenId }: { tokenId: ItemId }) {
   const [stake, setStake] = useState<number>(CALL_STAKE.default);
   const [seenRound, setSeenRound] = useState(0);
   const [tried, setTried] = useState(false);
+  const [placing, setPlacing] = useState<CallSide | null>(null);
   const round = c.round;
   const [left, setLeft] = useState(round?.secondsLeft ?? 0);
   useEffect(() => { setLeft(round?.secondsLeft ?? 0); }, [round?.round, round?.secondsLeft]);
@@ -402,7 +409,8 @@ function PriceCallCard({ tokenId }: { tokenId: ItemId }) {
   const clock = showResult ? "settled" : round ? (round.open ? `${fmtClock(left)} left` : `${fmtClock(left)} to go`) : null;
   const place = (side: CallSide) => {
     setTried(true);
-    void c.place(id as ItemId, side, stake).then(() => game.refresh()).catch(() => { /* c.error shows the chain's message */ });
+    setPlacing(side);
+    void c.place(id as ItemId, side, stake).then(() => game.refresh()).catch(() => { /* c.error shows the chain's message */ }).finally(() => setPlacing(null));
   };
 
   if (!c.enabled) return null;
@@ -438,27 +446,38 @@ function PriceCallCard({ tokenId }: { tokenId: ItemId }) {
                 <p className="font-display text-[14px] font-medium">In 10 min, will Bloq pay more, the same or less for {itemLabel(id)}s?</p>
               )}
               <div className={closed ? "opacity-45" : undefined}>
-                {c.busy ? (
-                  <LabLoader size={22} label="Calling on chain…" />
-                ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="flex flex-col items-center gap-1.5">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className={cn("flex flex-col items-center gap-1.5", placing && placing !== "More" && "opacity-35")}>
+                    <span className="relative">
                       <Press aria-label="More" disabled={closed || c.busy || game.busy} onClick={() => place("More")}
                         className="flex h-14 w-14 items-center justify-center rounded-full bg-navy text-lime shadow-[0_10px_20px_-12px_rgb(22_36_58/.8)] hover:bg-navy/90 disabled:opacity-50"><ArrowMore /></Press>
-                      <span className="font-mono text-[10.5px] leading-none text-muted-foreground" aria-hidden="true">more</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1.5">
+                      {placing === "More" && <i aria-hidden="true" className={cn("pointer-events-none absolute -inset-[5px] rounded-full border-[2.5px] border-transparent animate-spin motion-reduce:animate-none", COLOR.More.ring)} />}
+                    </span>
+                    <span className={cn("font-mono text-[10.5px] leading-none", placing === "More" ? cn("font-bold", COLOR.More.word) : "text-muted-foreground")} aria-live={placing === "More" ? "polite" : undefined}>
+                      {placing === "More" ? "calling on chain…" : "more"}
+                    </span>
+                  </div>
+                  <div className={cn("flex flex-col items-center gap-1.5", placing && placing !== "Same" && "opacity-35")}>
+                    <span className="relative">
                       <Press aria-label="Same" disabled={closed || c.busy || game.busy} onClick={() => place("Same")}
                         className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-navy/35 bg-card text-navy hover:bg-lavender-soft disabled:opacity-50"><ArrowSame /></Press>
-                      <span className="font-mono text-[10.5px] leading-none text-muted-foreground" aria-hidden="true">same</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1.5">
+                      {placing === "Same" && <i aria-hidden="true" className={cn("pointer-events-none absolute -inset-[5px] rounded-full border-[2.5px] border-transparent animate-spin motion-reduce:animate-none", COLOR.Same.ring)} />}
+                    </span>
+                    <span className={cn("font-mono text-[10.5px] leading-none", placing === "Same" ? cn("font-bold", COLOR.Same.word) : "text-muted-foreground")} aria-live={placing === "Same" ? "polite" : undefined}>
+                      {placing === "Same" ? "calling on chain…" : "same"}
+                    </span>
+                  </div>
+                  <div className={cn("flex flex-col items-center gap-1.5", placing && placing !== "Less" && "opacity-35")}>
+                    <span className="relative">
                       <Press aria-label="Less" disabled={closed || c.busy || game.busy} onClick={() => place("Less")}
                         className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-navy bg-card text-navy hover:bg-lavender-soft disabled:opacity-50"><ArrowLess /></Press>
-                      <span className="font-mono text-[10.5px] leading-none text-muted-foreground" aria-hidden="true">less</span>
-                    </div>
+                      {placing === "Less" && <i aria-hidden="true" className={cn("pointer-events-none absolute -inset-[5px] rounded-full border-[2.5px] border-transparent animate-spin motion-reduce:animate-none", COLOR.Less.ring)} />}
+                    </span>
+                    <span className={cn("font-mono text-[10.5px] leading-none", placing === "Less" ? cn("font-bold", COLOR.Less.word) : "text-muted-foreground")} aria-live={placing === "Less" ? "polite" : undefined}>
+                      {placing === "Less" ? "calling on chain…" : "less"}
+                    </span>
                   </div>
-                )}
+                </div>
                 <div className="mt-2 flex h-[38px] items-center justify-center gap-1 rounded-full bg-muted">
                   <Press aria-label="Less stake" disabled={closed || stake <= CALL_STAKE.min} onClick={() => setStake((s) => Math.max(CALL_STAKE.min, s - 5))} className="flex items-center justify-center disabled:opacity-30"><Minus className="h-4 w-4" /></Press>
                   <span className="min-w-[22px] text-center font-display font-semibold tabular-nums" aria-live="polite">{stake}</span>
