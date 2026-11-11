@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Price Call Polish</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: two fixes on the price call card, each shown as now / fixed, on the real card at its real width. */
+:root { --navy:#16243a; --navy-2:#22324c; --ivory:#f7f4eb; --ivory-2:#fffdf7; --lime:#d4f033; --lime-ink:#5a8a00; --purple:#8b45d9; --purple-d:#6630b3; --lavender:#c9a6f3; --lavender-soft:#efe7fb; --muted:#ece8dc; --muted-fg:#4f5b6e; --coral:#f5a58b; --frame:#131f33; --panel:#23344f; --navy-soft:#22324c;
+  --display:"Space Grotesk",system-ui,sans-serif; --sans:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace; color-scheme:dark; }
+*{box-sizing:border-box} html{background:var(--frame)}
+body{margin:0;background:var(--frame);color:var(--ivory);font:15px/1.5 var(--sans);-webkit-font-smoothing:antialiased;padding-block:24px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:28px}
+h1{margin:0;font:600 28px/1.15 var(--display);letter-spacing:-.02em;text-wrap:balance} .lead{margin:6px 0 0;color:var(--lavender);max-width:80ch}
+.sec{display:grid;gap:12px;padding:20px;border-radius:26px;background:var(--panel);box-shadow:0 0 0 1px rgb(255 255 255/.06)}
+.sec h2{margin:0;font:600 20px/1.2 var(--display)} .sec>p{margin:0;color:var(--lavender);max-width:80ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start}
+.frame{background:var(--navy);border-radius:18px;padding:14px;box-shadow:0 0 0 1px rgb(255 255 255/.08);display:grid;gap:10px;min-width:0}
+.cap{font:500 12px var(--mono);color:var(--lime)} .cap b{color:var(--ivory);font-weight:700} .cap.bad{color:var(--coral)}
+.why{margin:0;font-size:13px;color:var(--lavender)}
+.card{max-width:228px;margin:0 auto;width:100%}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer} button:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
+svg.ar{display:block;flex:none}
+.call{border-radius:24px;color:var(--navy);padding:14px 16px 16px;box-shadow:0 20px 44px -18px rgb(22 36 58/.4);display:grid;gap:10px;min-width:0;border:1px solid rgb(139 69 217/.22);background:linear-gradient(rgb(139 69 217/.07),rgb(139 69 217/.07)) #f7f4eb}
+.call .k{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font:600 10.5px/1 var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--purple-d)}
+.call .k span{font:500 10.5px var(--mono);letter-spacing:0;text-transform:none;color:var(--muted-fg)}
+.call .q{font:500 14px/1.35 var(--display);color:var(--navy)}
+.crowd small{font:500 10.5px/1.4 var(--mono);color:var(--muted-fg)}
+.stake{display:flex;align-items:center;justify-content:center;gap:4px;border-radius:999px;background:var(--muted);height:38px;font:600 14px var(--display)} .stake b{min-width:26px;text-align:center} .stake small{font:400 12px var(--sans);margin-left:4px} .stake button{width:34px;height:34px;border-radius:999px;display:grid;place-items:center}
+.side{width:56px;height:56px;border-radius:999px;display:grid;place-items:center} .side svg{width:26px;height:26px}
+.side.m{background:var(--navy);color:var(--lime);box-shadow:0 10px 20px -12px rgb(22 36 58/.8)} .side.s{border:2px solid rgb(22 36 58/.35);color:var(--navy);background:var(--ivory-2)} .side.l{border:2px solid var(--navy);color:var(--navy);background:var(--ivory-2)}
+/* as shipped: two rows, the second without the gaps, pulled up */
+.now .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;justify-items:center}
+.now .lab{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;font:500 10.5px var(--mono);color:var(--muted-fg);margin-top:-4px}
+/* fixed: one cell per side, the word belongs to its key */
+.fix .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fix .cell{display:flex;flex-direction:column;align-items:center;gap:6px}
+.fix .cell span{font:500 10.5px/1 var(--mono);color:var(--muted-fg)}
+.guide{position:relative} .guide i{position:absolute;top:-6px;bottom:-6px;width:1px;background:rgb(245 165 139/.8);pointer-events:none}
+.res{display:grid;gap:4px} .res b{font:600 15px var(--display)} .res small{font:500 10.5px var(--mono);color:var(--muted-fg)} .res .ok{justify-self:start;margin-top:4px;min-height:30px;padding:0 12px;border-radius:999px;border:1.5px solid rgb(22 36 58/.25);font:600 12px var(--display)}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:var(--navy);color:var(--lime);padding:6px 12px;font:600 13px var(--display);justify-self:start}
+.coin{width:16px;height:16px;border-radius:999px;background:var(--lime);box-shadow:inset 0 0 0 2px rgb(22 36 58/.5);display:inline-block}
+/* the bag */
+.bag{display:flex;align-items:center;gap:8px;border-radius:20px;background:var(--navy-soft);padding:8px;color:var(--ivory)}
+.bag .g{display:flex;align-items:center;gap:8px;border-radius:999px;background:var(--navy);padding:8px 12px;font:600 14px var(--sans)} .bag .g b{font:600 16px var(--display)}
+.bag .it{margin-left:auto;display:flex;gap:6px} .bag .it span{border-radius:999px;background:var(--lavender-soft);color:var(--navy);padding:8px 10px;font:600 13px var(--display)}
+.bag .g.bump{animation:bump .5s cubic-bezier(.34,1.4,.64,1)} @keyframes bump{50%{transform:scale(1.18)}}
+.flight{position:absolute;width:36px;height:36px;border-radius:999px;background:var(--lime);display:grid;place-items:center;box-shadow:0 10px 24px -8px rgb(0 0 0/.5);pointer-events:none}
+.stage{position:relative;display:grid;gap:14px}
+.legend{display:grid;gap:4px;font-size:13px;color:var(--lavender)} .legend b{color:var(--ivory)}
+.note{font-size:13px;color:var(--lavender);margin:0}
+@media (prefers-reduced-motion:reduce){.bag .g.bump{animation:none}}
+</style>
+<div class="wrap">
+  <div>
+    <h1>Price call: two fixes</h1>
+    <p class="lead">Left, what is live now; right, the fix. Cards at their real desktop width (228 px).</p>
+  </div>
+
+  <div class="sec">
+    <h2>1 · The words under the keys</h2>
+    <p>Now the words are a second row with no gaps between its thirds, pulled up by 4 px: their centres sit 2–3 px off the keys and they touch. Fix: each side is one cell, key over word, 6 px apart; the word can't drift because it shares the key's column.</p>
+    <div class="grid" id="labels"></div>
+  </div>
+
+  <div class="sec">
+    <h2>2 · The gold comes back to the bag</h2>
+    <p>Now the page never re-reads your learner after a round settles (nor after you place a call), so the bag only changes on reload. Fix: the card refreshes the learner the moment a result appears, and right after a call is placed. The bag's gold then counts to the new number and the chip springs, the same way it does after a quest. Press the button to see it.</p>
+    <div class="grid" id="bag"></div>
+  </div>
+
+  <div class="sec">
+    <h2>What Lovable changes (prompt 34, only src/pages/ShopPage.tsx)</h2>
+    <div class="legend">
+      <span><b>1 · Keys.</b> One <code>grid grid-cols-3 gap-2</code>; each cell <code>flex flex-col items-center gap-1.5</code> holding the key and its word (<code>font-mono text-[10.5px] leading-none text-muted-foreground</code>). The separate words row and its <code>-mt-1</code> go.</span>
+      <span><b>2 · Bag.</b> In <code>PriceCallCard</code>: <code>useEffect(() =&gt; { if (showResult) void game.refresh().catch(() =&gt; {}); }, [showResult, result?.round])</code>, and in <code>place</code>, after <code>c.place</code> resolves, <code>void game.refresh().catch(() =&gt; {})</code>. Nothing else; the bag already animates on a value change.</span>
+    </div>
+    <p class="note">Say "go" and I write prompt 34.</p>
+  </div>
+</div>
+<script>
+const AR = {
+  m: '<svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6 4 4 6-6"/><path d="M14 9h6v6"/></svg>',
+  s: '<svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"/><path d="m14 7 5 5-5 5"/></svg>',
+  l: '<svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l6 6 4-4 6 6"/><path d="M20 9v6h-6"/></svg>'
+};
+const minus='<svg class="ar" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 8h8"/></svg>';
+const plus='<svg class="ar" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 4v8M4 8h8"/></svg>';
+const k = (t) => `<div class="k">Price call <span>${t}</span></div>`;
+const q = `<div class="q">In 10 min, will Bloq pay more, the same or less for Key Fragments?</div>`;
+const stake = `<div class="stake"><button aria-label="Less stake">${minus}</button><b>20</b><button aria-label="More stake">${plus}</button><small>gold</small></div>`;
+const none = `<div class="crowd"><small>No calls yet this round. Be the first.</small></div>`;
+const keysNow = `<div class="now guide"><div class="keys"><button class="side m" aria-label="More">${AR.m}</button><button class="side s" aria-label="Same">${AR.s}</button><button class="side l" aria-label="Less">${AR.l}</button></div><div class="lab" aria-hidden="true"><span>more</span><span>same</span><span>less</span></div><i style="left:calc((100% - 16px)/6)"></i><i style="left:50%"></i><i style="left:calc(100% - (100% - 16px)/6)"></i></div>`;
+const keysFix = `<div class="fix guide"><div class="keys"><div class="cell"><button class="side m" aria-label="More">${AR.m}</button><span aria-hidden="true">more</span></div><div class="cell"><button class="side s" aria-label="Same">${AR.s}</button><span aria-hidden="true">same</span></div><div class="cell"><button class="side l" aria-label="Less">${AR.l}</button><span aria-hidden="true">less</span></div></div><i style="left:calc((100% - 16px)/6)"></i><i style="left:50%"></i><i style="left:calc(100% - (100% - 16px)/6)"></i></div>`;
+const frame = (cap, why, body, bad=false) => `<div class="frame"><div class="cap${bad?' bad':''}">${cap}</div><p class="why">${why}</p><div class="card">${body}</div></div>`;
+document.getElementById("labels").innerHTML =
+  frame("now", "The coral lines mark the keys' centres: the words miss them, and sit 1 px under the keys.", `<section class="call">${k("9:27 left")}${q}${keysNow}${stake}${none}</section>`, true) +
+  frame("fixed", "Each word is centred under its own key, 6 px below it.", `<section class="call">${k("9:27 left")}${q}${keysFix}${stake}${none}</section>`);
+
+const bag = (gold) => `<div class="bag"><div class="g"><span class="coin"></span><b data-gold>${gold}</b></div><div class="it"><span>4</span><span>5</span><span>5</span></div></div>`;
+const result = `<section class="call">${k("settled")}<div class="res"><b>You called it: +18 gold</b><small>43 → 45 · your 20 back plus 18 of the wrong sides' stakes</small><button class="ok">OK</button></div></section>`;
+document.getElementById("bag").innerHTML =
+  frame("now", "The round settled, the card says +18, the bag still shows the old number until you reload.", `<div class="stage">${bag(106)}${result}</div>`, true) +
+  `<div class="frame"><div class="cap">fixed</div><p class="why">The result appears, the learner is re-read, the bag counts 106 → 144 and springs. (Press "settle" to replay.)</p><div class="card"><div class="stage" id="stage">${bag(106)}<section class="call">${k("0:04 left")}<div class="q">In 10 min, will Bloq pay more, the same or less for Key Fragments?</div><div class="crowd"><small>Your call: → more, from 43</small></div></section></div></div><button id="settle" style="justify-self:start;border-radius:999px;background:var(--lime);color:var(--navy);padding:8px 14px;font:600 13px var(--display)">settle the round</button></div>`;
+
+const stage = document.getElementById("stage");
+document.getElementById("settle").addEventListener("click", () => {
+  stage.innerHTML = `${bag(106)}${result}`;
+  const g = stage.querySelector("[data-gold]"), chip = stage.querySelector(".g");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const from = 106, to = 144, t0 = performance.now(), dur = reduce ? 0 : 700;
+  const tick = (t) => { const p = dur ? Math.min(1, (t - t0) / dur) : 1; const e = 1 - Math.pow(1 - p, 3); g.textContent = Math.round(from + (to - from) * e); if (p < 1) requestAnimationFrame(tick); };
+  setTimeout(() => { chip.classList.add("bump"); requestAnimationFrame(tick); }, 350);
+});
+</script>
+</html>
