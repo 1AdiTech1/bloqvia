@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Info, Minus, Plus, TriangleAlert } from "lucide-react";
+import { Check, Info, Minus, Plus, TriangleAlert, X } from "lucide-react";
 import { useGame } from "@/game/useGame";
 import { ITEM_IDS, itemAmount } from "@/game/content";
 import { PhoneShell } from "@/components/PhoneShell";
@@ -9,7 +9,8 @@ import { RequireAccount } from "@/components/RequireAccount";
 import { bloqLine } from "@/components/Bloq";
 import { ItemIcon, itemLabel } from "@/components/GameBits";
 import { Bloq, SpeechBubble, talkMs, type BloqHandle, type BloqPose, type BloqProp, useMotionOff, PriceHistory } from "@/bloq";
-import { useMarket, explorer, type Market, type ItemId } from "@/near";
+import { useMarket, useCalls, crowd, crowdLeans, CALL_STAKE, explorer, type Market, type ItemId, type CallSide, type MyCall } from "@/near";
+import { LabLoader } from "@/components/LabLoader";
 import { Web3Passport } from "@/components/lab/Web3Passport";
 import { CubeBurst } from "@/components/lab/CubeBurst";
 import { InventoryBar } from "@/components/lab/InventoryBar";
@@ -155,7 +156,7 @@ function ShopInner() {
         </div>
         <div className="market">
           <div className="k"><i aria-hidden="true" />Market · live</div>
-          <div className="line">{traderLine}<small>{traderMeta}</small>{live && !(ff?.running && last) && t ? <small className="font-mono" style={{ fontSize: "10.5px" }}>allowed then: {t.allowed.join(" · ")}</small> : null}</div>
+          <div className="line">{traderLine}<small>{traderMeta}</small>{live && !(ff?.running && last) && t ? <small className="font-mono" style={{ fontSize: "10.5px" }}>allowed then: {t.allowed.join(" · ")}</small> : null}{market.data?.traders && market.data.traders.length > 1 ? <small className="font-mono" style={{ fontSize: "10.5px" }}>{market.data.traders.length} traders · {market.data.traders.map((tr) => `${tr.temper ?? "trader"} (${tr.last ? `${tr.last.kind === "buy" ? "bought" : "sold"} ${tr.last.amount} ${itemLabel(tr.last.token_id)}` : "holds"})`).join(" · ")}</small> : null}</div>
           <div className="ff">
             <Press onClick={() => void fastForward()} disabled={!live || !!ff?.running} className="ffbtn">{ff?.running ? "Trading…" : ff?.finishedAt && !ffNote ? "✓ Watched" : "▶ Watch a day of trading"}</Press>
             <div className="prog" aria-hidden="true"><i style={{ width: `${ff ? (ff.round / ff.rounds) * 100 : 0}%` }} /></div>
@@ -228,12 +229,64 @@ function ago(at: number, now: number = Date.now()) {
 
 const ITEM_PROP: Record<string, BloqProp> = { "key-fragment": "key", "fuel-cell": "fuel", "contract-seal": "scroll" };
 
+const fmtClock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
+function resultLine(r: MyCall): string {
+  const paid = Number(r.paid ?? 0), stake = Number(r.stake);
+  if (paid > stake) return `You called it: +${paid - stake} gold`;
+  if (r.paid === "0") return `Not this time: −${r.stake} gold`;
+  return `Nobody was right: ${r.stake} gold back`;
+}
+
+function resultSub(r: MyCall): string {
+  const paid = Number(r.paid ?? 0), stake = Number(r.stake);
+  if (paid > stake) return `your ${r.stake} back plus ${paid - stake} of the wrong sides' stakes`;
+  if (r.paid === "0") return `the stake went to the right side`;
+  return `everyone got the stake back`;
+}
+
+function CrowdLine({ k }: { k: ReturnType<typeof crowd> }) {
+  if (!k) return <p className="font-mono text-[10.5px] text-muted-foreground">No calls yet this round. Be the first.</p>;
+  const lean = crowdLeans(k);
+  return (
+    <div className="grid gap-1">
+      <div className="flex h-[6px] overflow-hidden rounded-full bg-navy/10" aria-hidden="true">
+        <i className="bg-purple" style={{ width: `${k.more}%` }} />
+        <i className="bg-lavender" style={{ width: `${k.same}%` }} />
+        <i className="bg-navy/40" style={{ width: `${k.less}%` }} />
+      </div>
+      <p className="font-mono text-[10.5px] text-muted-foreground">
+        {lean ? `${lean.pct} % of the gold says ${lean.side.toLowerCase()} · ` : ""}{k.calls} call{k.calls === 1 ? "" : "s"} · {k.gold} gold in play
+      </p>
+    </div>
+  );
+}
+
 function TradeCard({ price, have, gold, shopOpen, onTraded, market }: { price: ItemPrice; have: number; gold: number; shopOpen: boolean; onTraded: (id: string, kind: "sell" | "buy") => void; market: Market }) {
   const game = useGame();
+  const c = useCalls();
   const [qty, setQty] = useState(1);
   const [tip, setTip] = useState(false);
   const id = price.token_id;
   const stock = Number(price.bloq_stock);
+
+  const [stake, setStake] = useState<number>(CALL_STAKE.default);
+  const [seenRound, setSeenRound] = useState(0);
+  const [tried, setTried] = useState(false);
+  const round = c.round;
+  const [left, setLeft] = useState(round?.secondsLeft ?? 0);
+  useEffect(() => { setLeft(round?.secondsLeft ?? 0); }, [round?.round, round?.secondsLeft]);
+  useEffect(() => {
+    const iv = window.setInterval(() => setLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearInterval(iv);
+  }, []);
+  const mine = c.enabled ? c.mineFor(id as ItemId) : null;
+  const result = c.enabled ? c.lastResultFor(id as ItemId) : null;
+  const showResult = result !== null && result.round > seenRound;
+  const k = c.enabled ? crowd(c.rounds[id as ItemId]) : null;
+  const closed = !!round && !round.open;
+  const clock = showResult ? "settled" : round ? (round.open ? `${fmtClock(left)} left` : `${fmtClock(left)} to go`) : null;
+  const place = (side: CallSide) => { setTried(true); void c.place(id as ItemId, side, stake).catch(() => { /* c.error shows the chain's message */ }); };
 
   const act = async (fn: typeof game.sellToBloq, kind: "sell" | "buy") => {
     try {
@@ -284,6 +337,68 @@ function TradeCard({ price, have, gold, shopOpen, onTraded, market }: { price: I
         </div>
       </div>
       <PriceHistory points={market.history(id as ItemId)} change={market.change(id as ItemId)} className="mt-3" />
+
+      {c.enabled && (
+        <div className="mt-3 grid gap-2 rounded-2xl border border-purple/20 bg-purple/5 p-3">
+          <div className="flex items-baseline justify-between">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-purple-d">Price call</span>
+            {clock && <span className="font-mono text-[10.5px] text-muted-foreground">{clock}</span>}
+          </div>
+
+          {showResult && result ? (
+            <div className="grid gap-1">
+              <p className="font-display text-[15px] font-semibold">{resultLine(result)}</p>
+              <p className="font-mono text-[10.5px] text-muted-foreground">{result.open_price} → {result.close_price} · {resultSub(result)}</p>
+              <div>
+                <Press onClick={() => setSeenRound(result.round)} className="text-xs">OK</Press>
+              </div>
+            </div>
+          ) : mine ? (
+            <>
+              <div className="flex items-center justify-between gap-2 text-[13px]">
+                <span>Your call: <b className="font-display font-semibold">{mine.side.toLowerCase()}</b>, from {mine.open_price}</span>
+                <span className="rounded-full bg-lavender-soft px-3 py-1 text-xs font-semibold">settles in {fmtClock(left)}</span>
+              </div>
+              <CrowdLine k={k} />
+            </>
+          ) : (
+            <>
+              {closed ? (
+                <p className="text-[13px] text-muted-foreground">Calls open again in {fmtClock(left)}.</p>
+              ) : (
+                <p className="font-display text-[14px] font-medium">In 10 min, will Bloq pay more, the same or less for {itemLabel(id)}s?</p>
+              )}
+              <div className={closed ? "opacity-45" : undefined}>
+                {c.busy ? (
+                  <LabLoader size={22} label="Calling on chain…" />
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    <Press disabled={closed || c.busy || game.busy} onClick={() => place("More")} className="min-h-[38px] rounded-full bg-navy text-[13px] font-semibold text-lime disabled:opacity-50">▲ More</Press>
+                    <Press disabled={closed || c.busy || game.busy} onClick={() => place("Same")} className="min-h-[38px] rounded-full border-2 border-navy/40 text-[13px] font-semibold text-navy disabled:opacity-50">= Same</Press>
+                    <Press disabled={closed || c.busy || game.busy} onClick={() => place("Less")} className="min-h-[38px] rounded-full border-2 border-navy text-[13px] font-semibold text-navy disabled:opacity-50">▼ Less</Press>
+                  </div>
+                )}
+                <div className="mt-2 flex h-[38px] items-center justify-center gap-1 rounded-full bg-muted">
+                  <Press aria-label="Less stake" disabled={closed || stake <= CALL_STAKE.min} onClick={() => setStake((s) => Math.max(CALL_STAKE.min, s - 5))} className="flex items-center justify-center disabled:opacity-30"><Minus className="h-4 w-4" /></Press>
+                  <span className="min-w-[22px] text-center font-display font-semibold tabular-nums" aria-live="polite">{stake}</span>
+                  <Press aria-label="More stake" disabled={closed || stake >= CALL_STAKE.max} onClick={() => setStake((s) => Math.min(CALL_STAKE.max, s + 5))} className="flex items-center justify-center disabled:opacity-30"><Plus className="h-4 w-4" /></Press>
+                  <span className="text-xs">gold</span>
+                </div>
+              </div>
+              <CrowdLine k={k} />
+            </>
+          )}
+
+          {tried && c.error && (
+            <div className="flex items-start gap-2 rounded-2xl border-l-4 border-coral bg-coral/15 p-3 text-[13px] leading-relaxed">
+              <span className="flex-1">{c.error}</span>
+              <button type="button" aria-label="Dismiss" onClick={() => { c.clearError(); setTried(false); }} className="-m-2 flex h-8 w-8 shrink-0 items-center justify-center">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mt-3 flex items-center gap-2 dk:flex-col dk:items-stretch">
         <div className="flex items-center rounded-full bg-muted dk:justify-between">
