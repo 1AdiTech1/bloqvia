@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Price Call Busy State</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: the three price call cards side by side as on desktop; only the pressed card is busy, and its busy state is coloured by the side pressed. */
+:root { --navy:#16243a; --ivory:#f7f4eb; --ivory-2:#fffdf7; --lime:#d4f033; --lime-ink:#5a8a00; --purple:#8b45d9; --purple-d:#6630b3; --lavender:#c9a6f3; --lavender-soft:#efe7fb; --muted:#ece8dc; --muted-fg:#4f5b6e; --coral:#f5a58b; --coral-ink:#b0532f; --frame:#131f33; --panel:#23344f;
+  --display:"Space Grotesk",system-ui,sans-serif; --sans:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace; color-scheme:dark; }
+*{box-sizing:border-box} html{background:var(--frame)}
+body{margin:0;background:var(--frame);color:var(--ivory);font:15px/1.5 var(--sans);-webkit-font-smoothing:antialiased;padding-block:24px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:28px}
+h1{margin:0;font:600 28px/1.15 var(--display);letter-spacing:-.02em;text-wrap:balance} .lead{margin:6px 0 0;color:var(--lavender);max-width:80ch}
+.sec{display:grid;gap:12px;padding:20px;border-radius:26px;background:var(--panel);box-shadow:0 0 0 1px rgb(255 255 255/.06)}
+.sec h2{margin:0;font:600 20px/1.2 var(--display)} .sec>p{margin:0;color:var(--lavender);max-width:80ch}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:16px;max-width:740px}
+.cap{font:500 12px var(--mono);color:var(--lime)} .cap.bad{color:var(--coral)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer} button:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
+.call{border-radius:24px;color:var(--navy);padding:14px 16px 16px;box-shadow:0 20px 44px -18px rgb(22 36 58/.4);display:grid;gap:10px;min-width:0;border:1px solid rgb(139 69 217/.22);background:linear-gradient(rgb(139 69 217/.07),rgb(139 69 217/.07)) #f7f4eb}
+.call .k{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font:600 10.5px/1 var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--purple-d)} .call .k span{font:500 10.5px var(--mono);letter-spacing:0;text-transform:none;color:var(--muted-fg)}
+.call .q{font:500 14px/1.35 var(--display)}
+.crowd small{font:500 10.5px/1.4 var(--mono);color:var(--muted-fg)}
+.stake{display:flex;align-items:center;justify-content:center;gap:4px;border-radius:999px;background:var(--muted);height:38px;font:600 14px var(--display)} .stake b{min-width:26px;text-align:center} .stake small{font:400 12px var(--sans);margin-left:4px} .stake button{width:34px;height:34px;border-radius:999px;display:grid;place-items:center}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px} .cell{display:flex;flex-direction:column;align-items:center;gap:6px} .cell span{font:500 10.5px/1 var(--mono);color:var(--muted-fg)}
+.side{position:relative;width:56px;height:56px;border-radius:999px;display:grid;place-items:center} .side svg{width:26px;height:26px}
+.side.m{background:var(--navy);color:var(--lime);box-shadow:0 10px 20px -12px rgb(22 36 58/.8)} .side.s{border:2px solid rgb(22 36 58/.35);color:var(--navy);background:var(--ivory-2)} .side.l{border:2px solid var(--navy);color:var(--navy);background:var(--ivory-2)}
+.old{display:flex;align-items:center;justify-content:center;height:56px;font:600 12px var(--display);color:#dbe8a0}
+/* busy: the other keys fade, the pressed one keeps its look and gets a spinning ring in its colour; its word becomes the status */
+.busy .cell{opacity:.35} .busy .cell.on{opacity:1}
+.ring{position:absolute;inset:-5px;border-radius:999px;border:2.5px solid transparent;animation:spin .9s linear infinite}
+.on.more .ring{border-top-color:var(--lime);border-right-color:var(--lime)} .on.same .ring{border-top-color:var(--purple);border-right-color:var(--purple)} .on.less .ring{border-top-color:var(--coral-ink);border-right-color:var(--coral-ink)}
+.on.more span{color:var(--lime-ink)} .on.same span{color:var(--purple-d)} .on.less span{color:var(--coral-ink)} .on span{font-weight:700}
+@keyframes spin{to{transform:rotate(360deg)}} @media (prefers-reduced-motion:reduce){.ring{animation:none;border-color:currentColor}}
+.legend{display:grid;gap:4px;font-size:13px;color:var(--lavender)} .legend b{color:var(--ivory)}
+.note{font-size:13px;color:var(--lavender);margin:0}
+</style>
+<div class="wrap">
+  <div>
+    <h1>Price call: the busy state</h1>
+    <p class="lead">Two faults in one. The "busy" flag belongs to the whole store, so pressing a key on one card puts "Calling on chain…" on all three; and that text is the loader's default lime on ivory, nearly invisible. The fix: the keys stay where they are, only the pressed card is busy, the pressed key spins in its own colour and its word under it becomes the status in that colour.</p>
+  </div>
+
+  <div class="sec">
+    <h2>Now</h2>
+    <p>You pressed <b>more</b> on Key Fragments; all three cards lose their keys to a pale "Calling on chain…".</p>
+    <div class="row" id="now"></div>
+  </div>
+
+  <div class="sec">
+    <h2>Fixed · the pressed card only, coloured by the side</h2>
+    <p>Three cards, three presses, to show the three colours: lime for more, purple for same, coral for less. The other two keys on that card fade to 35 %; the other cards don't change at all. Nothing moves, so there's no jump when the call lands.</p>
+    <div class="row" id="fixed"></div>
+  </div>
+
+  <div class="sec">
+    <h2>What Lovable changes (prompt 37, only src/pages/ShopPage.tsx, inside PriceCallCard)</h2>
+    <div class="legend">
+      <span><b>Per-card busy.</b> A local <code>const [placing, setPlacing] = useState&lt;CallSide | null&gt;(null)</code>; <code>place</code> sets it to the side before <code>c.place</code> and back to <code>null</code> in <code>finally</code>. The keys and the stake stay disabled on <code>c.busy</code> (another card's call in flight still blocks a second one), but the busy look is driven by <code>placing</code> alone.</span>
+      <span><b>No LabLoader.</b> The <code>c.busy ? &lt;LabLoader …/&gt; : (keys)</code> branch goes: the keys always render. While <code>placing</code>: the two other cells get <code>opacity-35</code>; the pressed key gets an absolutely positioned ring (<code>absolute -inset-[5px] rounded-full border-[2.5px] border-transparent animate-spin motion-reduce:animate-none</code> with <code>border-t-lime border-r-lime</code> / <code>border-t-purple border-r-purple</code> / <code>border-t-coral-ink border-r-coral-ink</code>, the key wrapper being <code>relative</code>); its word reads <b>calling on chain…</b> in <code>font-bold</code> and the side's colour (<code>text-lime-ink</code> / <code>text-purple-d</code> / <code>text-coral-ink</code>; if a token is missing, the hex: #5a8a00, #6630b3, #b0532f).</span>
+      <span><b>Unchanged.</b> The stake, the crowd line, states B/C/D, the errors, the clock.</span>
+    </div>
+    <p class="note">Say "go" and I write prompt 37.</p>
+  </div>
+</div>
+<script>
+const AR = {
+  m: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6 4 4 6-6"/><path d="M14 9h6v6"/></svg>',
+  s: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"/><path d="m14 7 5 5-5 5"/></svg>',
+  l: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l6 6 4-4 6 6"/><path d="M20 9v6h-6"/></svg>'
+};
+const minus='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 8h8"/></svg>';
+const plus='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 4v8M4 8h8"/></svg>';
+const ITEMS=[["Key Fragments","7:15 left"],["Fuel Cells","7:15 left"],["Contract Seals","7:15 left"]];
+const stake=`<div class="stake"><button aria-label="Less stake">${minus}</button><b>20</b><button aria-label="More stake">${plus}</button><small>gold</small></div>`;
+const none=`<div class="crowd"><small>No calls yet this round. Be the first.</small></div>`;
+const keys=(busy)=>{ const w={m:"more",s:"same",l:"less"}; const cls={m:"more",s:"same",l:"less"};
+  return `<div class="keys${busy?' busy':''}">${["m","s","l"].map(k=>`<div class="cell${busy===k?' on '+cls[k]:''}"><button class="side ${k}" aria-label="${w[k]}">${AR[k]}${busy===k?'<i class="ring" aria-hidden="true"></i>':''}</button><span>${busy===k?'calling on chain…':w[k]}</span></div>`).join("")}</div>`; };
+const card=(name,t,body)=>`<section class="call"><div class="k">Price call <span>${t}</span></div><div class="q">In 10 min, will Bloq pay more, the same or less for ${name}?</div>${body}${stake}${none}</section>`;
+document.getElementById("now").innerHTML = ITEMS.map(([n,t])=>card(n,t,`<div class="old">Calling on chain…</div>`)).join("");
+document.getElementById("fixed").innerHTML = ITEMS.map(([n,t],i)=>card(n,t,keys(["m","s","l"][i]))).join("");
+</script>
+</html>
