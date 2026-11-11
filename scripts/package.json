@@ -16,7 +16,8 @@
     "bounty:reopen": "tsx bounty-reopen.ts",
     "trader:create": "tsx trader-create.ts",
     "dao:roles": "tsx dao-roles.ts",
-    "balances": "tsx check-balances.ts"
+    "balances": "tsx check-balances.ts",
+    "attack": "tsx attack.ts"
   },
   "dependencies": {
     "near-api-js": "^7.4.0"
