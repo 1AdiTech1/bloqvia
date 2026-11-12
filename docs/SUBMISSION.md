@@ -39,18 +39,18 @@ Attach the demo video (the MP4, under 2 min 20 s for X without Premium; otherwis
 the YouTube link in a reply) or four screenshots: the map with the On NEAR panel, the shop with
 the curves, Missions with the DAO card, the Passport with the Season 2 stamp.
 
-Text (273 characters):
+Text (the guide asks to lead with the user problem and to ask a question):
 
-> I built Bloqvia at the NEAR HACKATHON: learn Web3 by playing it on NEAR testnet. No wallet, no gas. Every quest is a real transaction, prices are a contract rule, an AI agent writes the daily quest, your Passport is a vote in a DAO. bloqvia.app @NEARProtocol #NEARHackathon
+> Most people quit Web3 at the wallet. Bloqvia teaches it by playing: one tap, a real NEAR account; every quest a real transaction; no gas, no seed phrase; your Passport votes in a DAO. Built at NEAR HACKATHON. What should quest one teach? bloqvia.app @NEARProtocol #NEARHackathon
 
-Reply to your own post with the repo link and the YouTube link, so the post itself stays short.
+(278 characters, under X's 280: count again after any edit.) Reply to your own post with the repo link and the YouTube link, so the post itself stays short. Optional in that reply: @NearLegion @NearBuilders.
 
 ## Before pressing Submit (in this order)
 
 1. Keys rotated (NEAR_AI_API_KEY, ADMIN_TOKEN) and Railway redeployed; `/health` ok.
 2. `git log -p --all | grep -E "ed25519:[1-9A-HJ-NP-Za-km-z]{60,}" | grep -vc "ed25519:5KqX9vTn"` prints 0.
 3. Video uploaded; its link in README.md under the first paragraph; committed.
-4. `git tag -f v1.0-hackathon && git push -f origin v1.0-hackathon` (the tag already exists from Nov 11; this moves it to the final commit).
+4. `git tag -f v1.0-hackathon && git tag hackathon-submission && git push -f origin v1.0-hackathon hackathon-submission` (`v1.0-hackathon` already exists from Nov 11 and moves to the final commit; `hackathon-submission` is the name the hackathon guide suggests).
 5. Repo public: GitHub → Settings → General → Danger Zone → Change visibility → Public.
 6. Open https://github.com/1AdiTech1/bloqvia in a private window: README renders, no 404.
 7. X post up; copy its link.

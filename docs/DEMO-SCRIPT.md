@@ -17,7 +17,7 @@ says so once, early, then lets the explorer links prove it.
   done" and "First graduate of the week" have room ("n of 50 claimed", not full).
 - Recorder: OBS or the browser's own (Chrome: `chrome://` → nothing special needed; on Windows
   `Win+G`). 1080p, 30 fps, microphone on, system sound off. Cursor visible.
-- Read the narration aloud twice. It is about 390 words; at a calm pace, with the clicks between them, that is 3 min. Do not
+- Read the narration aloud twice. It is about 400 words; at a calm pace, with the clicks between them, that is 3 min. Do not
   speed up to fit: cut a sentence instead.
 
 Mistakes are fine: every take makes a new account and costs nothing. Record the whole thing in
@@ -32,9 +32,9 @@ viewer sees. Plain = what you say.
 
 *The landing page.*
 
-> This is Bloqvia: a game that teaches Web3 by playing it, for real, on NEAR testnet. No wallet,
-> no seed phrase, no gas. Every move you'll see is a real transaction, and I'll show the chain
-> each time.
+> Most people quit Web3 at the wallet: a seed phrase, gas, a first transaction they don't
+> understand. Bloqvia is a game that teaches it by playing it, for real, on NEAR testnet, with none
+> of that in the way. Every move you'll see is a real transaction, and I'll show the chain each time.
 
 ### 0:10 — The account (20 s)
 
@@ -43,8 +43,9 @@ viewer sees. Plain = what you say.
 *"Creating your NEAR account… about five seconds", then the map; on the right the On NEAR panel
 with `learner-….bloqvia.testnet`, block height, Gas you paid: 0 NEAR.*
 
-> That was a NEAR account being created and a Passport NFT minted to it. The relayer paid; the
-> key stays in this browser. Here's the account, here's the block.
+> That was a NEAR account being created and a Passport NFT minted to it. NEAR lets a relayer pay
+> the gas for a transaction my account signs, so the key stays in this browser and I never buy
+> anything. Here's the account, here's the block.
 
 ### 0:30 — First quest, first transaction (30 s)
 
@@ -73,20 +74,21 @@ the answer, "Who wrote this quest" with the model and **Verify the signature**.*
 
 ### 1:25 — The living market (45 s)
 
-**Shop** tab. *Bloq's prices, and under each a 24-hour curve; the "MARKET · LIVE" line with the
-NPC trader.*
+**Shop** tab. *Bloq's prices, and under each a 24-hour curve; the "MARKET · LIVE" block with the
+three NPC traders, each with its sentence.*
 
 **Sell** two Key Fragments. *Bloq's buy price for Key Fragments drops; the gold counter climbs.*
 
 > This is a market, and it never sleeps. Prices come from a rule in the contract: the more Bloq
-> holds, the less he pays. Bots and an NPC trader keep trading while you're away, so the curve is a
-> day of real trades, all on chain. I just sold two, and his price fell.
+> holds, the less he pays, and every hour he ships part of his surplus so prices come back. Bots and
+> three NPC traders keep trading while you're away, so the curve is a day of real trades, all on
+> chain. I just sold two, and his price fell.
 
-Point at the **Market · live** line (the trader's last thought, with "thought on NEAR AI Cloud · signed in a TEE").
+Point at the **Market · live** block (the three traders, each with its sentence and "signed in a TEE · Verify").
 
-> And the trader is an AI agent: it reads the prices, picks a move and says why, signed. But it can
-> only pick from the moves the rules allow; ask it for anything else and it's overruled. An agent
-> with a wallet, inside a cage it can't open.
+> And the traders are AI agents: patient, bull, bear. Each reads the prices, picks a move and says
+> why, signed. But it can only pick from the moves its rules allow; anything else is overruled.
+> Agents with wallets, inside a cage they can't open.
 
 The **→ same** key on the **Price call** card under the Key Fragment card (stake left at 20).
 *The card flips to "Your call: → same, from 44 · settles in m:ss"; the gold in the bag drops by 20.*
@@ -112,7 +114,7 @@ Finish the other two quests fast (you know the answers: **The Fuel System** → 
 link; "Recent on the board" lists the account.*
 
 > Graduating sealed the Passport, and the Passport is a seat: this account now votes in the cohort
-> DAO. And a bounty board pays for what the chain can verify. I claim "first graduate"; the board
+> DAO, a Sputnik DAO on NEAR. And a bounty board pays for what the chain can verify. I claim "first graduate"; the board
 > reads my record from the game contract and pays. No one approved it; no model was asked.
 
 ### 2:45 — Founders propose (15 s)

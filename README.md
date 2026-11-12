@@ -99,7 +99,7 @@ docs/                        FLOWS.md (Mermaid), SPIKE-AUTH.md, INTEGRATION.md, 
 ## What is baseline and what was built in the window
 
 - Baseline (not judged): the TanStack Start + React + Tailwind scaffold Lovable generates for every project; `cargo near new` templates; the libraries listed below.
-- Built Nov 1–14, 2026: everything in `contracts/`, `relayer/`, `src/near/`, `src/bloq/`, `src/game/`, `scripts/`, `docs/`, the lesson content, the screens and their wiring.
+- Built Nov 1–14, 2026: everything in `contracts/`, `relayer/`, `src/near/`, `src/bloq/`, `src/game/`, `scripts/`, `docs/`, the lesson content, the screens and their wiring. This repository's first commit is Nov 3, 2026, so there is no `pre-hackathon` tag: nothing in it predates the window. The submitted state is tagged `hackathon-submission` (and `v1.0-hackathon`).
 - Libraries: near-sdk 5.30, near-sdk-contract-tools 4.0 (NEP-245 / NEP-171 / NEP-141 derives), near-api-js 7.4, React 19, TanStack Start, Framer Motion. AI at runtime: NEAR AI Cloud (OpenAI-compatible API, TEE-signed replies) with `Qwen/Qwen3.6-35B-A3B-FP8` for the daily quest; the client is `relayer/src/ai.ts`, 150 lines, no SDK. No AI-generated code is hidden: the contracts, the relayer and the scripts were written with Claude as a pair and the screens with Lovable, as the hackathon encourages; every line was read, tested and run by us.
 
 ## Known limits (stated plainly)
