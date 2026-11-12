@@ -654,7 +654,7 @@ const engine = (function () {
         let run = 0;
         if (this.follow) {
           // walking(true, true): the steps follow the ground. The phase moves with the distance the host really
-          // travels, so his feet never slide, and fast trips blend into a run (longer stride, knees up, arms bent,
+          // travels, so his feet never slide, and fast trips blend into a run (longer stride, knees up, elbows folded forward,
           // more bounce, leaning in). STRIDE_* are body widths per full cycle (two steps).
           // distance in 2D (a road goes down the screen too), measured on the page, not the screen, so the camera
           // scrolling the page (or the scrolling box he walks in) doesn't count as steps
@@ -676,8 +676,10 @@ const engine = (function () {
         a.kl += (36 + 44 * run) * am * Math.max(0, cph) + 10 * am * down * (s > 0 ? 1 : 0);
         a.kr += (36 + 44 * run) * am * Math.max(0, -cph) + 10 * am * down * (s < 0 ? 1 : 0);
         const sa = Math.sin(ph - 0.3);
-        a.s += 16 * k * sa; a.e += (10 * Math.max(0, sa) + 46 * run) * am;
-        a.bs += -16 * k * sa; a.be += (10 * Math.max(0, -sa) + 46 * run) * am;
+        // the elbow folds FORWARD (negative in this rig): a little on the arm's front swing when walking, a lot in the
+        // run, so the hands pump in front at waist height (Nov 12; before, +46 folded the forearms back behind the hips)
+        a.s += (16 + 10 * run) * k * sa; a.e += -(12 * Math.max(0, -sa) + 64 * run) * am;
+        a.bs += -(16 + 10 * run) * k * sa; a.be += -(12 * Math.max(0, sa) + 64 * run) * am;
         // carrying something (the carry pose, set in setPose): the arm that holds it swings only 30%
         if (this.prop) { a.s += -0.7 * 16 * k * sa; if ((PROP_W[this.prop] ?? 0) === 2) a.bs += 0.7 * 16 * k * sa; }
         bodyY = -6 * (1 + 0.9 * run) * Math.pow(Math.abs(Math.cos(ph - 0.25)), 1.6) * am + 2.2 * down * am;

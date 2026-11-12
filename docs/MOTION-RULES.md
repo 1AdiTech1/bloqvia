@@ -33,7 +33,7 @@ The programme:
    *Head 30–50 ms ahead · hat and arms settle 1–3 frames after the body.*
 5. **Feet stay on the ground** (shipped). While he travels, his steps follow the distance he really covers, measured in
    2D on the page (not the screen). Never a timed walk cycle on a moving Bloq.
-   *Stride 0.52 of his width a cycle when walking, 0.8 when running · slip at most 2 px.*
+   *Stride 0.52 of his width a cycle when walking, 0.8 when running · slip at most 2 px · in the run the elbows fold forward (64°) so the hands pump in front at waist height, never behind the hips (fixed Nov 12).*
 6. **Start and stop like a body** (shipped). Starting: lean back and dip, turn to the side, then the stride grows while
    he leans into the first step. Stopping: the stride dies out, then he rocks back and his knees soak it up.
    *Start 260 ms (90 dip + 170 push) · stop 400 ms (200 stride out + 200 settle) · the next action waits for the settle.*
