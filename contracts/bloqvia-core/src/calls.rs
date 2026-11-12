@@ -195,6 +195,7 @@ impl Contract {
         require!(r.calls.len() < MAX_CALLS_PER_ROUND, "This round is full; call in the next one");
         require!(!r.calls.iter().any(|c| c.account_id == learner), "One call per item per round");
 
+        self.settle_shipping();
         let open_price = pricing::buy_price(&self.pricing, self.balance_of(&token_id, &self.bloq_id));
         // the stake moves to this contract's own account until settlement; nobody can move it from there by hand
         self.move_tokens(&learner, &env::current_account_id(), GOLD, stake.0, "price call stake");
@@ -232,6 +233,7 @@ impl Contract {
         if r.settled {
             return r.close_price;
         }
+        self.settle_shipping();
         let close = pricing::buy_price(&self.pricing, self.balance_of(&token_id, &self.bloq_id));
         let paid = payouts(&r.calls, close);
         let pool: &AccountId = &env::current_account_id();

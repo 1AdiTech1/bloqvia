@@ -28,11 +28,12 @@ use near_sdk::{
 };
 use near_sdk_contract_tools::mt::metadata::{BaseMetadata, ContractMetadata, TokenMetadata};
 use near_sdk_contract_tools::mt::{
-    MetadataController, Nep245, Nep245Controller, Nep245Metadata, Nep245Mint, Nep245Transfer,
+    MetadataController, Nep245, Nep245Burn, Nep245Controller, Nep245Metadata, Nep245Mint, Nep245Transfer,
 };
 
 pub mod calls;
 pub mod pricing;
+pub mod shipping;
 pub use pricing::PricingParams;
 
 /// Token ids. Kept as constants so the frontend and the contract agree.
@@ -41,6 +42,10 @@ pub const ITEMS: [&str; 3] = ["key-fragment", "fuel-cell", "contract-seal"];
 
 const GAS_PASSPORT_CALL: Gas = Gas::from_tgas(10);
 const GAS_PASSPORT_CALLBACK: Gas = Gas::from_tgas(5);
+
+/// The graduation fee is the price of a full set at Bloq's shop, but never under this (half of what
+/// the three founding quests pay), so the milestone keeps its weight whatever the market does.
+pub const GRADUATION_FEE_FLOOR: u128 = 150;
 
 /// Cross-contract interface of `bloqvia-passport`.
 #[ext_contract(ext_passport)]
@@ -410,6 +415,7 @@ impl Contract {
         require!(is_item(&token_id), "Only items can be sold");
         require!(amount.0 > 0, "amount must be > 0");
         require!(self.shop_open(), "Shop closed: Bloq's treasury is below the floor");
+        self.settle_shipping();
 
         let stock = self.balance_of(&token_id, &self.bloq_id);
         let total = pricing::buy_total(&self.pricing, stock, amount.0);
@@ -440,6 +446,7 @@ impl Contract {
         require!(self.learners.contains(&learner), "Not a registered learner");
         require!(is_item(&token_id), "Only items can be bought");
         require!(amount.0 > 0, "amount must be > 0");
+        self.settle_shipping();
 
         let stock = self.balance_of(&token_id, &self.bloq_id);
         require!(stock >= amount.0, "Bloq does not have enough stock");
@@ -462,7 +469,7 @@ impl Contract {
         );
     }
 
-    /// Graduates the learner: hands one of each item plus the graduation fee
+    /// Graduates the learner: burns one of each item (stamped into the Passport) and pays the graduation fee
     /// (Bloq's current sell price for the three items) to Bloq, then asks the
     /// Passport to mark the learner as Graduate.
     pub fn graduate(&mut self) -> Promise {
@@ -479,12 +486,15 @@ impl Contract {
                 "You need one of each item to graduate"
             );
         }
+        self.settle_shipping();
         let fee = self.graduation_fee();
         require!(self.balance_of(GOLD, &learner) >= fee, "Not enough gold for the fee");
 
         self.graduates.insert(learner.clone());
+        // the set is stamped into the Passport: burned, not handed to Bloq (Nov 12), so graduating
+        // does not push his prices down for the next player
         for item in ITEMS {
-            self.move_tokens(&learner, &self.bloq_id.clone(), item, 1, "graduation");
+            self.burn_from(&learner, item, 1, "graduation: stamped into the Passport");
         }
         self.move_tokens(&learner, &self.bloq_id.clone(), GOLD, fee, "graduation fee");
 
@@ -556,7 +566,7 @@ impl Contract {
         ITEMS
             .iter()
             .map(|item| {
-                let stock = self.balance_of(item, &self.bloq_id);
+                let stock = self.stock_now(item);
                 ItemPrice {
                     token_id: item.to_string(),
                     bloq_stock: U128(stock),
@@ -658,12 +668,46 @@ impl Contract {
         self.balance_of(GOLD, &self.bloq_id) >= self.pricing.treasury_floor.0
     }
 
-    /// Bloq's current sell price for one of each item.
+    /// Bloq's current sell price for one of each item, never under GRADUATION_FEE_FLOOR.
     fn graduation_fee(&self) -> u128 {
-        ITEMS.iter().fold(0u128, |acc, item| {
-            let stock = self.balance_of(item, &self.bloq_id);
-            acc.saturating_add(pricing::sell_price(&self.pricing, stock))
-        })
+        ITEMS
+            .iter()
+            .fold(0u128, |acc, item| acc.saturating_add(pricing::sell_price(&self.pricing, self.stock_now(item))))
+            .max(GRADUATION_FEE_FLOOR)
+    }
+
+    /// Bloq's stock of an item as it stands now: what is on record less what the hours since the
+    /// last settlement ship (`shipping.rs`). Views read this; writes call `settle_shipping` first,
+    /// after which the balance on record is this number.
+    pub(crate) fn stock_now(&self, item: &str) -> u128 {
+        let stock = self.balance_of(item, &self.bloq_id);
+        let (periods, _) = shipping::periods_due(env::block_timestamp());
+        shipping::stock_after(stock, self.pricing.stock_halving.0, periods)
+    }
+
+    /// Burns what the hours since the last settlement ship, item by item, and moves the clock.
+    /// The first call after deployment only starts the clock.
+    pub(crate) fn settle_shipping(&mut self) {
+        let now = env::block_timestamp();
+        let (periods, advance_to) = shipping::periods_due(now);
+        if periods > 0 {
+            let bloq = self.bloq_id.clone();
+            let midpoint = self.pricing.stock_halving.0;
+            let mut shipped = Vec::with_capacity(ITEMS.len());
+            for item in ITEMS {
+                let stock = self.balance_of(item, &bloq);
+                let gone = stock - shipping::stock_after(stock, midpoint, periods);
+                if gone > 0 {
+                    self.burn_from(&bloq, item, gone, "shipped to Network City");
+                }
+                shipped.push((item, U128(gone)));
+            }
+            log_event(
+                "shipped",
+                &near_sdk::serde_json::json!({ "hours": periods, "items": shipped }),
+            );
+        }
+        shipping::write_last_settled_ns(advance_to);
     }
 
     fn define_token(&mut self, token_id: &str, name: &str, symbol: &str, description: &str) {
@@ -702,6 +746,15 @@ impl Contract {
             .unwrap_or_else(|_| env::panic_str("transfer: length mismatch"));
         Nep245Controller::transfer(self, &transfer)
             .unwrap_or_else(|e| env::panic_str(&format!("transfer: {e}")));
+    }
+
+    pub(crate) fn burn_from(&mut self, owner: &AccountId, token_id: &str, amount: u128, memo: &str) {
+        if amount == 0 {
+            return;
+        }
+        let owner_ref: &AccountIdRef = owner;
+        let burn = Nep245Burn::single(token_id, amount, owner_ref).memo(memo);
+        Nep245Controller::burn(self, &burn).unwrap_or_else(|e| env::panic_str(&format!("burn: {e}")));
     }
 
     fn season2_done(&self, account_id: &AccountId) -> bool {
@@ -945,23 +998,89 @@ mod tests {
     }
 
     #[test]
-    fn graduation_hands_items_and_fee_to_bloq() {
+    fn graduation_burns_the_set_and_pays_the_fee_to_bloq() {
         let mut c = deployed();
         as_caller(alice());
         for id in ["lesson-1", "lesson-2", "lesson-3"] {
             let _ = c.complete_lesson(id.into(), "public key".into());
         }
         let fee = c.get_bloq().graduation_fee.0;
+        // the price of a set at seed stock (3 x 68 = 204) is over the floor, so the fee is the set's price
+        assert_eq!(fee, ITEMS.iter().map(|i| pricing::sell_price(&params(), 5)).sum::<u128>());
+        assert!(fee > GRADUATION_FEE_FLOOR);
         let gold_before = c.balance_of(GOLD, &alice());
+        let treasury_before = c.balance_of(GOLD, &bloq());
         assert!(gold_before >= fee, "test setup: rewards must cover the fee");
         let _ = c.graduate();
         let view = c.get_learner(alice());
         assert!(view.graduated);
         assert_eq!(view.gold.0, gold_before - fee);
+        assert_eq!(c.balance_of(GOLD, &bloq()), treasury_before + fee);
         for item in ITEMS {
-            assert_eq!(c.balance_of(item, &alice()), 2, "one of each item went to Bloq");
-            assert_eq!(c.balance_of(item, &bloq()), 6);
+            assert_eq!(c.balance_of(item, &alice()), 2, "one of each item is stamped into the Passport");
+            assert_eq!(c.balance_of(item, &bloq()), 5, "Bloq's stock does not grow with a graduation");
         }
+    }
+
+    #[test]
+    fn the_graduation_fee_never_falls_under_the_floor() {
+        let mut c = deployed();
+        as_caller(alice());
+        for id in ["lesson-1", "lesson-2", "lesson-3"] {
+            let _ = c.complete_lesson(id.into(), "public key".into());
+        }
+        // alice sells six of each (three earned, three minted for the test): Bloq holds 11 of each, a set costs 3 x 48 = 144 < 150
+        for item in ITEMS {
+            c.mint_to(item, 3, &alice(), "test");
+            let _ = c.sell_to_bloq(item.into(), U128(6));
+        }
+        let set = ITEMS.iter().map(|_| pricing::sell_price(&params(), 11)).sum::<u128>();
+        assert!(set < GRADUATION_FEE_FLOOR, "{set}");
+        assert_eq!(c.get_bloq().graduation_fee.0, GRADUATION_FEE_FLOOR);
+    }
+
+    const HOUR: u64 = shipping::PERIOD_NS;
+
+    #[test]
+    fn bloq_ships_his_surplus_an_hour_at_a_time_and_views_agree_with_writes() {
+        let mut c = deployed();
+        // the clock starts at the first write: alice's first trade, at t = 0
+        as_caller_at(alice(), 0);
+        let _ = c.complete_lesson("lesson-1".into(), "public key".into());
+        let _ = c.sell_to_bloq("key-fragment".into(), U128(2)); // Bloq: 7 key fragments, midpoint 10: no surplus
+        assert_eq!(c.balance_of("key-fragment", &bloq()), 7);
+        // bob brings the stock to 40: a surplus of 30 over the midpoint of 10
+        as_caller(owner());
+        let _ = c.register_learner(bob());
+        as_caller_at(bob(), 0);
+        let _ = c.complete_lesson("lesson-1".into(), "public key".into());
+        let _ = c.mint_to("key-fragment", 30, &bob(), "test");
+        let _ = c.sell_to_bloq("key-fragment".into(), U128(33));
+        assert_eq!(c.balance_of("key-fragment", &bloq()), 40);
+        let price_at_40 = c.get_prices()[0].buy_price.0;
+
+        // nothing ships inside the hour
+        as_caller_at(alice(), HOUR - 1);
+        assert_eq!(c.get_prices()[0].bloq_stock.0, 40);
+        // an hour later a view already shows one item gone (4 % of 30 rounds to 1): the price is up
+        as_caller_at(alice(), HOUR);
+        assert_eq!(c.get_prices()[0].bloq_stock.0, 39);
+        assert!(c.get_prices()[0].buy_price.0 >= price_at_40);
+        assert_eq!(c.balance_of("key-fragment", &bloq()), 40, "the balance on record moves only on a write");
+        // a day later the view shows 24 gone; the next write burns exactly that, and the view and the record agree
+        as_caller_at(alice(), 24 * HOUR);
+        assert_eq!(c.get_prices()[0].bloq_stock.0, 40 - 24);
+        let _ = c.buy_from_bloq("fuel-cell".into(), U128(1));
+        assert_eq!(c.balance_of("key-fragment", &bloq()), 16);
+        assert_eq!(c.get_prices()[0].bloq_stock.0, 16);
+        assert!(c.get_prices()[0].buy_price.0 > price_at_40, "the price came back up");
+        // the two items with no surplus never ship
+        assert_eq!(c.balance_of("contract-seal", &bloq()), 5);
+        // the remainder of the hour is kept: half an hour on, nothing more; a full hour on, one more
+        as_caller_at(alice(), 24 * HOUR + HOUR / 2);
+        assert_eq!(c.get_prices()[0].bloq_stock.0, 16);
+        as_caller_at(alice(), 25 * HOUR);
+        assert_eq!(c.get_prices()[0].bloq_stock.0, 15);
     }
 
     #[test]

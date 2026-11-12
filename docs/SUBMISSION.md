@@ -16,22 +16,22 @@ when you press Submit. Corrections afterwards: nearhackathon.com/request-changes
 | Repository link | `https://github.com/1AdiTech1/bloqvia` — public, tagged `v1.0-hackathon` |
 | Website | `https://bloqvia.app` |
 | Demo post link | the X post below, once it is up |
-| What did you build? | the text under "What did you build?" (1996 characters, limit 2 000) |
+| What did you build? | the text under "What did you build?" (under 2 000 characters; count it before pasting) |
 
 ## What did you build? (paste as is)
 
-Bloqvia is a game that teaches Web3 by playing it, for real, on NEAR testnet, with no wallet, no seed phrase and no gas for the player.
+Bloqvia is a game that teaches Web3 by playing it for real on NEAR testnet: no wallet, no seed phrase, no gas for the player.
 
-Tap Create my account: a NEAR sub-account is created and a soulbound Passport NFT (NEP-171) minted to it. Every quest answer is a complete_lesson transaction signed by your account, relayed as a NEP-366 meta-transaction; the contract checks it against a hash and writes the reward. The app shows each transaction with its explorer link and "Gas you paid: 0 NEAR".
+Tap Create my account: a NEAR sub-account is created and a soulbound Passport NFT (NEP-171) is minted to it. Every quest answer is a complete_lesson transaction signed by your account, relayed as a NEP-366 meta-transaction; the contract checks it against a hash and writes the reward. The app shows every transaction with its explorer link and "Gas you paid: 0 NEAR".
 
 What's in the window (Nov 1–14):
-- Four Rust contracts: core (quests, shop, graduation, stamps), passport, streak (a token that mints on kept days, burns on missed ones), bounties (a board that pays what the chain can verify). 85 tests.
-- A market that never sleeps: prices are a contract rule (the more Bloq holds, the less he pays); bots and a fast-forward mode trade while nobody is online; the shop shows 24-hour curves. Three NPC traders (patient, bull, bear) are NEAR AI agents that pick a move, with a signed reason, only among moves their rules allow. And every price is a question: stake gold on more/same/less in ten minutes; the contract settles it from its own price rule.
-- An AI agent on NEAR AI Cloud (TEE, signed) writes a daily quest and answers "Ask Bloq". No model output reaches a reward, a price or another player's balance.
-- A cohort DAO (Sputnik v2): the board pays small bounties itself and files medium claims as proposals. The Passport is a vote: graduating seats you in the graduates role (you approve payments with your own key); the Season 2 stamp seats you in founders, who propose bounties the DAO adds to the board.
-- A relayer (Node, no framework): accounts, relaying, seats, the market, the agents. 43 tests.
+- Four Rust contracts: core (quests, shop, graduation, stamps), passport, streak (a token that mints on kept days, burns on missed ones), bounties (a board that pays what the chain can verify). 89 tests.
+- A market that never sleeps: prices are a contract rule (the more Bloq holds, the less he pays; each hour he ships part of his surplus, so prices come back); bots and a fast-forward mode trade while nobody is online. Three NPC traders (patient, bull, bear) are NEAR AI agents that pick a move, with a signed reason, only among moves their rules allow. And every price is a question: stake gold on more/same/less in ten minutes; the contract settles it from its own price rule.
+- An AI agent on NEAR AI Cloud (TEE, signed) writes a daily quest and answers "Ask Bloq". No model output reaches a reward, a price or anyone's balance.
+- A cohort DAO (Sputnik v2): the board pays small bounties itself, files medium claims as proposals. The Passport is a vote: graduating seats you in the graduates role (you approve payments with your own key); the Season 2 stamp seats you in founders, who propose bounties the DAO adds to the board.
+- A relayer (Node, no framework): accounts, relaying, seats, market, agents. 43 tests.
 
-The README is written for a judge: numbered "do X, see Y" steps for the hosted app and for a clean clone (cargo test, npm test, simulations, and `npm run attack`: nine things that must be refused, refused), all true on submission day. Testnet only.
+The README is written for a judge: numbered "do X, see Y" steps for the hosted app and a clean clone (cargo test, npm test, simulations, `npm run attack`: nine things that must be refused, refused), all true on submission day. Testnet only.
 
 ## The X post (demo post link)
 
