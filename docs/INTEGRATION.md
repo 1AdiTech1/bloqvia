@@ -54,7 +54,7 @@ const { txHash } = await b.completeLesson(lesson.lesson_id, chosenOptionText);
 await b.sellToBloq("key-fragment", 2);
 await b.buyFromBloq("fuel-cell", 1);
 
-// Graduation: enabled when b.learner.level === 3 && every item >= 1 && gold >= b.bloq.graduation_fee
+// Graduation: enabled when b.learner.level === 3 && every item >= 1 && gold >= b.bloq.graduation_fee (a set's price now, never under 150; the set is burned)
 await b.graduate();
 
 // Reveal: b.explorer.account(b.accountId), b.explorer.passport(b.accountId), b.exportSecretKey()

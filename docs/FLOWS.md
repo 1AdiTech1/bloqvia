@@ -66,7 +66,7 @@ flowchart TD
     N --> O[Sells and buys items with Bloq<br/>his prices move with his stock]
     O --> P{Holds all 3 items + Bloq's current price?}
     P -- no --> O
-    P -- yes --> R[Graduation swap at Bloq]
+    P -- yes --> R[Graduation at Bloq: set burned, fee paid]
     R --> S[Passport becomes Graduate]
     S --> T[The reveal: it was on-chain the whole time<br/>full history on Explorer, keys handed over]
     T --> U([Optional: export to own wallet])
@@ -168,7 +168,7 @@ stateDiagram-v2
     L0 --> L1: The Vault passed (keys)
     L1 --> L2: The Fuel System passed (gas)
     L2 --> L3: Smart Agreements passed (contracts), shop unlocks
-    L3 --> Graduate: graduation swap at Bloq
+    L3 --> Graduate: graduation at Bloq (set burned, fee paid)
     Graduate --> [*]
     note right of Graduate
         Non-transferable.
@@ -241,6 +241,13 @@ flowchart LR
     M --> Q
     I -- players buy --> S2[Bloq's stock falls]
     S2 -- price rule --> U[Bloq's price rises]
-    G[Graduation: 3 items + gold at Bloq's current price] --> T[Bloq's treasury]
+    S -- every hour, 4 % of what is above 40 --> N[Shipped to Network City: burned, nobody paid]
+    N --> U
+    G[Graduation: the set is burned into the Passport;<br/>the fee is a set's price, never under 150] -- fee --> T[Bloq's treasury]
     T -- treasury below floor --> X[Shop closes until restocked]
 ```
+
+Why the shipping arrow (Nov 12): without it every item a player earns ends in Bloq's stock and never leaves
+(selling and, before Nov 12, graduation both handed items to him), so prices slid for good while the quests
+kept paying the same gold. With it the surplus decays by about 62 % a day, prices come back toward 50, and the
+fee keeps its weight. `contracts/bloqvia-core/src/shipping.rs`.
