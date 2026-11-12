@@ -1,0 +1,17 @@
+Most people quit Web three at the wallet: a seed phrase, gas, a first transaction they don't understand. Blockvia is a game that teaches it by playing it, for real, on NEAR testnet, with none of that in the way. Every move you'll see is a real transaction, and I'll show the chain each time. <break time="1.5s" />
+
+That was a NEAR account being created and a Passport NFT minted to it. NEAR lets a relayer pay the gas for a transaction my account signs, so the key stays in this browser and I never buy anything. Here's the account, here's the block. <break time="1.5s" />
+
+The answer is checked by the contract, not by the app: pick a wrong one and the chain refuses it. The reward is written by the contract too. Here's the transaction: my account signed it, the relayer paid the gas. <break time="1.5s" />
+
+Today's quest was written this morning by an AI agent on NEAR AI Cloud, running in a trusted enclave: it's signed, and anyone can verify the signature. The model writes text. It never touches a reward, a price or a balance; the contract does that. <break time="1.5s" />
+
+This is a market, and it never sleeps. Prices come from a rule in the contract: the more Block holds, the less he pays, and every hour he ships part of his surplus so prices come back. Bots and three NPC traders keep trading while you're away, so the curve is a day of real trades, all on chain. I just sold two, and his price fell. <break time="1.5s" />
+
+And the traders are AI agents: patient, bull, bear. Each reads the prices, picks a move and says why, signed. But it can only pick from the moves its rules allow; anything else is overruled. Agents with wallets, inside a cage they can't open. <break time="1.5s" />
+
+And every price is a question. I'm staking twenty gold that in ten minutes Block pays the same. The contract remembers today's price, and when the round ends it reads its own rule and pays the side that was right from the stakes of the sides that weren't. No house, no odds: a market on the market. <break time="1.5s" />
+
+Two more quests and the Passport is ready. <break time="2s" /> Graduating sealed the Passport, and the Passport is a seat: this account now votes in the cohort dow, a Sputnik dow on NEAR. And a bounty board pays for what the chain can verify. I claim "first graduate"; the board reads my record from the game contract and pays. No one approved it; no model was asked. <break time="1.5s" />
+
+Finish Season two and you're a founder: you propose what the cohort pays for, founders vote with their own keys, and the dow itself adds the bounty to the board. Learn, earn a seat, govern. <break time="1.5s" /> Blockvia. Open source, on NEAR testnet, every step in the README. Thanks.

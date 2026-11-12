@@ -2,6 +2,10 @@
 
 Learn Web3 by playing it. A newcomer taps Start, plays three short quests, trades with a merchant whose prices move with what players do, and graduates — and only then learns that every step was a real transaction on NEAR, in an account that is theirs. A second season of three chapters then continues on the same map and ends with a stamp on their Passport.
 
+The chain stays invisible until the player has already used it, then the game says so: "It was on NEAR the whole time." Bloq's shop is a market whose rules you can read — one price rule in the contract, an hourly shipping rule that keeps prices alive with no dev patch, three NPC traders that are AI agents inside a cage of allowed moves, and a price call the contract settles from its own rule — and the sealed Passport is a seat in the cohort's Sputnik DAO, whose board pays NEAR for what the chain can verify.
+
+Demo video (2 min 06 s): the demo post on X, <X-POST-LINK> — the same MP4 is in this repository at `docs/demo/bloqvia-demo.mp4`.
+
 Built at **NEAR HACKATHON** (Nov 1–14, 2026). Tracks: `games` (primary: the merchant's economy and the NPC trader), `memecoins` (the streak coin, Module A), `social` (the graduates' Sputnik DAO and its bounty board, Module B), `nfts` (the Passport), `open`.
 
 **Live on testnet:** app https://bloqvia.app (alternate: https://bloqvia.lovable.app) · relayer https://relay.bloqvia.app (alternate: https://bloqvia-production.up.railway.app) · contracts [`core.bloqvia.testnet`](https://testnet.nearblocks.io/address/core.bloqvia.testnet), [`passport.bloqvia.testnet`](https://testnet.nearblocks.io/address/passport.bloqvia.testnet), merchant [`bloq.bloqvia.testnet`](https://testnet.nearblocks.io/address/bloq.bloqvia.testnet), streak token [`streak.bloqvia.testnet`](https://testnet.nearblocks.io/address/streak.bloqvia.testnet), bounty board [`bounties.bloqvia.testnet`](https://testnet.nearblocks.io/address/bounties.bloqvia.testnet), cohort DAO [`bloqvia-dao.sputnik-v2.testnet`](https://testnet.nearblocks.io/address/bloqvia-dao.sputnik-v2.testnet).
@@ -128,6 +132,6 @@ docs/                        FLOWS.md (Mermaid), SPIKE-AUTH.md, INTEGRATION.md, 
 - Every contract pays for the data it stores (storage staking, 1 NEAR per 100 KB), and that grows with every player. On Nov 7 the streak contract ran out and check-ins failed with `LackBalanceForState` until it was topped up. `npm run balances` in `scripts/` shows what's left, and the app now shows players a plain sentence instead of the raw error. Nothing tops the contracts up automatically.
 - The simulation's "players" are scripted strategies, not LLM agents, so the economy's behaviour is reproducible.
 
-## Licence
+## Licence and brand
 
-MIT — see `LICENSE`.
+The code and the documentation are MIT — see `LICENSE`. The brand is not: the Bloqvia name and block mark, the Bloq character (drawings, SVG rig, hats, voice lines), the BloqGold coin, the Passport card design, the lesson texts and the icons stay with the Bloqvia team and are not licensed for use in another product; the exception paragraph at the end of `LICENSE` says exactly what that covers. Fork the code, keep the assets only in unmodified or clearly unofficial copies, and give a derived product its own name and character.

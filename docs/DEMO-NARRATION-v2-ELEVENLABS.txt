@@ -1,0 +1,19 @@
+Most people quit Web three at the wallet. Blockvia skips the wallet: one tap, and you're playing. <break time="1.5s" />
+
+That tap made me a NEAR account and minted my Passport, and a relayer paid for it. Watch the panel on the right: gas you paid, zero. And a live block. <break time="1.5s" />
+
+A quest is a question. The contract checks the answer, not the app, and writes the reward. Here's the transaction: signed by my account, paid by the relayer. <break time="1.5s" />
+
+Today's quest was written this morning by an AI agent on NEAR AI Cloud, signed in a trusted enclave. The model writes text. The contract still decides what it pays. <break time="1.5s" />
+
+Block is a merchant with a wallet and one price rule: the more he holds, the less he pays. I sell two, and his price drops for everyone. Every hour he ships his surplus, so prices come back. No dev patch. <break time="1.5s" />
+
+Three NPC traders with their own accounts keep trading while you sleep: patient, bull, bear. They're AI agents, but each can only pick from the moves its rules allow. Agents with wallets, inside a cage they can't open. <break time="1.5s" />
+
+And every price is a question. I stake twenty gold that in ten minutes Block pays the same. The contract settles it from its own price rule. No house. <break time="1.5s" />
+
+Three quests, one graduation: the Passport is sealed. And now the game tells you what you've been doing. It was on NEAR the whole time. Your account, your Passport, your key. <break time="1.5s" />
+
+And the Passport is a seat. Graduates run a Sputnik dow, with a bounty board that pays NEAR for what the chain can verify. I claim first graduate: the board reads my record from the game contract and pays. No one approved it. Finish Season two, and you propose what the cohort pays for. <break time="1.5s" />
+
+Blockvia. Learn Web three by playing it. Open source, on NEAR testnet, every step in the README. <break time="1s" /> Web three is worth understanding. Let's make sense of it.

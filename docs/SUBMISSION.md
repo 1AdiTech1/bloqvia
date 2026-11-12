@@ -11,7 +11,7 @@ when you press Submit. Corrections afterwards: nearhackathon.com/request-changes
 | Team lead | `Adrian Chivu` |
 | Email address | the address you read hackathon mail on |
 | Team size | `2-4 people` (Adi, Maria) |
-| Tracks | `games`, `memecoins`, `social`, `nfts`, `open` |
+| Tracks | `games` (primary), `social`, `nfts`, `memecoins`, `open` — in that order |
 | NEAR wallet address | your **mainnet** account (prizes are paid on mainnet; not `bloqvia.testnet`) |
 | Repository link | `https://github.com/1AdiTech1/bloqvia` — public, tagged `v1.0-hackathon` |
 | Website | `https://bloqvia.app` |
@@ -20,39 +20,40 @@ when you press Submit. Corrections afterwards: nearhackathon.com/request-changes
 
 ## What did you build? (paste as is)
 
-Bloqvia is a game that teaches Web3 by playing it for real on NEAR testnet: no wallet, no seed phrase, no gas for the player.
+Bloqvia is a game that teaches Web3 by playing it for real on NEAR testnet: no wallet, no seed phrase, no gas. The chain stays invisible until the player has already used it, then the game says so: "It was on NEAR the whole time."
 
-Tap Create my account: a NEAR sub-account is created and a soulbound Passport NFT (NEP-171) is minted to it. Every quest answer is a complete_lesson transaction signed by your account, relayed as a NEP-366 meta-transaction; the contract checks it against a hash and writes the reward. The app shows every transaction with its explorer link and "Gas you paid: 0 NEAR".
+Tap Create my account: a NEAR sub-account and a soulbound Passport NFT (NEP-171). Every quest answer is a complete_lesson transaction signed by your account, relayed as a NEP-366 meta-transaction; the contract checks the hash and writes the reward. Each one is shown with its explorer link and "Gas you paid: 0 NEAR".
 
-What's in the window (Nov 1–14):
+Built in the window (Nov 1–14):
 - Four Rust contracts: core (quests, shop, graduation, stamps), passport, streak (a token that mints on kept days, burns on missed ones), bounties (a board that pays what the chain can verify). 89 tests.
-- A market that never sleeps: prices are a contract rule (the more Bloq holds, the less he pays; each hour he ships part of his surplus, so prices come back); bots and a fast-forward mode trade while nobody is online. Three NPC traders (patient, bull, bear) are NEAR AI agents that pick a move, with a signed reason, only among moves their rules allow. And every price is a question: stake gold on more/same/less in ten minutes; the contract settles it from its own price rule.
-- An AI agent on NEAR AI Cloud (TEE, signed) writes a daily quest and answers "Ask Bloq". No model output reaches a reward, a price or anyone's balance.
-- A cohort DAO (Sputnik v2): the board pays small bounties itself, files medium claims as proposals. The Passport is a vote: graduating seats you in the graduates role (you approve payments with your own key); the Season 2 stamp seats you in founders, who propose bounties the DAO adds to the board.
-- A relayer (Node, no framework): accounts, relaying, seats, market, agents. 43 tests.
+- A market whose rules you can read: prices are a contract rule (the more Bloq holds, the less he pays; each hour he ships part of his surplus, so prices come back); bots trade while nobody is on. Three NPC traders (patient, bull, bear) are NEAR AI agents that pick a move, with a signed reason, only among moves their rules allow. Every price is a question: stake gold on more/same/less in ten minutes; the contract settles it from its own rule.
+- An AI agent on NEAR AI Cloud (TEE, signed) writes a daily quest and answers "Ask Bloq"; no model output reaches a reward, a price or a balance.
+- A cohort DAO (Sputnik v2) with a bounty board that pays NEAR for what the chain can verify: small bounties itself, medium ones as proposals. The Passport is a seat: graduating seats you in the graduates role (you vote on payments with your own key); the Season 2 stamp seats you in founders, who propose bounties the DAO adds to the board.
+- A relayer (Node): accounts, relaying, seats, market, agents; 43 tests.
 
-The README is written for a judge: numbered "do X, see Y" steps for the hosted app and a clean clone (cargo test, npm test, simulations, `npm run attack`: nine things that must be refused, refused), all true on submission day. Testnet only.
+The README is written for a judge: "do X, see Y" steps for the hosted app and a clean clone (cargo test, npm test, simulations, `npm run attack`: nine refusals). All true on submission day. Testnet only.
 
 ## The X post (demo post link)
 
-Attach the demo video (the MP4, under 2 min 20 s for X without Premium; otherwise a 30 s cut plus
-the YouTube link in a reply) or four screenshots: the map with the On NEAR panel, the shop with
-the curves, Missions with the DAO card, the Passport with the Season 2 stamp.
+Attach the demo video, `C:\Users\A\Videos\bloqvia-demo\bloqvia-demo-adam3.mp4` (1080p, 2 min 06 s, with captions, so it plays muted).
 
 Text (the guide asks to lead with the user problem and to ask a question):
 
-> Most people quit Web3 at the wallet. Bloqvia teaches it by playing: one tap, a real NEAR account; every quest a real transaction; no gas, no seed phrase; your Passport votes in a DAO. Built at NEAR HACKATHON. What should quest one teach? bloqvia.app @NEARProtocol #NEARHackathon
+> Web3 tutorials don't teach Web3. Bloqvia makes you use it first: one tap, a real NEAR account; quests, a live market, a graduation. Then the reveal: it was on NEAR the whole time. Your Passport is a seat in a DAO. Built at NEAR HACKATHON. bloqvia.app @NEARProtocol #NEARHackathon
 
-(278 characters, under X's 280: count again after any edit.) Reply to your own post with the repo link and the YouTube link, so the post itself stays short. Optional in that reply: @NearLegion @NearBuilders.
+(279 characters, under X's 280: count again after any edit.) Attach `bloqvia-demo-adam3.mp4` to the post itself (2 min 06 s, under X's 2 min 20 s). Reply to your own post with the repo link; that reply is also where the question and the extra tags go:
+
+> Open source, every step in the README: github.com/1AdiTech1/bloqvia — what should quest one teach? @NearLegion @NearBuilders
+
+No YouTube: the X post is the demo link everywhere (the form, the README).
 
 ## Before pressing Submit (in this order)
 
 1. Keys rotated (NEAR_AI_API_KEY, ADMIN_TOKEN) and Railway redeployed; `/health` ok.
 2. `git log -p --all | grep -E "ed25519:[1-9A-HJ-NP-Za-km-z]{60,}" | grep -vc "ed25519:5KqX9vTn"` prints 0.
-3. Video uploaded; its link in README.md under the first paragraph; committed.
+3. X post up; its link replaces `<X-POST-LINK>` in README.md; the MP4 committed as `docs/demo/bloqvia-demo.mp4`.
 4. `git tag -f v1.0-hackathon && git tag hackathon-submission && git push -f origin v1.0-hackathon hackathon-submission` (`v1.0-hackathon` already exists from Nov 11 and moves to the final commit; `hackathon-submission` is the name the hackathon guide suggests).
 5. Repo public: GitHub → Settings → General → Danger Zone → Change visibility → Public.
-6. Open https://github.com/1AdiTech1/bloqvia in a private window: README renders, no 404.
-7. X post up; copy its link.
+6. Open https://github.com/1AdiTech1/bloqvia in a private window: README renders, no 404, the video line links to the post.
 8. `cd scripts && npm run balances` → `All accounts have room.`
 9. Fill the form, press Submit, keep the confirmation.

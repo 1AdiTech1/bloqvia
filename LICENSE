@@ -19,3 +19,24 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+Brand assets are not covered by the licence above.
+
+The MIT licence applies to the source code and documentation in this
+repository. It does not grant any right to the Bloqvia name, the Bloqvia
+block mark and logo, the name and likeness of "Bloq" (the character: his
+drawings, the SVG rig in `src/bloq/`, the hats, the poses, the voice lines),
+the BloqGold coin mark, the Passport card design, the lesson texts in
+`src/content/`, or the icons in `public/`. These remain the property of the
+Bloqvia team and may not be used to name, brand or
+market another product or service without written permission. You may keep
+them in unmodified copies of this repository and in forks that are clearly
+identified as unofficial; a derived product must use its own name, logo and
+character.
+
+"Bloqvia", "Bloq" and the Bloqvia block mark are trademarks of the Bloqvia
+team (EU trademark application pending). NEAR, Sputnik DAO and the other names
+mentioned in this repository are trademarks of their respective owners and are
+used only to describe what this software talks to.
