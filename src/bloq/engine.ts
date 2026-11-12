@@ -700,6 +700,9 @@ const engine = (function () {
           const d = pulse((q - 0.45) / 0.55); bodyY += 4 * d; a.kl += 16 * d; a.kr += 16 * d;
           a.s += 8 * pulse(q); a.bs -= 8 * pulse(q);
         }
+        // the lean is a rotation of the torso on the page, so it has to follow the mirror like the limbs do: without
+        // this he leaned into a walk to the right and away from a walk to the left (Nov 12)
+        lean *= mir;
       }
       // the wave: the shoulder joins in, the hand flops behind the forearm, he leans into it
       if (this.pose === "wave" && live) { a.s += 7 * Math.sin(t * 7.5 - 0.5); a.e += 26 * Math.sin(t * 7.5); this._handLag = 16 * Math.sin(t * 7.5 - 1.1); lean += 2; headTilt += 4; }
