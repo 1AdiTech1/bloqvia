@@ -353,7 +353,7 @@ function TradeCard({ price, have, gold, shopOpen, onTraded, market }: { price: I
       {tip && (
         <div ref={tipPanel} id={`price-tip-${id}`} role="dialog" aria-label="How prices work"
           className="bq-pop absolute left-[10px] right-[10px] top-[64px] z-30 rounded-[18px] bg-card px-4 py-3 text-sm leading-relaxed text-navy shadow-[0_22px_50px_rgb(0_0_0/.35),0_0_0_1px_#e3dccb]">
-          Bloq pays less for what he already has a lot of: price = 100 × 40 ÷ (40 + his stock). Nobody can change this rule by hand.
+          Bloq pays less for what he already has a lot of: price = 100 × 40 ÷ (40 + his stock). Every hour he ships part of what he holds above 40, so a price that fell comes back by itself. Nobody can change either rule by hand.
         </div>
       )}
 
