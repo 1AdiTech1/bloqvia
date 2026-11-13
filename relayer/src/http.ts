@@ -12,6 +12,8 @@
  *   POST /register           -> { publicKey, daoPublicKey? } (the second key is the Passport's vote, limited to the DAO)
  *   POST /propose            -> a founder's bounty proposal, signed with the second key; filed on the DAO (propose.ts)
  *   POST /fastforward        -> start "a day of trading in a minute" (six scripted learners); 429 with nextAt when gated
+ *   GET  /desk/signal        -> x402: 402 with the price, or the market signal once paid (desk.ts)
+ *   GET  /passport/proof?accountId= -> x402: 402 with the price, or a signed statement of the Passport once paid
  *
  * Wrap `handle()` in a Vercel/Netlify function if you host it serverless.
  */
@@ -29,6 +31,7 @@ import { hasKey } from "./accounts.js";
 import { propose, type ProposeBody } from "./propose.js";
 import { createAskBloq, type AskBloq } from "./ask.js";
 import { view, type NearContext } from "./near.js";
+import type { Desk } from "./desk.js";
 
 async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
   if (Number(req.headers["content-length"] ?? 0) > 64 * 1024) throw new PolicyError("Body too large", 413);
@@ -63,10 +66,13 @@ function send(res: ServerResponse, status: number, body: unknown, origin: string
 }
 
 let askBloq: AskBloq | null = null;
+let desk: Desk | null = null;
+/** The market desk, when the relayer runs one (index.ts). */
+export function setDesk(d: Desk | null): void { desk = d; }
 
 /** One trader as /market shows it: its temperament, last move and thought, and its lines as numbers. */
 function traderView(t: ReturnType<typeof traderState>) {
-  return { accountId: t.accountId, on: t.on, mind: t.mind, temper: t.temper, temperLine: t.temperLine, last: t.last, lastThought: t.lastThought, lastTick: t.lastTick, note: t.note, rules: { sellAbove: (t.lines?.sellAbove ?? 0n).toString(), buyBelow: (t.lines?.buyBelow ?? 0n).toString(), band: RULES.band.toString(), keepGold: RULES.keepGold.toString(), keepItems: RULES.keepItems.toString(), intervalMin: RULES.intervalMin } };
+  return { accountId: t.accountId, on: t.on, mind: t.mind, temper: t.temper, temperLine: t.temperLine, last: t.last, lastThought: t.lastThought, lastTick: t.lastTick, note: t.note, signal: t.signal, purse: t.purse, rules: { sellAbove: (t.lines?.sellAbove ?? 0n).toString(), buyBelow: (t.lines?.buyBelow ?? 0n).toString(), band: RULES.band.toString(), keepGold: RULES.keepGold.toString(), keepItems: RULES.keepItems.toString(), intervalMin: RULES.intervalMin } };
 }
 
 /** The client's address: the first hop of x-forwarded-for behind Railway's proxy, else the socket. */
@@ -122,8 +128,11 @@ export async function handle(ctx: NearContext, req: IncomingMessage, res: Server
         trader: traderView(t),
         traders: tradersState().map(traderView),
         fastForward: { ...ff, players: FF.players, everyMin: FF.everyMin },
+        desk: desk ? desk.view() : null,
       }, origin, allowed);
     }
+
+    if (desk && (await desk.handle(ctx, req, res, url))) return;
 
     if (req.method === "POST" && url.pathname === "/fastforward") {
       try {

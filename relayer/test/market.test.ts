@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { prune, thin, dayAverage, KEEP_MS, MAX_POINTS, type Snapshot } from "../src/market.js";
-import { allowedMoves, decide, judge, lines, linesFor, shortOfGold, RESTOCK_BAND, RULES, TEMPERS } from "../src/trader.js";
+import { allowedMoves, decide, judge, lines, linesFor, shortOfGold, signalLine, wantsSignal, RESTOCK_BAND, RULES, TEMPERS } from "../src/trader.js";
 import { gate, plan, slack, LINES, type FFState } from "../src/fastforward.js";
 
 const snap = (t: number): Snapshot => ({ t, gold: "1000", shop_open: true, prices: [] });
@@ -142,4 +142,16 @@ test("the restock rule: out of spare items a trader buys back on a 1-gold dip; s
   // the rule only ever tightens a line toward the average, never past it
   const tight = lines(fair, p, { name: "bear", sellBand: 1n, buyBand: 1n, line: "" });
   assert.deepEqual(linesFor("key-fragment", p, { gold: 60n, items: items(1n, 1n, 1n) }, tight), { sellAbove: 43n, buyBelow: 41n, restock: true, refill: true });
+});
+
+test("who wants the desk's signal: the bull always, the bear on a dip, the patient one twice an hour", () => {
+  const l = { sellAbove: 45n, buyBelow: 39n, ref: 42n };
+  const flat = { sell: items(43n, 42n, 44n) }, dip = { sell: items(43n, 41n, 44n) };
+  const [patient, bull, bear] = TEMPERS as [typeof TEMPERS[0], typeof TEMPERS[0], typeof TEMPERS[0]];
+  assert.equal(wantsSignal(bull, 3, flat, l), true);
+  assert.equal(wantsSignal(bear, 3, flat, l), false);
+  assert.equal(wantsSignal(bear, 3, dip, l), true);
+  assert.deepEqual([1, 2, 6, 7, 13].map((t) => wantsSignal(patient, t, flat, l)), [true, false, false, true, true]);
+  const line = signalLine({ at: 0, prices: null, average: null, round: [1, 120, true], traders: [{ temper: "bull", last: { kind: "buy", token_id: "fuel-cell", price: "41" } }, { temper: "bear", last: null }, { temper: "patient", last: null }] }, "patient");
+  assert.equal(line, "The desk's signal says: the bull bought fuel-cell at 41, the bear has not traded; the price-call round is open, 480 s to its end.");
 });

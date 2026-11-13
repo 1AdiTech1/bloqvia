@@ -19,12 +19,20 @@
  * trader too short of gold to buy anything sells on a RESTOCK_BAND rise. Without it the bear sold down to its last
  * item and the bull spent down to its floor within a day, and both then held forever; with it they keep trading, still
  * only inside their lines, still only accepting or refusing Bloq's prices.
+ *
+ * The traders buy their information (Nov 13): before a look, a trader with a purse (purse.ts) may buy the market
+ * desk's signal over x402 — a real payment in wrapped NEAR, settled on chain — and the agent reads it before it
+ * chooses. The bull buys every tick, the bear when a price dips under the average, the patient one twice an hour.
+ * The purse's rules (which host, how much a call, how much a day) are not the model's to change; a refusal is shown
+ * on the shop like a held move. Without a purse the trader looks with its own eyes, as before.
  */
 import { chat, extractJson, fetchSignature, signatureMatches, type AiConfig } from "./ai.js";
 import type { KeyPairString } from "near-api-js";
 import { ITEMS, botFromKey, call, learner, prices, type Bot, type Item } from "./bots.js";
 import { afterTrade, fairPrices } from "./market.js";
 import type { NearContext } from "./near.js";
+import { PurseError, fmt, type Purse } from "./purse.js";
+import type { Signal } from "./desk.js";
 
 /** The rules. Gold amounts are BloqGold (the game's gold), not NEAR. */
 export const RULES = {
@@ -67,10 +75,12 @@ export const TEMPERS: Temper[] = [
   { name: "bull", sellBand: 3n, buyBand: 1n, line: "buys on a 1-gold dip, sells only 3 up" },
   { name: "bear", sellBand: 1n, buyBand: 3n, line: "sells on a 1-gold rise, buys only 3 down" },
 ];
-export interface TraderState { accountId: string | null; on: boolean; mind: "ai" | "rules"; temper: Temper["name"]; temperLine: string; last: TraderMove | null; lastThought: Thought | null; lastTick: number | null; note: string; lines: TraderLines | null }
+/** The last signal the trader bought (or was refused): what the shop prints under its line. */
+export interface SignalNote { at: number; ok: boolean; cost: string; txHash: string | null; note: string }
+export interface TraderState { accountId: string | null; on: boolean; mind: "ai" | "rules"; temper: Temper["name"]; temperLine: string; last: TraderMove | null; lastThought: Thought | null; lastTick: number | null; note: string; lines: TraderLines | null; signal: SignalNote | null; purse: string | null; ticks: number }
 
 function fresh(temper: Temper): TraderState {
-  return { accountId: null, on: false, mind: "rules", temper: temper.name, temperLine: temper.line, last: null, lastThought: null, lastTick: null, note: "off: TRADER_ACCOUNT_ID / TRADER_PRIVATE_KEY not set", lines: null };
+  return { accountId: null, on: false, mind: "rules", temper: temper.name, temperLine: temper.line, last: null, lastThought: null, lastTick: null, note: "off: TRADER_ACCOUNT_ID / TRADER_PRIVATE_KEY not set", lines: null, signal: null, purse: null, ticks: 0 };
 }
 const states: TraderState[] = [fresh(TEMPERS[0]!)];
 /** Every trader that is configured. */
@@ -158,14 +168,30 @@ export function judge(raw: unknown, allowed: Allowed[]): { move: "sell" | "buy" 
   return { move, token_id: pick.token_id, reason, overruled: false, pick };
 }
 
-async function think(ai: AiConfig, model: string, p: Prices, me: Mine, l: TraderLines, fair: Record<string, bigint> | null, allowed: Allowed[], log: (s: string) => void, temper: Temper = TEMPERS[0]!): Promise<Thought> {
+/**
+ * Whether a trader wants to buy the desk's signal this tick: the bull every time, the bear when Bloq charges under the
+ * average for any item (a dip, what it waits for), the patient one every sixth tick (twice an hour at 5 min). Pure, tested.
+ */
+export function wantsSignal(temper: Temper, tick: number, p: { sell: Record<Item, bigint> }, l: TraderLines): boolean {
+  if (temper.name === "bull") return true;
+  if (temper.name === "bear") return ITEMS.some((i) => p.sell[i] < l.ref);
+  return tick % 6 === 1;
+}
+/** The signal as the agent reads it: the other traders' last moves and the round, in one line. Pure, tested. */
+export function signalLine(sig: Signal, me: Temper["name"]): string {
+  const others = sig.traders.filter((t) => t.temper !== me).map((t) => { const m = t.last as TraderMove | null; return m ? `the ${t.temper} ${m.kind === "sell" ? "sold" : "bought"} ${m.token_id} at ${m.price}` : `the ${t.temper} has not traded`; });
+  const round = sig.round ? `; the price-call round is ${sig.round[2] ? "open" : "closed"}, ${Math.max(0, 600 - sig.round[1])} s to its end` : "";
+  return `The desk's signal says: ${others.join(", ") || "no other trader is on"}${round}.`;
+}
+
+async function think(ai: AiConfig, model: string, p: Prices, me: Mine, l: TraderLines, fair: Record<string, bigint> | null, allowed: Allowed[], log: (s: string) => void, temper: Temper = TEMPERS[0]!, signal = ""): Promise<Thought> {
   const lines = ITEMS.map((i) => `${i}: Bloq pays ${p.buy[i]}, charges ${p.sell[i]}, holds ${p.stock[i]}; day average ${fair?.[i] ?? p.buy[i]}; I hold ${me.items[i]}`).join("\n");
   const restocking = ITEMS.filter((i) => linesFor(i, p, me, l).restock);
   const refill = shortOfGold(p, me);
   const restockLine = restocking.length ? ` I have no spare ${restocking.join(" or ")}, so I buy it back when Bloq charges ${l.ref - RESTOCK_BAND} or less.` : "";
   const refillLine = refill ? ` I am short of gold, so I sell when Bloq pays ${l.ref + RESTOCK_BAND} or more.` : "";
-  const user = `I am the ${temper.name} trader: I ${temper.line}. My lines today: sell when Bloq pays ${l.sellAbove} or more, buy when he charges ${l.buyBelow} or less.${restockLine}${refillLine} I keep ${RULES.keepGold} gold and never sell my last item. I have ${me.gold} gold.\n${lines}\n${allowed.length ? `Moves the rules allow right now: ${allowed.map(label).join(", ")}; "hold" is always allowed.\nChoose, and say which number decided it.` : `No move is allowed right now; only a hold. Say which item is closest to one of my lines and by how many gold, so a reader sees what you are waiting for.`}`;
-  const completion = await chat(ai, model, [{ role: "system", content: TRADER_PROMPT }, { role: "user", content: user }], { jsonSchema: { name: "bloqvia_trader", schema: THOUGHT_SCHEMA as unknown as Record<string, unknown> }, maxTokens: 400, temperature: 0.4, thinking: false });
+  const user = `I am the ${temper.name} trader: I ${temper.line}. My lines today: sell when Bloq pays ${l.sellAbove} or more, buy when he charges ${l.buyBelow} or less.${restockLine}${refillLine} I keep ${RULES.keepGold} gold and never sell my last item. I have ${me.gold} gold.\n${lines}\n${signal ? `${signal}\n` : ""}${allowed.length ? `Moves the rules allow right now: ${allowed.map(label).join(", ")}; "hold" is always allowed.\nChoose, and say which number decided it.` : `No move is allowed right now; only a hold. Say which item is closest to one of my lines and by how many gold, so a reader sees what you are waiting for.`}`;
+  const completion = await chat(ai, model, [{ role: "system", content: TRADER_PROMPT }, { role: "user", content: user }], { jsonSchema: { name: "bloqvia_trader", schema: THOUGHT_SCHEMA as unknown as Record<string, unknown> }, maxTokens: 1200, temperature: 0.4, reasoningEffort: "low" });
   let raw: unknown = null;
   try { raw = JSON.parse(extractJson(completion.content)); } catch { raw = null; }
   const j = judge(raw, allowed);
@@ -175,17 +201,32 @@ async function think(ai: AiConfig, model: string, p: Prices, me: Mine, l: Trader
   return { at: Date.now(), move: j.move, token_id: j.token_id, reason: j.reason, allowed: [...allowed.map(label), "hold"], overruled: j.overruled, generated_by: { provider: "NEAR AI Cloud", model: completion.model, chat_id: completion.id, signature_kind: verified ? sig!.signature_kind : null } };
 }
 
-export async function traderTick(ctx: NearContext, bot: Bot, log: (s: string) => void = console.log, ai: { cfg: AiConfig; model: string } | null = null, state: TraderState = states[0]!, temper: Temper = TEMPERS[0]!): Promise<TraderMove | null> {
+export async function traderTick(ctx: NearContext, bot: Bot, log: (s: string) => void = console.log, ai: { cfg: AiConfig; model: string } | null = null, state: TraderState = states[0]!, temper: Temper = TEMPERS[0]!, desk: { purse: Purse; url: string } | null = null): Promise<TraderMove | null> {
   state.lastTick = Date.now();
+  state.ticks += 1;
   const [p, me] = await Promise.all([prices(ctx), learner(ctx, bot.accountId)]);
   const fair = fairPrices();
   const l = lines(fair, p, temper);
   state.lines = l;
   const allowed = allowedMoves(p, me, l);
+  // the signal: bought from the desk over x402 when the temperament wants it; the purse's rules may refuse
+  let signal = "";
+  if (desk && p.shop_open && wantsSignal(temper, state.ticks, p, l)) {
+    try {
+      const { body, purchase } = await desk.purse.buy<Signal>(`${desk.url}/desk/signal`);
+      signal = signalLine(body, temper.name);
+      state.signal = { at: purchase.at, ok: true, cost: fmt(BigInt(purchase.amount)), txHash: purchase.txHash, note: `bought the desk's signal for ${fmt(BigInt(purchase.amount))}` };
+      log(`[trader:${temper.name}] bought the signal for ${fmt(BigInt(purchase.amount))} tx=${purchase.txHash}`);
+    } catch (e) {
+      const why = e instanceof PurseError ? `${e.reason}: ${e.message}` : (e as Error).message;
+      state.signal = { at: Date.now(), ok: false, cost: "0 wNEAR", txHash: null, note: `the purse refused the signal (${why})` };
+      log(`[trader:${temper.name}] signal not bought: ${why}`);
+    }
+  }
   let d: Allowed | null = null, reason: string | undefined;
   if (ai && p.shop_open) {
     // the agent chooses among what the rules allow; a slip in the model (or the gateway) falls back to the rules
-    try { const t = await think(ai.cfg, ai.model, p, me, l, fair, allowed, log, temper); state.lastThought = t; d = judge({ move: t.move, item: t.token_id ?? "none", reason: t.reason }, allowed).pick; reason = t.reason; }
+    try { const t = await think(ai.cfg, ai.model, p, me, l, fair, allowed, log, temper, signal); state.lastThought = t; d = judge({ move: t.move, item: t.token_id ?? "none", reason: t.reason }, allowed).pick; reason = t.reason; }
     catch (e) { log(`[trader:${temper.name}] the agent did not answer (${(e as Error).message}); the rules decide`); d = decide(p, me, l); }
   } else {
     d = decide(p, me, l);
@@ -204,9 +245,9 @@ export async function traderTick(ctx: NearContext, bot: Bot, log: (s: string) =>
  * bull, TRADER3_* the bear. One tick now, then every RULES.intervalMin minutes; the traders look in turn, never at
  * once, so the relayer's one key never races itself. Returns null when no trader is configured.
  */
-export function startTrader(ctx: NearContext, env: NodeJS.ProcessEnv = process.env): (() => void) | null {
+export function startTrader(ctx: NearContext, env: NodeJS.ProcessEnv = process.env, purses: (Purse | null)[] = [], deskUrl: string | null = null): (() => void) | null {
   const ai = ctx.config.ai && env.TRADER_MIND !== "rules" ? { cfg: ctx.config.ai, model: env.TRADER_MODEL ?? ctx.config.ai.chatModel } : null;
-  const traders: { bot: Bot; state: TraderState; temper: Temper }[] = [];
+  const traders: { bot: Bot; state: TraderState; temper: Temper; desk: { purse: Purse; url: string } | null }[] = [];
   states.length = 0;
   TEMPERS.forEach((temper, i) => {
     const prefix = i === 0 ? "TRADER" : `TRADER${i + 1}`;
@@ -214,13 +255,15 @@ export function startTrader(ctx: NearContext, env: NodeJS.ProcessEnv = process.e
     if (!accountId || !key) return;
     const state = fresh(temper);
     state.accountId = accountId; state.on = true; state.mind = ai ? "ai" : "rules"; state.note = "starting";
+    const purse = purses[i] ?? null;
+    state.purse = purse?.accountId ?? null;
     states.push(state);
-    traders.push({ bot: botFromKey(ctx, accountId, key), state, temper });
+    traders.push({ bot: botFromKey(ctx, accountId, key), state, temper, desk: purse && deskUrl ? { purse, url: deskUrl } : null });
   });
   if (!traders.length) { states.push(fresh(TEMPERS[0]!)); return null; }
   const tick = async () => {
     for (const t of traders) {
-      await traderTick(ctx, t.bot, console.log, ai, t.state, t.temper).catch((e) => { t.state.note = `error: ${(e as Error).message}`; console.error(`[trader:${t.temper.name}] ${(e as Error).message}`); });
+      await traderTick(ctx, t.bot, console.log, ai, t.state, t.temper, t.desk).catch((e) => { t.state.note = `error: ${(e as Error).message}`; console.error(`[trader:${t.temper.name}] ${(e as Error).message}`); });
     }
   };
   void tick();

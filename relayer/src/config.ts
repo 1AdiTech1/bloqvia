@@ -17,6 +17,8 @@ export interface RelayerConfig {
   daoId: string;
   /** Abuse limits (Nov 11): registrations per IP per hour, registrations per UTC day, relays per IP per minute. */
   limits: { registerPerIpPerHour: number; registerPerDay: number; relayPerIpPerMin: number };
+  /** The market desk (Nov 13): what the relayer sells over x402. Null with DESK=off. The traders buy from publicUrl. */
+  desk: { publicUrl: string; payTo: string; wnear: string } | null;
 }
 
 function required(name: string): string {
@@ -59,6 +61,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): RelayerConfig 
       registerPerIpPerHour: Number(env.REGISTER_PER_IP_PER_HOUR ?? 6),
       registerPerDay: Number(env.REGISTER_PER_DAY ?? 400),
       relayPerIpPerMin: Number(env.RELAY_PER_IP_PER_MIN ?? 120),
+    },
+    desk: env.DESK === "off" ? null : {
+      publicUrl: (env.DESK_PUBLIC_URL ?? `http://localhost:${Number(env.PORT ?? 8787)}`).replace(/\/$/, ""),
+      payTo: env.DESK_PAY_TO?.trim() || required("RELAYER_ACCOUNT_ID"),
+      wnear: env.WNEAR_CONTRACT_ID?.trim() || (network === "testnet" ? "wrap.testnet" : "wrap.near"),
     },
   };
 }

@@ -17,10 +17,13 @@
     "trader:create": "tsx trader-create.ts",
     "dao:roles": "tsx dao-roles.ts",
     "balances": "tsx check-balances.ts",
-    "attack": "tsx attack.ts"
+    "attack": "tsx attack.ts",
+    "x402:setup": "tsx x402-setup.ts",
+    "desk:buy": "tsx desk-buy.ts"
   },
   "dependencies": {
-    "near-api-js": "^7.4.0"
+    "near-api-js": "^7.4.0",
+    "@x402/core": "^2.18.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
