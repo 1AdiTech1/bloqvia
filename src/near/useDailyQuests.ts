@@ -37,7 +37,8 @@ function set(patch: Partial<DailyQuestsState>): void {
 
 export function parseDailyQuest(l: LessonWithText): DailyQuest | null {
   // chapter- lessons are bonus quests too, but they belong to Season 2 (useChapters)
-  if (!l.bonus || !l.text || !l.lesson.lesson_id.startsWith("daily-")) return null;
+  // the sponsored slot shares the daily- prefix on chain (a bonus quest for the contract) but belongs to useSponsoredQuest
+  if (!l.bonus || !l.text || !l.lesson.lesson_id.startsWith("daily-") || l.lesson.lesson_id.endsWith("-sponsored")) return null;
   try {
     const t = JSON.parse(l.text) as Omit<DailyQuest, "lesson_id" | "reward_gold" | "reward_item" | "reward_item_amount">;
     return {

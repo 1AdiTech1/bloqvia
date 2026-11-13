@@ -9,7 +9,8 @@ import { scheduleFastForward, FF_AUTO_HOURS } from "./fastforward.js";
 import { startCallSettler } from "./calls.js";
 import { Desk } from "./desk.js";
 import { setDesk } from "./http.js";
-import { pursesFromEnv } from "./purse.js";
+import { housePurseFromEnv, pursesFromEnv } from "./purse.js";
+import { SPONSOR_PRICE, startHouseSponsor } from "./sponsor.js";
 
 const config = loadConfig();
 const ctx = createNearContext(config);
@@ -20,8 +21,12 @@ let purses: ReturnType<typeof pursesFromEnv> = [];
 if (config.desk) {
   const desk = new Desk({ network: config.network, rpcUrl: config.rpcUrl, payTo: config.desk.payTo, relayerAccountId: config.relayerAccountId, relayerPrivateKey: config.relayerPrivateKey, asset: config.desk.wnear }, config.desk.publicUrl);
   setDesk(desk);
-  purses = pursesFromEnv(process.env, { rpcUrl: config.rpcUrl, network: config.network, allowedHosts: [new URL(config.desk.publicUrl).host] });
-  console.log(`[relayer] market desk on at ${config.desk.publicUrl}: /desk/signal and /passport/proof paid in ${config.desk.wnear} to ${config.desk.payTo} (x402); purses: ${purses.map((p) => p?.accountId ?? "none").join(", ")}`);
+  const base = { rpcUrl: config.rpcUrl, network: config.network, allowedHosts: [new URL(config.desk.publicUrl).host] };
+  purses = pursesFromEnv(process.env, base);
+  console.log(`[relayer] market desk on at ${config.desk.publicUrl}: /desk/signal, /passport/proof and /sponsor/quest paid in ${config.desk.wnear} to ${config.desk.payTo} (x402); purses: ${purses.map((p) => p?.accountId ?? "none").join(", ")}`);
+  const house = housePurseFromEnv(process.env, base, SPONSOR_PRICE);
+  if (house) { startHouseSponsor(ctx, house, config.desk.publicUrl); console.log(`[relayer] the house purse ${house.accountId} buys the day's sponsored slot when nobody else does`); }
+  else console.log("[relayer] PURSE_HOUSE_ACCOUNT_ID / PURSE_HOUSE_PRIVATE_KEY not set: the sponsored slot is sold only to outside sponsors");
 } else {
   console.log("[relayer] DESK=off: the market desk and the purses are off");
 }

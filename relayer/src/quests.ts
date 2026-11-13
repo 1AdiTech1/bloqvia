@@ -35,6 +35,8 @@ export const TOPICS: { topic: string; angle: string }[] = [
   { topic: "Explorers", angle: "what a block explorer shows and how to check a transaction yourself" },
   { topic: "Testnet versus mainnet", angle: "why test networks exist and why their coins are worth nothing" },
   { topic: "Private keys and signing", angle: "what signing proves without revealing the key" },
+  // Nov 13: the market desk went live (x402); this day's quest is about it, so a player meets the idea the day the judges do
+  { topic: "Paying per request", angle: "HTTP 402 'Payment Required': a program asks for an answer, is told a price, pays with a signed token transfer and gets the answer; in Bloqvia the NPC traders buy the market desk's signal this way, from a purse with a daily budget the agent cannot change; who paid, who got paid, and what a budget protects" },
   { topic: "Access keys on NEAR", angle: "full-access keys versus keys limited to one contract and some methods" },
   { topic: "Supply and burning", angle: "how a token's supply can grow or shrink by rules anyone can read" },
   { topic: "Automated market rules", angle: "how a price can move with stock without anyone setting it" },

@@ -29,7 +29,7 @@ Built in the window (Nov 1–14):
 - A market whose rules you can read: prices are a contract rule (the more Bloq holds, the less he pays; each hour he ships part of his surplus, so prices come back); bots trade while nobody is on. Three NPC traders (patient, bull, bear) are NEAR AI agents that pick a move, with a signed reason, only among moves their rules allow. Every price is a question: stake gold on more/same/less in ten minutes; the contract settles it from its own rule.
 - An AI agent on NEAR AI Cloud (TEE, signed) writes a daily quest and answers "Ask Bloq"; no model output reaches a reward, a price or a balance.
 - A cohort DAO (Sputnik v2) with a bounty board that pays NEAR for what the chain can verify: small bounties itself, medium ones as proposals. The Passport is a seat: graduating seats you in the graduates role (you vote on payments with your own key); the Season 2 stamp seats you in founders, who propose bounties the DAO adds to the board.
-- A relayer (Node): accounts, relaying, seats, market, agents, the x402 market desk and the traders' purses; 52 tests.
+- A relayer (Node): accounts, relaying, seats, market, agents, the x402 market desk, the traders' purses and the sponsored slot; 55 tests.
 
 The README is written for a judge: "do X, see Y" steps for the hosted app and a clean clone (cargo test, npm test, simulations, `npm run attack`: twelve refusals). All true on submission day. Testnet only.
 

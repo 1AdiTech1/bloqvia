@@ -6,6 +6,8 @@
  *   GET /passport/proof?accountId=   0.05 wNEAR   a signed statement of what the chain says about one Passport: sealed or
  *                                                 not, level, stamps; the signature is the relayer's key, which is on
  *                                                 chain, so anyone can check it without trusting the relayer
+ *   POST /sponsor/quest              0.5 wNEAR    the day's sponsored slot on the map (sponsor.ts): a quest that passes the
+ *                                                 validator is seeded on chain with the payment's transaction
  *
  * The handshake is the x402 v2 "exact" scheme on NEAR: an unpaid request gets a 402 with the price in the
  * PAYMENT-REQUIRED header; the payer signs a NEP-366 delegate action for the token transfer and retries with
@@ -26,9 +28,10 @@ import { fairPrices, latest } from "./market.js";
 import { tradersState } from "./trader.js";
 import { view, withRetry, type NearContext } from "./near.js";
 import { WNEAR, WNEAR_CONTRACT, fmt } from "./purse.js";
+import { SPONSOR_PRICE, attachSponsoredText, seedSponsored, sponsoredLessonId, sponsoredText, todaysSlot, validateSponsor } from "./sponsor.js";
 
-export interface DeskPrices { signal: bigint; proof: bigint }
-export const DESK_PRICES: DeskPrices = { signal: WNEAR / 100n, proof: WNEAR / 20n }; // 0.01 and 0.05 wNEAR
+export interface DeskPrices { signal: bigint; proof: bigint; sponsor: bigint }
+export const DESK_PRICES: DeskPrices = { signal: WNEAR / 100n, proof: WNEAR / 20n, sponsor: SPONSOR_PRICE }; // 0.01, 0.05 and 0.5 wNEAR
 
 export interface DeskConfig {
   network: "testnet" | "mainnet";
@@ -66,8 +69,17 @@ export function verifyProof(p: Proof): boolean {
   try { return PublicKey.fromString(p.public_key).verify(digest(p.statement), Buffer.from(p.signature, "base64")); } catch { return false; }
 }
 
+async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
+  if (Number(req.headers["content-length"] ?? 0) > 64 * 1024) throw new Error("Body too large");
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) chunks.push(chunk as Buffer);
+  const text = Buffer.concat(chunks).toString("utf8");
+  if (text.length > 64 * 1024) throw new Error("Body too large");
+  try { return text ? (JSON.parse(text) as Record<string, unknown>) : {}; } catch { return {}; }
+}
+
 /** node:http as the x402 adapter. */
-function adapt(req: IncomingMessage, url: URL): HTTPAdapter {
+function adapt(req: IncomingMessage, url: URL, body: unknown = undefined): HTTPAdapter {
   const h = (name: string) => { const v = req.headers[name.toLowerCase()]; return Array.isArray(v) ? v[0] : v; };
   return {
     getHeader: h,
@@ -78,6 +90,7 @@ function adapt(req: IncomingMessage, url: URL): HTTPAdapter {
     getUserAgent: () => h("user-agent") ?? "",
     getQueryParams: () => Object.fromEntries(url.searchParams.entries()),
     getQueryParam: (name) => url.searchParams.get(name) ?? undefined,
+    getBody: () => body,
   };
 }
 
@@ -106,12 +119,21 @@ export class Desk {
     const facilitator = createNearFacilitator({ registrations: [{ network: this.network, signer: { relayers: [{ accountId: cfg.relayerAccountId, secretKey: cfg.relayerPrivateKey }], rpcUrls: { [this.network]: cfg.rpcUrl } } }] });
     const server = createNearResourceServer({ facilitators: facilitator });
     const price = (yocto: bigint) => ({ amount: yocto.toString(), asset: this.asset });
+    const unpaid = (yocto: bigint) => () => ({ contentType: "application/json", body: { error: `Payment required: ${fmt(yocto)} to ${this.payTo} on ${this.network} (x402, PAYMENT-REQUIRED header)` } });
     const routes: RoutesConfig = {
-      "GET /desk/signal": { accepts: [{ scheme: "exact", network: this.network, price: price(this.prices.signal), payTo: this.payTo }], description: "Bloqvia market desk: prices now, the day's average, the price-call round, the traders' last moves", mimeType: "application/json", resource: `${publicUrl}/desk/signal`, unpaidResponseBody: () => ({ contentType: "application/json", body: { error: `Payment required: ${fmt(this.prices.signal)} to ${this.payTo} on ${this.network} (x402, PAYMENT-REQUIRED header)` } }) },
-      "GET /passport/proof": { accepts: [{ scheme: "exact", network: this.network, price: price(this.prices.proof), payTo: this.payTo }], description: "A signed statement of one Passport as the chain holds it", mimeType: "application/json", resource: `${publicUrl}/passport/proof`, unpaidResponseBody: () => ({ contentType: "application/json", body: { error: `Payment required: ${fmt(this.prices.proof)} to ${this.payTo} on ${this.network} (x402, PAYMENT-REQUIRED header)` } }) },
+      "GET /desk/signal": { accepts: [{ scheme: "exact", network: this.network, price: price(this.prices.signal), payTo: this.payTo }], description: "Bloqvia market desk: prices now, the day's average, the price-call round, the traders' last moves", mimeType: "application/json", resource: `${publicUrl}/desk/signal`, unpaidResponseBody: unpaid(this.prices.signal) },
+      "GET /passport/proof": { accepts: [{ scheme: "exact", network: this.network, price: price(this.prices.proof), payTo: this.payTo }], description: "A signed statement of one Passport as the chain holds it", mimeType: "application/json", resource: `${publicUrl}/passport/proof`, unpaidResponseBody: unpaid(this.prices.proof) },
+      "POST /sponsor/quest": { accepts: [{ scheme: "exact", network: this.network, price: price(this.prices.sponsor), payTo: this.payTo }], description: "Today's sponsored slot on Bloqvia's map: a quest that passes the validator, seeded on chain with the payment", mimeType: "application/json", resource: `${publicUrl}/sponsor/quest`, unpaidResponseBody: unpaid(this.prices.sponsor) },
     };
     this.http = new x402HTTPResourceServer(server, routes);
+    // the slot is one a day: a taken slot is refused before any payment is asked for
+    this.http.onProtectedRequest(async (context) => {
+      if (context.path !== "/sponsor/quest" || !this.near) return;
+      const slot = await todaysSlot(this.near);
+      if (slot.taken) return { abort: true, reason: `Today's slot is taken (${slot.lessonId}); tomorrow's opens at 00:00 UTC` };
+    });
   }
+  private near: NearContext | null = null;
 
   /** Facilitator support is read once (in-process, no network). */
   init(): Promise<void> { return (this.ready ??= this.http.initialize()); }
@@ -136,15 +158,33 @@ export class Desk {
   async handle(ctx: NearContext, req: IncomingMessage, res: ServerResponse, url: URL): Promise<boolean> {
     const route = `${req.method} ${url.pathname}`;
     if (!(route in this.http.routes)) return false;
+    this.near = ctx;
     await this.init();
-    const context: HTTPRequestContext = { adapter: adapt(req, url), path: url.pathname, method: req.method ?? "GET", paymentHeader: (req.headers["payment-signature"] as string | undefined) ?? (req.headers["x-payment"] as string | undefined) };
+    const json = req.method === "POST" ? await readJson(req) : {};
+    const context: HTTPRequestContext = { adapter: adapt(req, url, json), path: url.pathname, method: req.method ?? "GET", paymentHeader: (req.headers["payment-signature"] as string | undefined) ?? (req.headers["x-payment"] as string | undefined) };
     const r = await this.http.processHTTPRequest(context);
     if (r.type === "payment-error") { write(res, r.response); return true; }
     if (r.type === "no-payment-required") { write(res, { status: 500, headers: {}, body: { error: "desk route without a price" } }); return true; }
     // paid: produce the answer first, settle second, so a failed read never costs the payer
-    let body: unknown;
+    let body: unknown, after: ((s: { payer: string | null; txHash: string }) => Promise<unknown>) | null = null;
     try {
-      body = url.pathname === "/desk/signal" ? await this.signal(ctx) : await this.proof(ctx, url.searchParams.get("accountId") ?? "");
+      if (url.pathname === "/desk/signal") body = await this.signal(ctx);
+      else if (url.pathname === "/passport/proof") body = await this.proof(ctx, url.searchParams.get("accountId") ?? "");
+      else {
+        // the sponsored slot: validate and seed the lesson now (the hash and the reward rule); its text, which names the
+        // payment, lands after settlement
+        const sponsor = validateSponsor(json);
+        const date = new Date(), lessonId = sponsoredLessonId(date);
+        const slot = await todaysSlot(ctx, date);
+        if (slot.taken) throw new Error(`Today's slot is taken (${lessonId})`);
+        if (!slot.exists) await seedSponsored(ctx, lessonId, sponsor, date);
+        body = { lessonId, sponsor: sponsor.name, house: sponsor.house ?? false };
+        after = async (s) => {
+          const text = sponsoredText(sponsor.quest, { name: sponsor.name, url: sponsor.url, house: sponsor.house ?? false }, { paid_by: s.payer, amount: this.prices.sponsor.toString(), asset: this.asset, tx_hash: s.txHash, bought_at: new Date().toISOString() });
+          await attachSponsoredText(ctx, lessonId, text);
+          console.log(`[sponsor] ${lessonId} seeded for ${sponsor.name}${sponsor.house ? " (house)" : ""}, paid by ${s.payer ?? "?"} tx=${s.txHash}`);
+        };
+      }
     } catch (e) {
       await r.cancellationDispatcher.cancel({ reason: "handler_threw", error: e }).catch(() => undefined);
       write(res, { status: 400, headers: {}, body: { error: (e as Error).message } });
@@ -155,11 +195,12 @@ export class Desk {
     this.sales.push({ at: Date.now(), route, payer: s.payer ?? null, amount: r.paymentRequirements.amount, txHash: s.transaction });
     if (this.sales.length > 50) this.sales.shift();
     console.log(`[desk] sold ${route} to ${s.payer ?? "?"} for ${fmt(BigInt(r.paymentRequirements.amount))} tx=${s.transaction}`);
-    write(res, { status: 200, headers: s.headers, body });
+    if (after) { try { await after({ payer: s.payer ?? null, txHash: s.transaction }); } catch (e) { write(res, { status: 500, headers: s.headers, body: { ...(body as object), error: `paid, seeded, but the text did not land: ${(e as Error).message}` } }); return true; } }
+    write(res, { status: 200, headers: s.headers, body: { ...(body as object), txHash: s.transaction } });
     return true;
   }
 
   view() {
-    return { asset: this.asset, payTo: this.payTo, network: this.network, prices: { signal: fmt(this.prices.signal), proof: fmt(this.prices.proof) }, routes: Object.keys(this.http.routes), sales: this.sales.slice(-20) };
+    return { asset: this.asset, payTo: this.payTo, network: this.network, prices: { signal: fmt(this.prices.signal), proof: fmt(this.prices.proof), sponsor: fmt(this.prices.sponsor) }, routes: Object.keys(this.http.routes), sales: this.sales.slice(-20) };
   }
 }

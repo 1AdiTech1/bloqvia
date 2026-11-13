@@ -32,7 +32,7 @@ test("an unpaid request to the desk gets a 402 that names the price, the token, 
   const p = await d.http.processHTTPRequest(ctxFor(d, "/passport/proof?accountId=x.testnet"));
   assert.equal(p.type, "payment-error");
   if (p.type === "payment-error") assert.equal(decodePaymentRequiredHeader(p.response.headers["PAYMENT-REQUIRED"]!).accepts[0]!.amount, DESK_PRICES.proof.toString());
-  assert.deepEqual(d.view().routes, ["GET /desk/signal", "GET /passport/proof"]);
+  assert.deepEqual(d.view().routes, ["GET /desk/signal", "GET /passport/proof", "POST /sponsor/quest"]);
   assert.equal(d.view().prices.proof, "0.05 wNEAR");
 });
 
@@ -58,7 +58,7 @@ test("the purse accepts the desk's own price and only then reaches for the chain
   await assert.rejects(p.buy("http://relay.test:8787/desk/signal"), (e: PurseError) => e.reason === "transport");
   assert.equal(p.log.filter((l) => !l.ok && /asked|not on the purse|pays in/.test(l.note ?? "")).length, 0);
   // the same purse against a price over its cap is refused on the spot
-  const dear = new Desk({ network: "testnet", rpcUrl: "http://rpc.test", payTo: "bloqvia.testnet", relayerAccountId: "bloqvia.testnet", relayerPrivateKey: key, prices: { signal: WNEAR, proof: WNEAR } }, "http://relay.test:8787");
+  const dear = new Desk({ network: "testnet", rpcUrl: "http://rpc.test", payTo: "bloqvia.testnet", relayerAccountId: "bloqvia.testnet", relayerPrivateKey: key, prices: { signal: WNEAR, proof: WNEAR, sponsor: WNEAR } }, "http://relay.test:8787");
   await dear.init();
   const g = (async (input: RequestInfo | URL) => {
     const r = await dear.http.processHTTPRequest(ctxFor(dear, urlOf(input).pathname));

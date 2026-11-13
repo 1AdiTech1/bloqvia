@@ -10,6 +10,11 @@
  * balance is the hard ceiling of what the agent can ever spend. The relayer itself (the desk's payee) is registered
  * on the token too, so the desk can be paid. Prints the six lines for relayer/.env and Railway's variables; never
  * commit them. An existing purse is left alone (its key is the one you kept).
+ *
+ *   npm run x402:setup -- --apply --topup 1.4     # a week of signals for each trader's purse (and 1.4 to the house if set)
+ *   npm run x402:setup -- --apply --house        # also the house purse (Nov 14): buys the day's sponsored slot when
+ *                                                  nobody else did, 0.5 wNEAR a day; funded with --house-fund (3 NEAR),
+ *                                                  --house-wrap (2.5) wrapped: five days of slots
  */
 import { Account, JsonRpcProvider, KeyPair, actions, nearToYocto, teraToGas } from "near-api-js";
 
@@ -17,6 +22,9 @@ const argv = process.argv.slice(2);
 const flag = (name: string, dflt: string) => { const i = argv.indexOf(`--${name}`); return i >= 0 && argv[i + 1] ? argv[i + 1] : dflt; };
 const apply = argv.includes("--apply");
 const fund = Number(flag("fund", "0.3")), wrap = Number(flag("wrap", "0.2"));
+const house = argv.includes("--house"), houseFund = Number(flag("house-fund", "3")), houseWrap = Number(flag("house-wrap", "2.5"));
+/** --topup N: send N NEAR from the relayer to every purse whose key is in the environment and wrap it there (a week is 1.4 for a trader at 0.2 a day, 3.5 for the house). */
+const topup = Number(flag("topup", "0"));
 const rpcUrl = process.env.NEAR_RPC_URL ?? "https://test.rpc.fastnear.com";
 const relayerId = process.env.RELAYER_ACCOUNT_ID, relayerKey = process.env.RELAYER_PRIVATE_KEY as `ed25519:${string}` | undefined;
 const wnear = process.env.WNEAR_CONTRACT_ID ?? "wrap.testnet";
@@ -25,7 +33,7 @@ if (!(wrap < fund)) { console.error("--wrap must be under --fund (the rest pays 
 
 const provider = new JsonRpcProvider({ url: rpcUrl });
 const relayer = new Account(relayerId, provider, relayerKey);
-const PURSES = [["patient", "PURSE"], ["bull", "PURSE2"], ["bear", "PURSE3"]] as const;
+const PURSES: readonly (readonly [string, string, number, number])[] = [["patient", "PURSE", fund, wrap], ["bull", "PURSE2", fund, wrap], ["bear", "PURSE3", fund, wrap], ...(house ? [["house", "PURSE_HOUSE", houseFund, houseWrap] as const] : [])];
 const STORAGE = nearToYocto(0.00125);
 
 async function exists(id: string): Promise<boolean> {
@@ -43,7 +51,7 @@ if (!(await registered(relayerId))) {
   if (apply) await relayer.signAndSendTransaction({ receiverId: wnear, actions: [actions.functionCall("storage_deposit", { account_id: relayerId, registration_only: true }, teraToGas("30"), STORAGE)] });
 } else console.log(`- ${relayerId} already registered on ${wnear}`);
 
-for (const [temper, prefix] of PURSES) {
+for (const [temper, prefix, fund, wrap] of PURSES) {
   const id = `purse-${temper}.${relayerId}`;
   if (await exists(id)) { console.log(`- ${id} exists: left alone (its key is the one in your .env)`); continue; }
   const key = KeyPair.fromRandom("ed25519");
@@ -57,6 +65,20 @@ for (const [temper, prefix] of PURSES) {
   const bal = (await provider.callFunction({ contractId: wnear, method: "ft_balance_of", args: { account_id: id } })) as string;
   console.log(`    holds ${(Number(BigInt(bal) / 10n ** 20n) / 10000).toFixed(4)} wNEAR  explorer: https://testnet.nearblocks.io/address/${id}`);
   lines.push(`${prefix}_ACCOUNT_ID=${id}`, `${prefix}_PRIVATE_KEY=${key.toString()}`);
+}
+
+if (topup > 0) {
+  for (const prefix of ["PURSE", "PURSE2", "PURSE3", "PURSE_HOUSE"]) {
+    const id = process.env[`${prefix}_ACCOUNT_ID`], key = process.env[`${prefix}_PRIVATE_KEY`] as `ed25519:${string}` | undefined;
+    if (!id || !key) continue;
+    const before = (await provider.callFunction({ contractId: wnear, method: "ft_balance_of", args: { account_id: id } })) as string;
+    console.log(`- top up ${id}: ${topup} NEAR from the relayer, wrapped there (holds ${(Number(BigInt(before) / 10n ** 20n) / 10000).toFixed(4)} wNEAR now)`);
+    if (!apply) continue;
+    await relayer.signAndSendTransaction({ receiverId: id, actions: [actions.transfer(nearToYocto(topup + 0.01))] });
+    const purse = new Account(id, provider, key);
+    const tx = await purse.signAndSendTransaction({ receiverId: wnear, actions: [actions.functionCall("near_deposit", {}, teraToGas("30"), nearToYocto(topup))] });
+    console.log(`    wrapped tx=${tx.transaction.hash}`);
+  }
 }
 
 if (lines.length) console.log(`\nAdd to relayer/.env and to the hosted relayer's variables (never commit them):\n${lines.join("\n")}`);

@@ -101,11 +101,15 @@ export class Purse {
       catch (e) { this.log.push({ at: now(), url, amount: r.amount, asset: r.asset, payTo: r.payTo, txHash: null, ok: false, note: (e as Error).message }); return { abort: true, reason: (e as Error).message }; }
       pending = { url, amount: r.amount, asset: r.asset, payTo: r.payTo };
     });
-    client.onPaymentResponse(async ({ settleResponse, requirements: r, error }) => {
+    client.onPaymentResponse(async ({ settleResponse, requirements: r, error, paymentRequired }) => {
       const p = pending ?? { url: "", amount: r.amount, asset: r.asset, payTo: r.payTo };
       pending = null;
       if (settleResponse?.success) { this.ledger.commit(p.amount); this.log.push({ at: now(), ...p, txHash: settleResponse.transaction, ok: true }); }
-      else this.log.push({ at: now(), ...p, txHash: null, ok: false, note: settleResponse?.errorReason ?? error?.message ?? "not settled" });
+      else {
+        // a second 402 after paying carries the facilitator's reason (an empty purse, a stale nonce); keep it readable
+        const why = settleResponse?.errorReason ?? settleResponse?.errorMessage ?? paymentRequired?.error ?? error?.message ?? "not settled";
+        this.log.push({ at: now(), ...p, txHash: null, ok: false, note: /balance|insufficient/i.test(why) ? `the purse is empty on chain (${why})` : why });
+      }
       if (this.log.length > 50) this.log.shift();
     });
     this.paidFetch = wrapFetchWithPayment(fetchImpl, client);
@@ -134,6 +138,13 @@ export class Purse {
   view() {
     return { accountId: this.accountId, asset: this.policy.asset, maxPerCall: fmt(this.policy.maxPerCall), dailyBudget: fmt(this.policy.dailyBudget), spentToday: fmt(this.ledger.spentToday), left: fmt(this.ledger.left), purchases: this.log.filter((p) => p.ok).length, refused: this.log.filter((p) => !p.ok).length, last: this.log[this.log.length - 1] ?? null };
   }
+}
+
+/** The house purse (Nov 14): PURSE_HOUSE_ACCOUNT_ID / PURSE_HOUSE_PRIVATE_KEY, which buys the day's sponsored slot when nobody else did. One slot a day: 0.5 wNEAR a call, 0.5 a day. */
+export function housePurseFromEnv(env: NodeJS.ProcessEnv, base: { rpcUrl: string; network: "testnet" | "mainnet"; allowedHosts: string[] }, slotPrice: bigint): Purse | null {
+  const accountId = env.PURSE_HOUSE_ACCOUNT_ID, secretKey = env.PURSE_HOUSE_PRIVATE_KEY as KeyPairString | undefined;
+  if (!accountId || !secretKey) return null;
+  return new Purse({ accountId, secretKey, rpcUrl: base.rpcUrl, policy: { allowedHosts: base.allowedHosts, maxPerCall: slotPrice, dailyBudget: slotPrice, asset: env.WNEAR_CONTRACT_ID ?? WNEAR_CONTRACT[base.network], network: `near:${base.network}` } });
 }
 
 /** The three purses from the environment: PURSE_ACCOUNT_ID / PURSE_PRIVATE_KEY for the patient trader, PURSE2_* the bull, PURSE3_* the bear. */

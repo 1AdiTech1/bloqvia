@@ -14,6 +14,8 @@
  *   POST /fastforward        -> start "a day of trading in a minute" (six scripted learners); 429 with nextAt when gated
  *   GET  /desk/signal        -> x402: 402 with the price, or the market signal once paid (desk.ts)
  *   GET  /passport/proof?accountId= -> x402: 402 with the price, or a signed statement of the Passport once paid
+ *   POST /sponsor/quest      -> x402: 402 with the price, or today's sponsored slot seeded once paid (sponsor.ts)
+ *   GET  /sponsor/today      -> today's slot as the chain holds it: { lessonId, taken, text }
  *
  * Wrap `handle()` in a Vercel/Netlify function if you host it serverless.
  */
@@ -32,6 +34,7 @@ import { propose, type ProposeBody } from "./propose.js";
 import { createAskBloq, type AskBloq } from "./ask.js";
 import { view, type NearContext } from "./near.js";
 import type { Desk } from "./desk.js";
+import { todaysSlot } from "./sponsor.js";
 
 async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
   if (Number(req.headers["content-length"] ?? 0) > 64 * 1024) throw new PolicyError("Body too large", 413);
@@ -130,6 +133,11 @@ export async function handle(ctx: NearContext, req: IncomingMessage, res: Server
         fastForward: { ...ff, players: FF.players, everyMin: FF.everyMin },
         desk: desk ? desk.view() : null,
       }, origin, allowed);
+    }
+
+    if (req.method === "GET" && url.pathname === "/sponsor/today") {
+      const slot = await todaysSlot(ctx);
+      return send(res, 200, { ...slot, price: desk ? desk.view().prices.sponsor : null, route: "POST /sponsor/quest (x402)" }, origin, allowed);
     }
 
     if (desk && (await desk.handle(ctx, req, res, url))) return;

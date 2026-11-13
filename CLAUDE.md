@@ -19,7 +19,7 @@ Tracks: games (primary), nfts, memecoins, social, open. Read `README.md` first, 
    `cd ../bloqvia-passport && cargo test` → expect 11 passed.
    `cd ../bloqvia-streak && cargo test` → expect 9 passed (Module A, merged).
    `cd ../bloqvia-bounties && cargo test` → expect 14 passed (Module B, merged Nov 5 after its on-chain proof).
-3. `cd relayer && npm i && npm test` → expect 52 passed.
+3. `cd relayer && npm i && npm test` → expect 55 passed.
    `cd ../scripts && npm i && npm test` → expect 2 passed.
 If any of these fail on a clean clone, stop and report the full output; do not
 "fix" by changing tests.
@@ -66,6 +66,9 @@ If any of these fail on a clean clone, stop and report the full output; do not
   a signal is worth buying, `relayer/src/purse.ts` decides whether the payment
   is allowed (one host, 0.01 wNEAR a call, 0.2 a day, one token) and the
   balance is the ceiling. The desk sells only what the chain already holds.
+  The sponsored slot (Nov 14) sells a day's quest slot, never a reward: the
+  quest passes the same validator as the daily quest and the contract pays
+  the daily quest's reward; the house purse buys the slot when nobody did.
 - The README is written for an AI judge: "do X, see Y" steps, no marketing.
   Every step in it must be true on a clean clone the day it is written.
 - Pre-hackathon code is baseline; everything we write is new in this window.
@@ -94,6 +97,8 @@ If any of these fail on a clean clone, stop and report the full output; do not
 | Fast-forward now | `curl -s -X POST localhost:8787/fastforward` then `curl -s localhost:8787/market` | `{ started: true }`; `/market` shows round, log and snapshots |
 | Try to break it (twelve refusals) | `cd scripts && npm run attack -- --relayer https://relay.bloqvia.app` | ✓ on all twelve, exit 0; a ✗ is a bug |
 | Make the three purses (once, Adi's go-ahead; x402, Nov 13) | `cd scripts && set -a && source ../relayer/.env && set +a && npm run x402:setup -- --apply` (without `--apply`: dry run) | three `purse-*.bloqvia.testnet` with wNEAR; six `PURSE*` lines for `relayer/.env` and Railway, plus `DESK_PUBLIC_URL` |
+| The house purse (once, Adi's go-ahead; sponsored slot, Nov 14) | `cd scripts && set -a && source ../relayer/.env && set +a && npm run x402:setup -- --apply --house` | `purse-house.bloqvia.testnet` with 2.5 wNEAR; two `PURSE_HOUSE_*` lines for `relayer/.env` and Railway |
+| Buy the sponsored slot (x402) | `cd scripts && set -a && source ../relayer/.env && set +a && npm run sponsor:buy -- --relayer https://relay.bloqvia.app --name "…" --url https://… --quest q.json` | `slot bought for 0.5 wNEAR tx=…`, the lesson `daily-<date>-sponsored` on chain; 403 when the day's slot is taken |
 | Buy from the desk (x402) | `cd scripts && set -a && source ../relayer/.env && set +a && npm run desk:buy -- --relayer https://relay.bloqvia.app` | the 402, then `signal bought for 0.01 wNEAR tx=…`; `/market` lists the sale |
 | Account balances (read-only) | `cd scripts && npm run balances` | table of balance / locked / free per account; exit 1 and a top-up hint if one is low |
 | View on chain | `near contract call-function as-read-only core.bloqvia.testnet get_bloq json-args '{}' network-config testnet now` | JSON |

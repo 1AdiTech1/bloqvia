@@ -98,6 +98,14 @@ export interface DailyQuest {
 /** A Season 2 chapter: same shape as a daily quest, written by us (no model provenance). */
 export type Chapter = Omit<DailyQuest, "generated_by">;
 
+/** The day's sponsored quest (Nov 14): a daily-shaped quest whose slot was bought over x402; `sponsor` says by whom, `slot` what it cost and the payment's transaction. */
+export interface SponsoredQuest extends Omit<DailyQuest, "generated_by"> {
+  sponsor: { name: string; url: string | null; house: boolean };
+  slot: { paid_by: string | null; amount: string; asset: string; tx_hash: string | null; bought_at: string; price: string; route: string };
+  written_by: string;
+  checked_by: string;
+}
+
 /** POST /ask — what the model said and how to verify that it said it. */
 export interface AskResult {
   answer: string;

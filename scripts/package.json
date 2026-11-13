@@ -19,7 +19,8 @@
     "balances": "tsx check-balances.ts",
     "attack": "tsx attack.ts",
     "x402:setup": "tsx x402-setup.ts",
-    "desk:buy": "tsx desk-buy.ts"
+    "desk:buy": "tsx desk-buy.ts",
+    "sponsor:buy": "tsx sponsor-buy.ts"
   },
   "dependencies": {
     "near-api-js": "^7.4.0",
