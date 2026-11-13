@@ -15,7 +15,7 @@ when you press Submit. Corrections afterwards: nearhackathon.com/request-changes
 | NEAR wallet address | your **mainnet** account (prizes are paid on mainnet; not `bloqvia.testnet`) |
 | Repository link | `https://github.com/1AdiTech1/bloqvia` — public, tagged `v1.0-hackathon` |
 | Website | `https://bloqvia.app` |
-| Demo post link | the X post below, once it is up |
+| Demo post link | `https://x.com/Bloqvia/status/2121195350769946838` (up since 13 Nov 12:55; the reply with the repo link is under it) |
 | What did you build? | the text under "What did you build?" (under 2 000 characters; count it before pasting) |
 
 ## What did you build? (paste as is)
@@ -51,7 +51,7 @@ No YouTube: the X post is the demo link everywhere (the form, the README).
 
 1. Keys rotated (NEAR_AI_API_KEY, ADMIN_TOKEN) and Railway redeployed; `/health` ok.
 2. `git log -p --all | grep -E "ed25519:[1-9A-HJ-NP-Za-km-z]{60,}" | grep -vc "ed25519:5KqX9vTn"` prints 0.
-3. X post up; its link replaces `<X-POST-LINK>` in README.md; the MP4 committed as `docs/demo/bloqvia-demo.mp4`.
+3. ~~X post up; its link replaces `<X-POST-LINK>` in README.md; the MP4 committed as `docs/demo/bloqvia-demo.mp4`.~~ Done 13 Nov.
 4. `git tag -f v1.0-hackathon && git tag hackathon-submission && git push -f origin v1.0-hackathon hackathon-submission` (`v1.0-hackathon` already exists from Nov 11 and moves to the final commit; `hackathon-submission` is the name the hackathon guide suggests).
 5. Repo public: GitHub → Settings → General → Danger Zone → Change visibility → Public.
 6. Open https://github.com/1AdiTech1/bloqvia in a private window: README renders, no 404, the video line links to the post.

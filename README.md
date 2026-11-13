@@ -4,7 +4,7 @@ Learn Web3 by playing it. A newcomer taps Start, plays three short quests, trade
 
 The chain stays invisible until the player has already used it, then the game says so: "It was on NEAR the whole time." Bloq's shop is a market whose rules you can read — one price rule in the contract, an hourly shipping rule that keeps prices alive with no dev patch, three NPC traders that are AI agents inside a cage of allowed moves, and a price call the contract settles from its own rule — and the sealed Passport is a seat in the cohort's Sputnik DAO, whose board pays NEAR for what the chain can verify.
 
-Demo video (2 min 06 s): the demo post on X, <X-POST-LINK> — the same MP4 is in this repository at `docs/demo/bloqvia-demo.mp4`.
+Demo video (2 min 06 s): the demo post on X, https://x.com/Bloqvia/status/2121195350769946838 — the same MP4 is in this repository at `docs/demo/bloqvia-demo.mp4`.
 
 Built at **NEAR HACKATHON** (Nov 1–14, 2026). Tracks: `games` (primary: the merchant's economy and the NPC trader), `memecoins` (the streak coin, Module A), `social` (the graduates' Sputnik DAO and its bounty board, Module B), `nfts` (the Passport), `open`.
 
