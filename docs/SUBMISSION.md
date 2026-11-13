@@ -11,7 +11,7 @@ when you press Submit. Corrections afterwards: nearhackathon.com/request-changes
 | Team lead | `Adrian Chivu` |
 | Email address | the address you read hackathon mail on |
 | Team size | `2-4 people` (Adi, Maria) |
-| Tracks | `games` (primary), `social`, `nfts`, `memecoins`, `open` — in that order |
+| Tracks | `games` (primary), `security`, `social`, `nfts`, `memecoins`, `agents`, `open` — in that order (security and agents added 13 Nov) |
 | NEAR wallet address | your **mainnet** account (prizes are paid on mainnet; not `bloqvia.testnet`) |
 | Repository link | `https://github.com/1AdiTech1/bloqvia` — public, tagged `v1.0-hackathon` |
 | Website | `https://bloqvia.app` |
