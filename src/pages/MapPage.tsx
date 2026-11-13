@@ -13,6 +13,7 @@ import { ItemIcon } from "@/components/GameBits";
 import { InventoryBar } from "@/components/lab/InventoryBar";
 import { StreakCard } from "@/components/lab/StreakCard";
 import { DailyQuestCard } from "@/components/lab/DailyQuestCard";
+import { SponsoredQuestCard } from "@/components/lab/SponsoredQuestCard";
 import { buzz, Press } from "@/components/lab/motion";
 import { Web3Passport } from "@/components/lab/Web3Passport";
 import { seasonProgress } from "@/components/lab/seasonProgress";
@@ -100,6 +101,7 @@ function MapInner() {
   const cardsBox = useRef<HTMLDivElement>(null);
   const streakBox = useRef<HTMLDivElement>(null);
   const dailyBox = useRef<HTMLDivElement>(null);
+  const sponsoredBox = useRef<HTMLDivElement>(null);
   const listBox = useRef<HTMLDivElement>(null);
   const tourHost = useRef<HTMLDivElement>(null);
   const tourBody = useRef<HTMLDivElement>(null);
@@ -260,7 +262,7 @@ function MapInner() {
     done: "That's everything for today. Come back tomorrow for a new quest and a new streak day.",
   };
   const sayTour = (line: string) => { sayTourRaw(line); tourBloq.current?.talk(talkMs(line), line); };
-  const boxFor = (step: AfterStep) => step === "streak" ? streakBox.current : step === "daily" ? dailyBox.current : listBox.current;
+  const boxFor = (step: AfterStep) => step === "streak" ? streakBox.current : step === "daily" ? dailyBox.current : step === "sponsored" ? sponsoredBox.current : listBox.current;
   const spotFor = (step: AfterStep) => {
     const root = rootRef.current, box = boxFor(step);
     if (!root || !box) return null;
@@ -400,12 +402,14 @@ function MapInner() {
         <div id="keep-going" ref={cardsBox} className="order-5 mt-[112px] flex scroll-mt-[120px] flex-col gap-[100px] dk:order-4 dk:col-span-2 dk:mt-[112px] dk:grid dk:grid-cols-2 dk:items-stretch dk:gap-4">
           <div ref={streakBox} className="min-w-0 empty:hidden"><StreakCard highlight={tourOn && after.next === "streak"} /></div>
           <div ref={dailyBox} className="min-w-0 empty:hidden"><DailyQuestCard onPlay={openQuest} highlight={tourOn && after.next === "daily"} /></div>
-          <div ref={listBox} className="min-w-0 dk:col-span-2 dk:mt-[84px]"><AfterSeasonsCard after={after} onCheckIn={() => scrollTo(streakBox.current)} onPlay={() => scrollTo(dailyBox.current)} /></div>
+          <div ref={sponsoredBox} className="min-w-0 empty:hidden dk:col-span-2 dk:mt-[16px]"><SponsoredQuestCard onPlay={openQuest} highlight={tourOn && after.next === "sponsored"} /></div>
+          <div ref={listBox} className={`min-w-0 dk:col-span-2 ${after.sponsored.available ? "dk:mt-[16px]" : "dk:mt-[84px]"}`}><AfterSeasonsCard after={after} onCheckIn={() => scrollTo(streakBox.current)} onPlay={() => scrollTo(dailyBox.current)} onPlaySponsored={() => scrollTo(sponsoredBox.current)} /></div>
         </div>
       ) : (
       <div ref={cardsBox} className="order-5 mt-10 flex flex-col gap-3 dk:order-4 dk:col-span-2 dk:mt-6 dk:grid dk:grid-cols-2 dk:items-stretch dk:gap-4">
         <StreakCard />
         <DailyQuestCard onPlay={openQuest} />
+        <div className="min-w-0 empty:hidden dk:col-span-2"><SponsoredQuestCard onPlay={openQuest} /></div>
       </div>
       )}
 

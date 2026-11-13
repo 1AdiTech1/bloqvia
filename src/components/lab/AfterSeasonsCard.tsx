@@ -18,10 +18,10 @@ function Row({ done, label, action }: { done: boolean; label: string; action?: R
 }
 
 /** "Every day on Bloqvia" (prompt 26): what's left to do today once both seasons are done. */
-export function AfterSeasonsCard({ after, onCheckIn, onPlay }: { after: AfterSeasons; onCheckIn: () => void; onPlay: () => void }) {
+export function AfterSeasonsCard({ after, onCheckIn, onPlay, onPlaySponsored }: { after: AfterSeasons; onCheckIn: () => void; onPlay: () => void; onPlaySponsored: () => void }) {
   const [again, setAgain] = useState(false);
   const againBtn = useRef<HTMLButtonElement>(null);
-  const allDone = (!after.streak.available || after.streak.done) && (!after.daily.available || after.daily.done) && after.missions.done;
+  const allDone = (!after.streak.available || after.streak.done) && (!after.daily.available || after.daily.done) && (!after.sponsored.available || after.sponsored.done) && after.missions.done;
   const close = () => { setAgain(false); requestAnimationFrame(() => againBtn.current?.focus()); };
 
   return (
@@ -33,6 +33,7 @@ export function AfterSeasonsCard({ after, onCheckIn, onPlay }: { after: AfterSea
         <Row done label="Season 2 · stamped on your Passport" />
         {after.streak.available && <Row done={after.streak.done} label="Check in for the community streak" action={<button type="button" onClick={onCheckIn} className={ACT}>Check in ↑</button>} />}
         {after.daily.available && <Row done={after.daily.done} label="Play today's quest" action={<button type="button" onClick={onPlay} className={ACT}>Play ↑</button>} />}
+        {after.sponsored.available && <Row done={after.sponsored.done} label="Play the sponsored quest" action={<button type="button" onClick={onPlaySponsored} className={ACT}>Play ↑</button>} />}
         <Row done={after.missions.done} label="Take on a mission (graduates)" action={<Link to="/cohort" className={ACT}>Missions →</Link>} />
       </ul>
       <p className="mt-3 text-[13px] text-lavender">{allDone ? "A new quest arrives every day, and the streak needs you again next Bloqvia day." : "Your Passport keeps everything. Nothing here resets it."}</p>

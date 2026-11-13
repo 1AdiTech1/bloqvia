@@ -24,6 +24,7 @@ vi.mock("@/bloq", async () => {
 vi.mock("@/near", () => ({
   useFinalBlock: () => 123,
   useChapters: () => ({ chapters: [] }),
+  useSponsoredQuest: () => ({ quest: null, quests: [], done: false, loading: false, error: null }),
   SEASON2_CHAPTERS: ["chapter-ownership", "chapter-transactions", "chapter-defi"],
   season2Done: () => sandbox.stamped,
   useAfterSeasons: () => ({ active: false, ready: false, next: "streak", streak: { available: false, done: false }, daily: { available: false, done: false, lessonId: null }, missions: { available: true, done: false }, tourStarted: false, startTour: () => {} }),

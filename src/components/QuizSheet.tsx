@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, ExternalLink, RotateCcw, X } from "lucide-react";
 import { useGame } from "@/game/useGame";
 import { Bloq, SpeechBubble, useSay, talkMs, type BloqHandle, type BloqHat, type BloqProp, type BloqPose, useMotionOff } from "@/bloq";
-import { useChapters, SEASON2_CHAPTERS, useDailyQuests, type GeneratedBy } from "@/near";
+import { useChapters, SEASON2_CHAPTERS, useDailyQuests, useSponsoredQuest, explorer, type GeneratedBy } from "@/near";
 import { formatQuestDate } from "./lab/DailyQuestCard";
 import { LESSON_CONTENT, type LessonContent } from "@/game/content";
 import { RewardChip, ItemIcon } from "./GameBits";
@@ -28,6 +28,7 @@ const LOOKS: Record<string, { hat: BloqHat; prop: BloqProp; hello: string }> = {
   "chapter-defi": { hat: "tophat", prop: "coin", hello: "Last one: DeFi. My shop is a tiny market run by code." },
 };
 const DAILY_LOOK = { hat: "bucket" as BloqHat, prop: "bulb" as BloqProp, hello: "Today's quest was written by an AI agent. The chain still checks your answer." };
+const SPONSORED_LOOK = { hat: "tophat" as BloqHat, prop: "coin" as BloqProp, hello: "A sponsored quest: somebody paid for this slot. The chain still checks your answer, and the reward is mine." };
 const CUBE_COLORS = ["#d4f033", "#b47ff0", "#ffffff"];
 
 /**
@@ -39,10 +40,11 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved, onBag }: { lesso
   const reduce = useMotionOff();
   const desktop = useIsDesktop();
   const daily = useDailyQuests().quests.find((q) => q.lesson_id === lessonId);
+  const sponsored = useSponsoredQuest().quests.find((q) => q.lesson_id === lessonId);
   const chapter = useChapters().chapters.find((c) => c.lesson_id === lessonId);
   const index = LESSON_CONTENT.findIndex((l) => l.lesson_id === lessonId);
   const founding = LESSON_CONTENT[index];
-  const lesson: SheetLesson | undefined = daily ?? chapter ?? founding;
+  const lesson: SheetLesson | undefined = daily ?? sponsored ?? chapter ?? founding;
   useEffect(() => {
     if (!lesson) onClose();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,7 +61,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved, onBag }: { lesso
   const [line, sayLine] = useSay();
   const [pose, setPose] = useState<BloqPose>("hold");
   const [burst, setBurst] = useState(0);
-  const look = daily ? DAILY_LOOK : LOOKS[lessonId] ?? DAILY_LOOK;
+  const look = daily ? DAILY_LOOK : sponsored ? SPONSORED_LOOK : LOOKS[lessonId] ?? DAILY_LOOK;
   const sheet = useSheetDrag(onClose, !desktop);
   const sheetPanel = sheet.ref;
   const say = (t: string) => { sayLine(t); bloq.current?.talk(talkMs(t), t); };
@@ -165,7 +167,7 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved, onBag }: { lesso
 
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-lavender-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]">{lesson.topic}</span>
-          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{daily ? `Daily quest · ${formatQuestDate(daily.lesson_id.slice(6))}` : chapter ? `Chapter 0${SEASON2_CHAPTERS.findIndex((id) => id === lessonId) + 4}` : `Chapter ${index + 1}`}</span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{daily ? `Daily quest · ${formatQuestDate(daily.lesson_id.slice(6))}` : sponsored ? `Sponsored quest · ${formatQuestDate(lessonId.slice(6, 16))}` : chapter ? `Chapter 0${SEASON2_CHAPTERS.findIndex((id) => id === lessonId) + 4}` : `Chapter ${index + 1}`}</span>
         </div>
 
         {!done ? (
@@ -249,6 +251,16 @@ export function QuizSheet({ lessonId, onClose, onLanded, saved, onBag }: { lesso
                   <a href={verifyUrl(gen.model)} target="_blank" rel="noopener noreferrer" className="tap mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-lime underline-offset-4 hover:underline">
                     Verify the signature <ExternalLink className="h-4 w-4" />
                   </a>
+                </div>
+              )}
+              {sponsored && (
+                <div className="mt-4 border-t border-ivory/15 pt-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-lavender">Who paid for this quest</p>
+                  <p className="mt-2 text-sm leading-relaxed text-ivory/80">
+                    {sponsored.sponsor.house ? `Nobody bought today's slot, so Bloqvia's own purse paid ${sponsored.slot.price} for it over x402; the payment is a token transfer on NEAR testnet.` : `${sponsored.sponsor.name} paid ${sponsored.slot.price} for today's slot over x402 (HTTP 402); the payment is a token transfer on NEAR testnet.`}
+                  </p>
+                  {sponsored.slot.tx_hash && <a href={explorer.tx(sponsored.slot.tx_hash)} target="_blank" rel="noopener noreferrer" className="tap mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-lime underline-offset-4 hover:underline">See the payment on the explorer <ExternalLink className="h-4 w-4" /></a>}
+                  <p className="mt-2 text-sm leading-relaxed text-ivory/80">Bloqvia's validator checked the quest and the contract paid the reward: the sponsor never touches rewards.</p>
                 </div>
               )}
               {game.lastTx && (

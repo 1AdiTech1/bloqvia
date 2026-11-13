@@ -165,7 +165,7 @@ function ShopInner() {
                 {voices.map((tr) => <TraderVoice key={tr.accountId ?? tr.temper} tr={tr} />)}
               </div>
               <small className="font-mono text-lavender" style={{ fontSize: "11px" }}>
-                three NPC traders, each an agent on NEAR AI Cloud that may only pick from the moves its rules allow · next look in {voices[0]?.rules.intervalMin ?? 5} min
+                three NPC traders, each an agent on NEAR AI Cloud that may only pick from the moves its rules allow · each buys its information from the market desk over x402, from a purse with a daily budget · next look in {voices[0]?.rules.intervalMin ?? 5} min
               </small>
             </>
           ) : (
@@ -557,6 +557,9 @@ function TraderVoice({ tr }: { tr: TraderView }) {
           {t && <>{t.generated_by.signature_kind === "provider_tee" ? " · signed in a TEE" : " · thought on NEAR AI Cloud"} · <a href={`https://cloud.near.ai/verify?model=${encodeURIComponent(t.generated_by.model)}`} target="_blank" rel="noreferrer">Verify</a> · allowed then: {t.allowed.join(", ")}</>}
           {acted && tr.last?.txHash && <> · <a href={explorer.tx(tr.last.txHash)} target="_blank" rel="noopener noreferrer">explorer</a></>}
         </small>
+        {tr.signal && <small className={cn("mt-1 block font-mono", tr.signal.ok ? "text-lime" : "text-coral")} style={{ fontSize: "10.5px" }}>
+          {tr.signal.ok ? <>bought the desk's signal for {tr.signal.cost} · x402 · {tr.signal.txHash && <a href={explorer.tx(tr.signal.txHash)} target="_blank" rel="noopener noreferrer">explorer</a>}</> : <>the purse refused the signal: {tr.signal.note.replace(/^the purse refused the signal \((.*)\)$/, "$1")}</>}
+        </small>}
       </div>
     </div>
   );

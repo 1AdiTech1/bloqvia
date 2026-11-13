@@ -15,3 +15,4 @@
 - The Lab reuses the landing `lv-pass` styles through `src/components/lab/Web3Passport.tsx` (Shop ceremony, Passport page); keep one card implementation so both stay in sync.
 - Season progress helpers are display-only; map movement uses the public ChainTrail handles, and Passport stamps come exclusively from the existing game view/completion action.
 - Both season reveals share RevealPage's presentation, key controls and restart action; SeasonStamp is shared with Web3Passport to keep the ink artwork identical.
+- Sponsored quest presentation uses the existing sponsored hook and normal quiz completion action, keeping payment provenance separate from contract-owned rewards.
