@@ -253,6 +253,7 @@ function MapInner() {
   const LINE: Record<AfterStep, string> = {
     streak: "Both seasons done! Now the community needs you: check in today. When enough of us do, everyone who checked in gets STREAK.",
     daily: "Checked in! Next, today's quest. An AI agent wrote it this morning, and the chain still checks your answer.",
+    sponsored: "One more quest today, and somebody paid for its slot: a sponsored quest. Read who, on the card. The chain checks your answer like any quest, and the reward is mine, not theirs.",
     missions: desktop
       ? "One more, just for graduates: Missions. The DAO's board pays testnet NEAR for small tasks. It's in the menu on the left."
       : "One more, just for graduates: Missions. The DAO's board pays testnet NEAR for small tasks. Tap Missions below.",
