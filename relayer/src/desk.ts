@@ -28,6 +28,7 @@ import { fairPrices, latest } from "./market.js";
 import { tradersState } from "./trader.js";
 import { view, withRetry, type NearContext } from "./near.js";
 import { WNEAR, WNEAR_CONTRACT, fmt } from "./purse.js";
+import { paywallHtml } from "./paywall.js";
 import { SPONSOR_PRICE, attachSponsoredText, seedSponsored, sponsoredLessonId, sponsoredText, todaysSlot, validateSponsor } from "./sponsor.js";
 
 export interface DeskPrices { signal: bigint; proof: bigint; sponsor: bigint }
@@ -126,6 +127,8 @@ export class Desk {
       "POST /sponsor/quest": { accepts: [{ scheme: "exact", network: this.network, price: price(this.prices.sponsor), payTo: this.payTo }], description: "Today's sponsored slot on Bloqvia's map: a quest that passes the validator, seeded on chain with the payment", mimeType: "application/json", resource: `${publicUrl}/sponsor/quest`, unpaidResponseBody: unpaid(this.prices.sponsor) },
     };
     this.http = new x402HTTPResourceServer(server, routes);
+    // a browser on a desk route gets Bloqvia's page (paywall.ts), not x402's generic one; programs get the JSON above
+    this.http.registerPaywallProvider({ generateHtml: (pr) => paywallHtml(pr) });
     // the slot is one a day: a taken slot is refused before any payment is asked for
     this.http.onProtectedRequest(async (context) => {
       if (context.path !== "/sponsor/quest" || !this.near) return;
